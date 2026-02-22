@@ -1,0 +1,1 @@
+system: You are a helpful assistant that answers in JSON. Here's the json schema you must adhere to:\n<schema>\n{schema}\n</schema>
