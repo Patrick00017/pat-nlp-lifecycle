@@ -1,0 +1,39 @@
+EventId,EventTemplate
+E1,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"当前订单：材质限速={material_set_speed},切长限速={cutlength_set_speed}"
+E2,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"坑机材质限速,SF1={sf1_material_set_speed},SF2={sf2_material_set_speed},SF3={sf3_material_set_speed},整线巡航车速= {cruise_speed}"
+E3,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"备卷未就绪判断后,整线巡航车速={cruise_speed}"
+E4,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"刚换卷延迟升速,之前的接纸车速={former_splicer_speed},巡航车速={cruise_speed}"
+E5,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"R00返回额定刀数订单ID:{order_id}，刀数1：{cut1}，刀数2：{cut2}"
+E6,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PLC第1次完成写值--变量名={param_name}\r\n写入值={param_set_value}\r\n实际地址={actual_addr}\r\n"
+E7,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":""IPS-BIZ-DOCP-LS0-LS0-iNum:0k:0 || 点位赋值结束，方式：1、开机赋值;2、正常换卷;3、修改队列第一条赋值;4、等1分钟内;5、糊机赋值|""
+E8,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS-发生{func}巡航设置改变，IP地址：{ip_addr}"
+E9,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"--------------更新全局巡航变量-------------------\r\n是否启用：{is_enable}\r\n糊机准备就绪：{is_gu_ready}\r\n1机准备就绪：{is_machine1_ready}\r\n2机准备就绪：{is_machine2_ready}\r\n3机准备就绪：{is_machine3_ready}\r\n巡航界面系数：{cruise_factor}\r\n"
+E10,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS-{ip_addr}:{port}断开服务端成功!"
+E11,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS换单--重置PLC换单信号完成"
+E12,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志：已获取订单信息。 WO_ID：{wo_id} 门幅：{width} 楞型：{flute_type} 材质：{material}"
+E13,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志--P04P中关于 订单ID={order_id} 的最后一次换班数据获取完成"
+E14,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志--构造P04P数据，订单ID={order_id}，判断上刀走下刀标识={is_up_to_down}"
+E15,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志--构造P04P数据，订单ID={order_id}，开始时间={start_time}，结束时间={end_time}，耗时={time_duration}"
+E16,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志--构造P04P数据，订单ID={order_id}，停机次数={stop_count}，停机时间={stop_time}"
+E17,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志--构造P04P数据，订单ID={order_id}，回收刀数 ActualCuts1={actual_cuts1},ActualCuts2 = {actual_cuts2}"
+E18,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS换单 p04ps数量{num_p04ps},PlcFinishOrderInfo:[{\""OrderID\"":{order_id},\""CutQty\"":{cutqty},\""CutQtyD\"":{cutqtyd}},{\""OrderID\"":{order_id},\""CutQty\"":{cutqty},\""CutQtyD\"":{cutqtyd}},{\""OrderID\"":{order_id},\""CutQty\"":{cutqty},\""CutQtyD\"":{cutqtyd}},{\""OrderID\"":{order_id},\""CutQty\"":{cutqty},\""CutQtyD\"":{cutqtyd}},{\""OrderID\"":{order_id},\""CutQty\"":{cutqty},\""CutQtyD\"":{cutqtyd}}]"
+E19,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志 插入P04PS SetupIDs：{order_id} "
+E20,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志 插入完工表 WOIDs：{order_id} "
+E21,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志 删除未完工表 WOIDs：{order_id} "
+E22,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志：获取下笔订单完成，订单ID={order_id}"
+E23,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志：更新下笔订单，订单ID={order_id} 的开始时间={start_time}"
+E24,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志：重新计算备料表完成。"
+E25,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"PMS回收日志：发送消息给客户端完成。"
+E26,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"横切换单或者强换，触发判定是否横切换材\r\n"
+E27,"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"发送CCC订单：返回结果={return_result},订单ID={order_id},报文= {ccc_packet}"
+
+
+
+
+
+
+
+
+
+
+
