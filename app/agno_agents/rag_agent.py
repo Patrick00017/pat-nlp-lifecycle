@@ -34,7 +34,7 @@ rag_agent = Agent(
     markdown=True,
 )
 
-rag_agent.print_response("什么是强换", markdown=True)
+rag_agent.print_response("什么是强换操作")
 
 # Delete operations examples
 vector_db = knowledge.vector_db
