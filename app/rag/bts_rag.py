@@ -12,6 +12,7 @@ from langchain_ollama.llms import OllamaLLM
 from langchain_chroma import Chroma
 from langchain.agents.middleware import dynamic_prompt, ModelRequest
 from langchain_core.documents import Document
+from networkx_construct import load_graph, query_node_relationships
 
 
 def extract_heading_to_text_map(markdown_text: str) -> Dict[str, str]:
@@ -74,7 +75,7 @@ key2text = {}
 intent_agent = None  # this agent is used to identify user's intention
 doc_agent = None  # this agent is used to search doc vector and answer
 graph_agent = None  # this agent is used to query the neo4j graph database
-
+loaded_graph = None
 # system prompts
 intent_agent_system_prompt = """你是一个用户意图分析助手。
 用户的提问都是与系统的使用有关的，按照用户的问题对其意图进行分析，并接着判断询问的是哪个确切的模块。
@@ -114,7 +115,7 @@ def prompt_with_context(request: ModelRequest) -> str:
     docs_content = "\n\n".join(doc.content for doc in retrieved_docs)
     system_prompt = (
         "你是一个用户手册文档助手，该文档是关于BTS开发的IPS智能瓦楞纸板生产线的系统使用手册\n",
-        "按照用户的问题，基于查询到的有关文档信息进行回答。\n"
+        "按照用户的问题，严格按照查询到的有关文档信息进行回答。使用的语句尽可能专业。\n"
         f"查询到的相关文档如下：{docs_content}",
     )
     return system_prompt
@@ -135,13 +136,14 @@ def prompt_with_neo4j_graph(request: ModelRequest) -> str:
 
     # try to get knowledge graph from neo4j
     # todo
-
+    related_results = query_node_relationships(loaded_graph, module)
     # create system prompt
     system_prompt = (
         "你是一个用户引导助手，需要基于给出的模块关系引导用户下一步可以进行什么询问。",
-        f"模块关系如下: {1}",
+        f"模块的包含与属于关系如下: {related_results}",
         "回答用户，包含当前模块的界面或者操作有哪些，以及当前模块包含的界面或者操作有哪些。",
         "比如：包含A的界面有B和C，在A中包含操作D，如果有其他问题可以继续进行询问。",
+        "若关系为空，则回答如果有其他问题我可以进行帮助等类似语句，关系不为空时，严格按照给出的关系回答。",
     )
     return system_prompt
 
@@ -167,6 +169,8 @@ def init_all():
         # now, do embedding
         document_ids = vector_store.add_documents(documents=user_manual_docs)
 
+    # load the graph
+    loaded_graph = load_graph("./bts_graph.pkl")
     # read markdown file and
     key2text = extract_heading_to_text_map(markdown_user_manual_path)
     # create agents
@@ -178,6 +182,8 @@ def init_all():
 
 
 def response(question):
+    content = ""  # final answer
+
     # 1. intent classification and parse the json output
     intent_output = intent_agent.invoke(
         {"messages": [{"role": "user", "content": question}]}
@@ -187,25 +193,28 @@ def response(question):
         parsed_intent_output = json.loads(intent_output)
     except json.JSONDecodeError as e:
         print(f"JSON解析失败，原文：{intent_output}")
-        return
+        return "没有理解"
     intent = parsed_intent_output["intent"]
     module = parsed_intent_output["module"]
+    print(f"part1: {intent} - {module}")
     # 2. try to get the right answer in the key2text first,
     #    if can not find the direct answer, use doc agent
-    content = ""
-    if module in key2text.keys():
-        content += f"{key2text[module]}\n"
-    else:
-        # use doc agent
-        doc_agent_output = doc_agent.invoke(
-            {"messages": [{"role": "user", "content": question}]}
-        )
-        doc_agent_output = doc_agent_output["messages"][-1].content
-        content += doc_agent_output
+    # use doc agent
+    doc_agent_output = doc_agent.invoke(
+        {"messages": [{"role": "user", "content": question}]}
+    )
+    doc_agent_output = doc_agent_output["messages"][-1].content
+    print(f"part2: {doc_agent_output}")
+    content += doc_agent_output
 
     # 3. use graph agent to make the graph guide
     graph_agent_output = graph_agent.invoke(
         {"messages": [{"role": "user", "content": intent_output}]}
     )
     graph_agent_output = graph_agent_output["messages"][-1].content
+    print(f"part3: {graph_agent_output}")
     content += graph_agent_output
+    return content
+
+
+text = response("解释一下强换操作")
