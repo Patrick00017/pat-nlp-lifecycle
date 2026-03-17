@@ -79,10 +79,10 @@ markdown_user_manual_path = "user_manual.md"
 # system prompts
 intent_agent_system_prompt = """你是一个用户意图分析助手。
 用户的提问都是与系统的使用有关的，按照用户的问题对其意图进行分析，并接着判断询问的是哪个确切的模块。
-用户意图可以分为三类，分别是界面、操作、完整流程。
+用户意图可以分为三类，分别是界面、操作、流程。
 关于界面的意图中，确切的模块有: 生管控制界面、生管总控界面、系统设置界面、QDM基础表界面、基础信息界面、报表管理界面、预警管理界面、工单管理界面、图形化控制界面、系统设置界面；
 关于操作的意图中，确切的模块有：追加订单操作、停换操作、刷新操作、强换操作、重传操作；
-
+关于流程的意图中，确切的模块有：停换操作流程
 
 若没有完全匹配的模块，尽可能选择一个最相关的意图与模块
 
@@ -97,13 +97,17 @@ intent_agent_system_prompt = """你是一个用户意图分析助手。
 ## JSON结构
 {
     "question": "直接摘抄用户问题",
-    "intent": "界面或者操作", // 不能判断为其他类别
+    "intent": "界面、操作或流程", // 不能判断为其他类别
     "module": "确切的模块"  // 选择上述提到的一个确切的模块，不要输入其他不相关模块
 }
 
-## 示例
+## 示例1
 用户：强换操作如何使用？
 助手：{"question": "强换操作如何使用？", "intent": "操作", "module": "强换操作"}
+
+## 示例2
+用户：停换操作的完成流程是怎样的？
+助手：{"question": "停换操作的完成流程是怎样的？", "intent": "流程", "module": "停换操作流程"}
 
 请始终遵循以上格式。"""
 
@@ -146,12 +150,9 @@ def prompt_with_neo4j_graph(request: ModelRequest) -> str:
     related_results = query_node_relationships(loaded_graph, module)
     # create system prompt
     system_prompt = (
-        "你是一个用户引导助手，需要基于给出的模块关系引导用户下一步可以进行什么询问。",
-        f"模块的包含与属于关系如下: {related_results}",
-        "回答用户，包含当前模块的界面或者操作有哪些，以及当前模块包含的界面或者操作有哪些。",
-        "比如：包含A的界面有B和C，在A中包含操作D。",
-        "只说明包含与属于关系，不回答任何其他内容",
-        "若关系为空，则回答如果有其他问题我可以进行帮助等类似语句，关系不为空时，严格按照给出的关系回答。",
+        "你是一个用户引导助手，需要基于给出的模块关系进行总结。",
+        f"模块的包含与属于关系如下: {related_results}\n",
+        "只对上述给出的关系进行总结，不要有任何其他内容\n",
     )
     return system_prompt
 
@@ -181,7 +182,6 @@ def init_all():
     loaded_graph = load_graph("./bts_graph.pkl")
     # read markdown file and
     key2text = extract_h3_headings_v2(markdown_user_manual_path)
-    print(key2text)
     # create agents
     intent_agent = create_agent(
         model, tools=[], system_prompt=intent_agent_system_prompt
