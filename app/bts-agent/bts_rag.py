@@ -285,10 +285,10 @@ def init_all():
 
 def response(question):
     """
-                            unknown intent or complicated question
+                            unknown intention or complicated question
                         --------------------------------------------> plan agent(brain storm agent) -----> fetch useful knowledge graph ------> summarize the graph based on manual
                         |
-                        |            known intent
+                        |            known intention
     question -----> intent router ------------------> rag agent(normal agent) ----------> graph agent: get adj node to show the little part of the knowledge graph
 
     """
