@@ -1,0 +1,996 @@
+{
+  "style": {
+    "font-family": "sans-serif",
+    "background-color": "#ffffff",
+    "background-image": "",
+    "background-size": "100%",
+    "node-color": "#ffffff",
+    "border-width": 4,
+    "border-color": "#000000",
+    "radius": 50,
+    "node-padding": 5,
+    "node-margin": 2,
+    "outside-position": "auto",
+    "node-icon-image": "",
+    "node-background-image": "",
+    "icon-position": "inside",
+    "icon-size": 64,
+    "caption-position": "inside",
+    "caption-max-width": 200,
+    "caption-color": "#000000",
+    "caption-font-size": 50,
+    "caption-font-weight": "normal",
+    "label-position": "inside",
+    "label-display": "pill",
+    "label-color": "#000000",
+    "label-background-color": "#ffffff",
+    "label-border-color": "#000000",
+    "label-border-width": 4,
+    "label-font-size": 40,
+    "label-padding": 5,
+    "label-margin": 4,
+    "directionality": "directed",
+    "detail-position": "inline",
+    "detail-orientation": "parallel",
+    "arrow-width": 5,
+    "arrow-color": "#000000",
+    "margin-start": 5,
+    "margin-end": 5,
+    "margin-peer": 20,
+    "attachment-start": "normal",
+    "attachment-end": "normal",
+    "relationship-icon-image": "",
+    "type-color": "#000000",
+    "type-background-color": "#ffffff",
+    "type-border-color": "#000000",
+    "type-border-width": 0,
+    "type-font-size": 16,
+    "type-padding": 5,
+    "property-position": "outside",
+    "property-alignment": "colon",
+    "property-color": "#000000",
+    "property-font-size": 16,
+    "property-font-weight": "normal"
+  },
+  "nodes": [
+    {
+      "id": "n0",
+      "position": {
+        "x": -63.1583590204546,
+        "y": -2246.1632539660977
+      },
+      "caption": "系统设置界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n2",
+      "position": {
+        "x": 164.59036508503257,
+        "y": -1851.6908924564084
+      },
+      "caption": "BTS系统",
+      "labels": ["系统"],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n3",
+      "position": {
+        "x": -641.8131088092646,
+        "y": -1498.8257165782552
+      },
+      "caption": "生管控制界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n4",
+      "position": {
+        "x": -199.2361575678272,
+        "y": -1937.1891207898386
+      },
+      "caption": "图形化控制界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n5",
+      "position": {
+        "x": 135.2577321247022,
+        "y": -1503.7708677697751
+      },
+      "caption": "工单管理界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n6",
+      "position": {
+        "x": 458.5794494891335,
+        "y": -1503.7708677697751
+      },
+      "caption": "预警管理界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n7",
+      "position": {
+        "x": 263.25381136862006,
+        "y": -2296.3744312726685
+      },
+      "caption": "QDM基础表界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n8",
+      "position": {
+        "x": 616.1908870410524,
+        "y": -1792.2359187724537
+      },
+      "caption": "报表管理界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n9",
+      "position": {
+        "x": 559.0627265947227,
+        "y": -2079.4396165618946
+      },
+      "caption": "基础信息界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n11",
+      "position": {
+        "x": -1390.8838541424848,
+        "y": -1715.7605312890653
+      },
+      "caption": "生管总控界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n12",
+      "position": {
+        "x": -701.376490039979,
+        "y": -1937.1891207898386
+      },
+      "caption": "坑机用户界面",
+      "labels": [
+        "界面"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n14",
+      "position": {
+        "x": -1018.6995031158582,
+        "y": -503.70398631391083
+      },
+      "caption": "重传操作",
+      "labels": [
+        "操作"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n15",
+      "position": {
+        "x": -1390.8838541424848,
+        "y": -698.8518204896752
+      },
+      "caption": "刷新操作",
+      "labels": [
+        "操作"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n16",
+      "position": {
+        "x": -1209.000889682087,
+        "y": -598.9393360686222
+      },
+      "caption": "强换操作",
+      "labels": [
+        "操作"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n17",
+      "position": {
+        "x": -1577.3936852833838,
+        "y": -803.0848727203768
+      },
+      "caption": "停换操作",
+      "labels": [
+        "操作"
+      ],
+      "properties": {},
+      "style": {}
+    },
+    {
+      "id": "n19",
+      "position": {
+        "x": -488.88989113607806,
+        "y": -1233.9549339113814
+      },
+      "caption": "糊机用户界面",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n20",
+      "position": {
+        "x": -1138.2305822368533,
+        "y": -1429.3552121048879
+      },
+      "caption": "同步屏界面",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n21",
+      "position": {
+        "x": -944.9207045011675,
+        "y": -1233.9549339113814
+      },
+      "caption": "办公室界面",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n22",
+      "position": {
+        "x": 548.6130795337579,
+        "y": -420.24328034406653
+      },
+      "caption": "订单列表管理界面",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n23",
+      "position": {
+        "x": -178.51367588787295,
+        "y": -1405.314248048748
+      },
+      "caption": "系统状态栏组件",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n24",
+      "position": {
+        "x": -774.7036231688851,
+        "y": -1015.5074258947241
+      },
+      "caption": "当前生产订单信息显示组件",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n25",
+      "position": {
+        "x": -774.7036231688851,
+        "y": -2134.004889322938
+      },
+      "caption": "接纸机状态组件",
+      "style": {},
+      "labels": [],
+      "properties": {}
+    },
+    {
+      "id": "n26",
+      "position": {
+        "x": -995.8514849600165,
+        "y": -978.5073114642762
+      },
+      "caption": "本班与本单信息汇总组件",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n27",
+      "position": {
+        "x": -1299.973695741979,
+        "y": -1080.5048622617815
+      },
+      "caption": "未完工订单列表组件",
+      "style": {},
+      "labels": [
+        "界面"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n29",
+      "position": {
+        "x": -868.7458959632643,
+        "y": -466.5058424805803
+      },
+      "caption": "刷新不动操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n30",
+      "position": {
+        "x": -685.9746759607779,
+        "y": -466.5058424805803
+      },
+      "caption": "错位操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n31",
+      "position": {
+        "x": -268.92251373618325,
+        "y": 27.667628794799953
+      },
+      "caption": "订单查询操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n32",
+      "position": {
+        "x": -64.20576151142257,
+        "y": 27.667628794799953
+      },
+      "caption": "新增订单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n33",
+      "position": {
+        "x": 92.72385473007814,
+        "y": 12.730445413038183
+      },
+      "caption": "修改订单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n34",
+      "position": {
+        "x": 314.1053864189121,
+        "y": 12.730445413038183
+      },
+      "caption": "删除订单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n35",
+      "position": {
+        "x": -473.63926596094393,
+        "y": 27.667628794799953
+      },
+      "caption": "复制操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n36",
+      "position": {
+        "x": 501.7761352274998,
+        "y": 12.730445413038183
+      },
+      "caption": "计算堆叠操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n37",
+      "position": {
+        "x": 689.4468840360876,
+        "y": 12.730445413038183
+      },
+      "caption": "批量上下刀切换操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n38",
+      "position": {
+        "x": 877.1176328446753,
+        "y": 12.730445413038183
+      },
+      "caption": "重排订单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n39",
+      "position": {
+        "x": 1088.6802256597034,
+        "y": 12.730445413038183
+      },
+      "caption": "重做订单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n40",
+      "position": {
+        "x": 1226.2443685660721,
+        "y": -78.20972849575932
+      },
+      "caption": "打印标签操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n41",
+      "position": {
+        "x": 1264.448491188864,
+        "y": -237.54202970330272
+      },
+      "caption": "打印排程单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n42",
+      "position": {
+        "x": 1306.7902200312083,
+        "y": -383.6572434901805
+      },
+      "caption": "一键假单操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n43",
+      "position": {
+        "x": 1355.2878788128016,
+        "y": -503.70398631391083
+      },
+      "caption": "订单列表布局修改操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n44",
+      "position": {
+        "x": 1368.008292405098,
+        "y": -653.434185984259
+      },
+      "caption": "订单剪切粘贴操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n45",
+      "position": {
+        "x": 1306.7902200312083,
+        "y": -824.7003480651422
+      },
+      "caption": "订单转换材质操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n46",
+      "position": {
+        "x": 1050.5231388609247,
+        "y": -896.9245804459393
+      },
+      "caption": "排序翻转操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n47",
+      "position": {
+        "x": 833.0568714786518,
+        "y": -945.4144878683582
+      },
+      "caption": "楞型机台转换操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n48",
+      "position": {
+        "x": 661.9260527087731,
+        "y": -978.5073114642762
+      },
+      "caption": "复制订单号操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "n49",
+      "position": {
+        "x": -356.8380711825562,
+        "y": -198.5524089592862
+      },
+      "caption": "自定义标签操作",
+      "style": {},
+      "labels": [
+        "操作"
+      ],
+      "properties": {}
+    }
+  ],
+  "relationships": [
+    {
+      "id": "n1",
+      "type": "包含",
+      "style": {
+        "directionality": "directed"
+      },
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n0"
+    },
+    {
+      "id": "n2",
+      "type": "包含",
+      "style": {
+        "directionality": "directed"
+      },
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n3"
+    },
+    {
+      "id": "n3",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n4"
+    },
+    {
+      "id": "n4",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n5"
+    },
+    {
+      "id": "n5",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n6"
+    },
+    {
+      "id": "n6",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n7"
+    },
+    {
+      "id": "n7",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n8"
+    },
+    {
+      "id": "n8",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n9"
+    },
+    {
+      "id": "n10",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n11"
+    },
+    {
+      "id": "n11",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n12"
+    },
+    {
+      "id": "n18",
+      "type": "",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n19"
+    },
+    {
+      "id": "n19",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n20"
+    },
+    {
+      "id": "n20",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n21"
+    },
+    {
+      "id": "n22",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n2",
+      "toId": "n23"
+    },
+    {
+      "id": "n23",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n5",
+      "toId": "n22"
+    },
+    {
+      "id": "n24",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n24"
+    },
+    {
+      "id": "n25",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n12",
+      "toId": "n25"
+    },
+    {
+      "id": "n26",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n3",
+      "toId": "n26"
+    },
+    {
+      "id": "n29",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n27",
+      "toId": "n14"
+    },
+    {
+      "id": "n30",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n27",
+      "toId": "n15"
+    },
+    {
+      "id": "n31",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n27",
+      "toId": "n17"
+    },
+    {
+      "id": "n32",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n27",
+      "toId": "n16"
+    },
+    {
+      "id": "n33",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n27",
+      "toId": "n29"
+    },
+    {
+      "id": "n34",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n27",
+      "toId": "n30"
+    },
+    {
+      "id": "n35",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n11",
+      "toId": "n27"
+    },
+    {
+      "id": "n36",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n31"
+    },
+    {
+      "id": "n37",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n32"
+    },
+    {
+      "id": "n38",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n33"
+    },
+    {
+      "id": "n39",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n34"
+    },
+    {
+      "id": "n40",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n35"
+    },
+    {
+      "id": "n41",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n36"
+    },
+    {
+      "id": "n42",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n37"
+    },
+    {
+      "id": "n43",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n38"
+    },
+    {
+      "id": "n44",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n39"
+    },
+    {
+      "id": "n45",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n40"
+    },
+    {
+      "id": "n46",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n41"
+    },
+    {
+      "id": "n47",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n42"
+    },
+    {
+      "id": "n48",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n43"
+    },
+    {
+      "id": "n49",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n44"
+    },
+    {
+      "id": "n50",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n45"
+    },
+    {
+      "id": "n51",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n46"
+    },
+    {
+      "id": "n52",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n47"
+    },
+    {
+      "id": "n53",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n48"
+    },
+    {
+      "id": "n54",
+      "type": "包含",
+      "style": {},
+      "properties": {},
+      "fromId": "n22",
+      "toId": "n49"
+    }
+  ]
+}

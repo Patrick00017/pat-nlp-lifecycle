@@ -367,7 +367,7 @@ init_all()
 # print(f"问题：{question2}")
 # print(f"回答：{ans2}")
 
-question1 = "如何进行订单修改"
-ans1 = response(question1)
-print(f"问题：{question1}")
-print(f"回答：{ans1}")
+# question1 = "如何进行订单修改"
+# ans1 = response(question1)
+# print(f"问题：{question1}")
+# print(f"回答：{ans1}")

@@ -1,6 +1,6 @@
 from collections import deque
 import pickle
-
+import json
 import networkx as nx
 import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple, Any
@@ -77,56 +77,104 @@ def query_node_relationships(DG: nx.DiGraph, node_name: str) -> Dict[str, List[s
         "related_arr": sorted(related_arr),
     }
 
+
 def query_all_nodes(DG: nx.DiGraph):
     return DG.nodes()
+
 
 def extract_upward_subgraph(G, start_nodes, relation_type="属于"):
     """
     从起始节点向上抽取子图（沿着关系类型的反方向）
-    
+
     Args:
         G: 原始有向图
         start_nodes: 起始节点列表
         relation_type: 关系类型
-    
+
     Returns:
         向上抽取的子图
     """
     # 收集所有需要包含的节点
     nodes_to_include = set(start_nodes)
-    
+
     # 使用队列进行 BFS
     queue = deque(start_nodes)
     visited = set(start_nodes)
-    
+
     while queue:
         current = queue.popleft()
         # print(current)
-        
+
         # 查找所有指向当前节点的边（即出边）
         for successor in G.successors(current):
             # print(successor)
             # 检查这条边的类型是否为指定的关系类型
             edge_data = G.get_edge_data(current, successor)
-            if edge_data and edge_data.get('type') == relation_type:
+            if edge_data and edge_data.get("type") == relation_type:
                 if successor not in visited:
                     visited.add(successor)
                     nodes_to_include.add(successor)
                     queue.append(successor)
-    
+
     # 返回子图
     # 打印结果
     subgraph = G.subgraph(nodes_to_include).copy()
     content = ""
     content += "子图中的节点:\n"
     for node in subgraph.nodes():
-        node_type = subgraph.nodes[node].get('type', '未知')
+        node_type = subgraph.nodes[node].get("type", "未知")
         content += f"  - {node} ({node_type})\n"
 
     content += "子图中的边:\n"
     for u, v, data in subgraph.edges(data=True):
         content += f"  {u} -> {v} (type: {data.get('type')})\n"
     return content
+
+
+def convert_to_networkx_digraph(json_data):
+    """
+    将给定的JSON结构转换为NetworkX有向图
+
+    参数:
+    json_data: 字典格式的JSON数据，包含nodes和relationships
+
+    返回:
+    nx.DiGraph: NetworkX有向图对象
+    """
+    # 创建有向图
+    G = nx.DiGraph()
+    id2Caption = {}
+    # 记录json中的id2Caption和caption2Id
+    for node in json_data["nodes"]:
+        node_id = node["id"]
+        node_caption = node["caption"]
+        id2Caption[node_id] = node_caption
+    # 添加节点
+    for node in json_data["nodes"]:
+        node_id = node["id"]
+        # 提取节点属性
+        node_attrs = {
+            "labels": node.get("labels", []),
+            "position": node.get("position", {}),
+            "style": node.get("style", {}),
+            "properties": node.get("properties", {}),
+        }
+        G.add_node(id2Caption[node_id], **node_attrs)
+
+    # 添加边（关系）
+    for rel in json_data["relationships"]:
+        from_id = rel["fromId"]
+        to_id = rel["toId"]
+
+        # 提取关系属性
+        edge_attrs = {
+            "type": rel.get("type", ""),
+            "style": rel.get("style", {}),
+            "properties": rel.get("properties", {}),
+        }
+        G.add_edge(id2Caption[from_id], id2Caption[to_id], **edge_attrs)
+
+    return G
 
 
 def init_graph():
@@ -190,12 +238,13 @@ def init_graph():
     # 打印结果
     print("子图中的节点:")
     for node in subgraph.nodes():
-        node_type = subgraph.nodes[node].get('type', '未知')
+        node_type = subgraph.nodes[node].get("type", "未知")
         print(f"  - {node} ({node_type})")
 
     print("\n子图中的边:")
     for u, v, data in subgraph.edges(data=True):
         print(f"  {u} -> {v} (type: {data.get('type')})")
+
 
 # init_graph()
 
@@ -206,3 +255,19 @@ def init_graph():
 # results = query_node_relationships(loaded_graph, "IPS系统")
 # print(results["contains_arr"])
 # print(results["related_arr"])
+
+
+with open("graph.json", "r", encoding="utf-8") as f:
+    json_data = json.load(f)
+G = convert_to_networkx_digraph(json_data)
+# 查看图信息
+print(f"节点数: {G.number_of_nodes()}")
+print(f"边数: {G.number_of_edges()}")
+
+# 访问节点属性
+for node_id, attrs in G.nodes(data=True):
+    print(f"节点 {node_id}: {attrs['labels']}")
+
+# 访问边属性
+for u, v, attrs in G.edges(data=True):
+    print(f"边 {u} -> {v}: {attrs.get('type', '')}")
