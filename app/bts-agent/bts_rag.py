@@ -19,6 +19,7 @@ from networkx_construct import (
     query_all_nodes,
     extract_upward_subgraph,
 )
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 
 
 def extract_h3_headings_v2(markdown_file: str) -> Dict[str, str]:
@@ -67,19 +68,20 @@ def extract_h3_headings_v2(markdown_file: str) -> Dict[str, str]:
     return result
 
 
-model = OllamaLLM(model="qwen3:4b")
-# model = ChatLlamaCpp(
-#     temperature=0.5,
-#     model_path="D:/code/btsagent/models/Hermes-2-Pro-Llama-3-8B-Q4_K_M.gguf",
-#     n_ctx=10000,
-#     n_gpu_layers=8,
-#     n_batch=300,  # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
-#     max_tokens=512,
-#     repeat_penalty=1.5,
-#     top_p=0.5,
-#     verbose=True,
-# )
-embeddings = OllamaEmbeddings(model="llama3:8b")
+# model = OllamaLLM(model="qwen3:4b")
+model = ChatLlamaCpp(
+    temperature=0.5,
+    model_path="D:/code/gguf-models/qwen3-4b/Qwen3-4B-Q4_K_M.gguf",
+    n_ctx=10000,
+    # n_gpu_layers=8,
+    n_batch=300,  # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
+    max_tokens=1024,
+    repeat_penalty=1.5,
+    top_p=0.5,
+    verbose=True,
+)
+
+embeddings = HuggingFaceEmbeddings(model_name="Qwen/Qwen3-Embedding-0.6B")
 vector_store = Chroma(
     collection_name="bts_collection",
     embedding_function=embeddings,
@@ -300,6 +302,7 @@ def response(question):
         {"messages": [{"role": "user", "content": question}]}
     )
     intent_output = intent_output["messages"][-1].content
+    intent_output = intent_output.split("</think>\n\n")[-1]
     try:
         parsed_intent_output = json.loads(intent_output)
     except json.JSONDecodeError as e:
@@ -308,7 +311,7 @@ def response(question):
     intent = parsed_intent_output["intent"]
     module = parsed_intent_output["module"]
     print(f"part1: {intent} - {module}")
-    if intent != "未知":
+    if intent != "未知" or intent != None:
         # Normal stage: 2. try to get the right answer in the key2text first,
         docs = ""
         if module in key2text.keys():
@@ -334,6 +337,7 @@ def response(question):
             {"messages": [{"role": "user", "content": question}]}
         )
         graph_nodes_output = graph_nodes_output["messages"][-1].content
+        graph_nodes_output = graph_nodes_output.split("</think>\n\n")[-1]
         try:
             parsed_graph_nodes_output = json.loads(graph_nodes_output)
         except json.JSONDecodeError as e:
@@ -357,10 +361,10 @@ def response(question):
 
 init_all()
 
-# question1 = "解释一下强换操作"
-# ans1 = response(question1)
-# print(f"问题：{question1}")
-# print(f"回答：{ans1}")
+question1 = "解释一下强换操作"
+ans1 = response(question1)
+print(f"问题：{question1}")
+print(f"回答：{ans1}")
 
 # question2 = "生管总控界面是什么"
 # ans2 = response(question2)
