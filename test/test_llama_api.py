@@ -1,7 +1,12 @@
 from langchain_openai import ChatOpenAI, custom_tool
+from langchain_core.messages import HumanMessage
+from langgraph.types import interrupt
+from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel, Field
 from langchain.agents import create_agent
 from langchain.tools import tool
+from langgraph.types import Command
+
 
 llm = ChatOpenAI(
     temperature=0.5,
@@ -25,20 +30,30 @@ class CodeInput(BaseModel):
 
 @tool(args_schema=CodeInput)
 def execute_code(code: str) -> str:
+    response = interrupt(
+        f"Trying to call `execute_code`. Please approve or suggest edits."
+    )
+    if response["type"] == "accept":
+        pass
+    elif response["type"] == "edit":
+        funcname = response["args"]["func"]
+        print(f"user input funcname: {funcname}")
+    else:
+        raise ValueError(f"Unknown response type: {response['type']}")
     """Execute python code."""
     return "27"
 
 
 # llm_with_tools = llm.bind_tools([GetWeather])
+checkpointer = InMemorySaver()
+agent = create_agent(llm, [execute_code], checkpointer=checkpointer)
 
-agent = create_agent(llm, [execute_code])
+config = {"configurable": {"thread_id": "1"}}
 
 input_message = {"role": "user", "content": "Use the tool to calculate 3^3."}
-for step in agent.stream(
-    {"messages": [input_message]},
-    stream_mode="values",
-):
-    step["messages"][-1].pretty_print()
+for step in agent.stream({"messages": [input_message]}, config):
+    print(step)
+    print("\n")
 
 # print(llm.predict("hi!"))
 
@@ -46,3 +61,23 @@ for step in agent.stream(
 #     "what is the weather like in San Francisco",
 # )
 # print(ai_msg)
+
+human_input = input("y or n or edit?\n")
+if human_input == "y":
+    for chunk in agent.stream(
+        Command(resume={"type": "accept"}),
+        # Command(resume={"type": "edit", "args": {"hotel_name": "McKittrick Hotel"}}),
+        config,
+    ):
+        print(chunk)
+        print("\n")
+elif human_input == "edit":
+    for chunk in agent.stream(
+        Command(resume={"type": "edit", "args": {"func": "fuck"}}),
+        # Command(resume={"type": "edit", "args": {"hotel_name": "McKittrick Hotel"}}),
+        config,
+    ):
+        print(chunk)
+        print("\n")
+else:
+    print("end")
