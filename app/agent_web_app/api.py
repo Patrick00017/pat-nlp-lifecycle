@@ -147,7 +147,7 @@ agent = create_agent(llm, [execute_code], checkpointer=checkpointer)
 app = FastAPI(title="LangGraph Agent with Interrupt")
 
 # 设置允许的源（Origin）
-origins = ["http://localhost:5173", "http://localhost:8080"]
+origins = ["http://localhost:5173", "http://localhost", "http://localhost:8080"]
 
 app.add_middleware(
     CORSMiddleware,
