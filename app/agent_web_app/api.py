@@ -3,6 +3,7 @@ import uuid
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
 
@@ -144,6 +145,18 @@ agent = create_agent(llm, [execute_code], checkpointer=checkpointer)
 
 # ------------------ FastAPI 应用 ------------------
 app = FastAPI(title="LangGraph Agent with Interrupt")
+
+# 设置允许的源（Origin）
+origins = ["http://localhost:5173", "http://localhost:8080"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # 1. 允许的源列表
+    allow_credentials=True,  # 2. 是否允许携带Cookie
+    allow_methods=["*"],  # 3. 允许的HTTP方法（*代表全部）
+    allow_headers=["*"],  # 4. 允许的请求头（*代表全部）
+)
+
 
 # 会话存储（线程 ID -> 配置）
 sessions: Dict[str, Dict] = {}

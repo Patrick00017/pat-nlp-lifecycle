@@ -1,0 +1,11 @@
+body { font-family: Arial, Helvetica, sans-serif; background:#f7f7fb; margin:0; padding:20px }
+.container { max-width:800px; margin:0 auto }
+.chat { background: #fff; border:1px solid #eee; padding:12px; min-height:200px; max-height:400px; overflow:auto }
+.msg { padding:8px; margin-bottom:6px; border-radius:6px }
+.msg.ai { background:#eef6ff }
+.msg.error { background:#ffecec; color:#900 }
+.composer { margin-top:12px }
+.composer textarea { width:100%; box-sizing:border-box; padding:8px }
+.interrupt { background:#fff3cd; border:1px solid #ffeeba; padding:10px; margin-top:12px }
+.buttons { margin-top:8px }
+.buttons button { margin-right:8px }
