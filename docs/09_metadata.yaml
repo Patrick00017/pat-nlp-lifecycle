@@ -1,0 +1,159 @@
+# Documentation Metadata
+
+version: "1.0"
+generated: "2026-04-15"
+
+documents:
+  - id: "01_system_overview"
+    title: "系统概述"
+    type: "overview"
+    tags: ["system", "architecture", "overview"]
+    entities:
+      - name: "IPS"
+        type: "system"
+      - name: "BTS"
+        type: "organization"
+      - name: "BHS"
+        type: "vendor"
+
+  - id: "02_ui_modules"
+    title: "UI模块"
+    type: "reference"
+    tags: ["ui", "interface", "module"]
+    entities:
+      - name: "生管总控界面"
+        type: "module"
+        related: ["重传操作", "刷新操作", "强换操作", "停换操作"]
+      - name: "坑机用户界面"
+        type: "module"
+      - name: "糊机用户界面"
+        type: "module"
+      - name: "同步屏界面"
+        type: "module"
+      - name: "办公室界面"
+        type: "module"
+      - name: "订单列表管理界面"
+        type: "module"
+
+  - id: "03_ui_components"
+    title: "UI组件"
+    type: "reference"
+    tags: ["ui", "component"]
+    entities:
+      - name: "系统状态栏组件"
+        type: "component"
+      - name: "当前生产订单信息显示组件"
+        type: "component"
+      - name: "接纸机状态组件"
+        type: "component"
+      - name: "本班与本单信息汇总组件"
+        type: "component"
+      - name: "未完工订单列表组件"
+        type: "component"
+
+  - id: "04_operations"
+    title: "操作目录"
+    type: "reference"
+    tags: ["operation", "manual"]
+    entities:
+      - name: "重传操作"
+        type: "operation"
+        module: "生管总控界面"
+      - name: "刷新操作"
+        type: "operation"
+        module: "生管总控界面"
+      - name: "强换操作"
+        type: "operation"
+        module: "生管总控界面"
+      - name: "停换操作"
+        type: "operation"
+        module: "生管总控界面"
+      - name: "新增订单操作"
+        type: "operation"
+        module: "订单列表管理界面"
+      - name: "修改订单操作"
+        type: "operation"
+        module: "订单列表管理界面"
+      - name: "删除订单操作"
+        type: "operation"
+        module: "订单列表管理界面"
+
+  - id: "05_workflows"
+    title: "工作流程"
+    type: "guide"
+    tags: ["workflow", "procedure"]
+    entities:
+      - name: "停换操作流程"
+        type: "workflow"
+      - name: "强换操作流程"
+        type: "workflow"
+      - name: "新增订单流程"
+        type: "workflow"
+
+  - id: "06_rag_pipeline"
+    title: "RAG系统架构"
+    type: "technical"
+    tags: ["rag", "system", "architecture"]
+    entities:
+      - name: "intent_agent"
+        type: "agent"
+      - name: "doc_agent"
+        type: "agent"
+      - name: "graph_agent"
+        type: "agent"
+      - name: "Chroma"
+        type: "vector_store"
+      - name: "NetworkX"
+        type: "graph"
+
+  - id: "07_api_reference"
+    title: "API参考"
+    type: "technical"
+    tags: ["api", "reference"]
+    entities:
+      - name: "/chat"
+        type: "endpoint"
+        method: "POST"
+
+  - id: "08_troubleshooting"
+    title: "故障排查"
+    type: "guide"
+    tags: ["troubleshooting", "error"]
+
+intent_keywords:
+  interface:
+    - "生管总控"
+    - "生产控制"
+    - "坑机"
+    - "糊机"
+    - "同步屏"
+    - "办公室"
+    - "订单列表"
+    - "订单管理"
+  operation:
+    - "重传"
+    - "刷新"
+    - "强换"
+    - "停换"
+    - "新增"
+    - "修改"
+    - "删除"
+    - "查询"
+    - "打印"
+  workflow:
+    - "流程"
+    - "步骤"
+    - "操作流程"
+
+module_hierarchy:
+  root: "IPS系统"
+  children:
+    - name: "生管总控界面"
+      priority: "high"
+      children:
+        - "重传操作"
+        - "刷新操作"
+        - "强换操作"
+        - "停换操作"
+    - name: "订单列表管理界面"
+      priority: "high"
