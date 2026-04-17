@@ -11,6 +11,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents import create_agent
 from tools_definition import tools
 
+
 # ------------------ 状态定义 ------------------
 class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
@@ -46,6 +47,7 @@ llm = ChatOpenAI(
     # model="models/mistral-7b-openorca.Q8_0.gguff",
     openai_api_base="http://127.0.0.1:8080/v1",
     openai_api_key="ed",
+    streaming=True,
 )
 llm_with_tools = llm.bind_tools(tools)
 
@@ -98,11 +100,7 @@ def ask_user_approval(state: AgentState) -> Dict[str, Any]:
         return {"messages": [AIMessage(content=result)]}
     else:
         # 用户拒绝执行工具
-        return {
-            "messages": [
-                AIMessage(content="用户取消了工具调用")
-            ]
-        }
+        return {"messages": [AIMessage(content="用户取消了工具调用")]}
 
 
 # ------------------ 构建图 ------------------
