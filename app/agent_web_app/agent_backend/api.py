@@ -1,0 +1,183 @@
+import json
+import uuid
+from typing import Annotated, Any, Dict, List, Optional, TypedDict
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, BaseMessage
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+from langgraph.types import interrupt, Command
+from langgraph.errors import GraphInterrupt
+from ips_log_agent import graph as ips_log_agent
+
+# from rag_agent import response as rag_response
+
+# ------------------ FastAPI 应用 ------------------
+app = FastAPI(title="LangGraph Agent with Interrupt")
+
+# 设置允许的源（Origin）
+origins = ["http://localhost:5173", "http://localhost", "http://localhost:8080"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # 1. 允许的源列表
+    allow_credentials=True,  # 2. 是否允许携带Cookie
+    allow_methods=["*"],  # 3. 允许的HTTP方法（*代表全部）
+    allow_headers=["*"],  # 4. 允许的请求头（*代表全部）
+)
+
+# 会话存储（线程 ID -> 配置）
+sessions: Dict[str, Dict] = {}
+
+
+class ChatRequest(BaseModel):
+    thread_id: Optional[str] = None  # 会话 ID，若为空则新建
+    message: str
+
+
+class ResumeRequest(BaseModel):
+    thread_id: str
+    approved: bool = True
+    modified_args: Optional[Dict[str, Any]] = None
+
+
+class ChatResponse(BaseModel):
+    thread_id: str
+    response: str
+    interrupt: Optional[Dict] = None  # 如果中断发生，返回中断信息
+
+
+class SimpleRequest(BaseModel):
+    message: str
+
+
+class SimpleResponse(BaseModel):
+    response: str
+
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    """发送消息到 Agent。"""
+    thread_id = request.thread_id or str(uuid.uuid4())
+    config = {"configurable": {"thread_id": thread_id}}
+
+    # 准备输入
+    input_state = {"messages": [HumanMessage(content=request.message)]}
+
+    # 运行图，可能因 interrupt 暂停
+    try:
+        # stream 方式获取最终状态
+        events = list(
+            ips_log_agent.stream(input_state, config=config, stream_mode="values")
+        )
+        if not events:
+            raise HTTPException(status_code=500, detail="No output from graph")
+        final_state = events[-1]
+        last_message = final_state["messages"][-1]
+
+        if "__interrupt__" in final_state:
+            return ChatResponse(
+                thread_id=thread_id,
+                response="",
+                interrupt=final_state["__interrupt__"][0].value,
+            )
+        else:
+            return ChatResponse(
+                thread_id=thread_id,
+                response=(
+                    last_message.content if hasattr(last_message, "content") else ""
+                ),
+                interrupt=None,
+            )
+    except Exception as e:
+        # 检查是否是中断异常（LangGraph 的 GraphInterrupt）
+        print(e)
+
+
+@app.post("/resume", response_model=ChatResponse)
+async def resume(request: ResumeRequest):
+    print(request)
+    """继续被中断的会话。"""
+    thread_id = request.thread_id
+    config = {"configurable": {"thread_id": thread_id}}
+
+    # 构造恢复命令
+    resume_value = {
+        "approved": request.approved,
+        "modified_args": request.modified_args,
+    }
+
+    try:
+        # 使用 Command(resume=...) 恢复
+        events = list(
+            ips_log_agent.stream(
+                Command(resume=resume_value), config=config, stream_mode="values"
+            )
+        )
+        if not events:
+            raise HTTPException(status_code=500, detail="No output from graph")
+        final_state = events[-1]
+        last_message = final_state["messages"][-1]
+
+        return ChatResponse(
+            thread_id=thread_id,
+            response=last_message.content if hasattr(last_message, "content") else "",
+            interrupt=None,
+        )
+    except GraphInterrupt as e:
+        interrupt_data = e.args[0] if e.args else {}
+        return ChatResponse(thread_id=thread_id, response="", interrupt=interrupt_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# @app.post("/rag", response_model=SimpleResponse)
+# async def rag(request: SimpleRequest):
+#     """发送消息到 Agent。"""
+
+#     # 运行图，可能因 interrupt 暂停
+#     try:
+#         content, no_think_content = rag_response(request.message)
+#         return SimpleResponse(response=no_think_content)
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error.{e}")
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """发送消息到 Agent，使用 Server-Sent Events 流式返回。"""
+    thread_id = request.thread_id or str(uuid.uuid4())
+    config = {"configurable": {"thread_id": thread_id}}
+
+    input_state = {"messages": [HumanMessage(content=request.message)]}
+
+    async def event_generator():
+        yield f"data: {json.dumps({'type': 'thread_id', 'value': thread_id})}\n\n"
+
+        try:
+            for event in ips_log_agent.stream(
+                input_state, config=config, stream_mode="values"
+            ):
+                messages = event.get("messages", [])
+                if messages:
+                    last_msg = messages[-1]
+                    if hasattr(last_msg, "content"):
+                        content = last_msg.content
+                        yield f"data: {json.dumps({'type': 'message', 'content': content})}\n\n"
+
+                if "__interrupt__" in event:
+                    interrupt_data = event["__interrupt__"][0].value
+                    yield f"data: {json.dumps({'type': 'interrupt', 'value': interrupt_data})}\n\n"
+                    return
+
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

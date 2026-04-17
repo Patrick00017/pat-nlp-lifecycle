@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { sendChat, resumeChat } from './api'
 
-function InterruptCheck({ interrupt, modifiedArgsText, setModifiedArgsText, onApprove, onReject, isLoading }) {
-  if (!interrupt) return null
+function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, onApprove, onReject, isLoading }) {
   return (
     <div className="interrupt-card">
       <div className="interrupt-header">
@@ -41,9 +40,28 @@ export default function App() {
   const [message, setMessage] = useState('')
   const [threadId, setThreadId] = useState(null)
   const [chatLog, setChatLog] = useState([])
-  const [interrupt, setInterrupt] = useState(null)
   const [modifiedArgsText, setModifiedArgsText] = useState('{}')
   const [isLoading, setIsLoading] = useState(false)
+  const [mode, setMode] = useState('IPS')
+  const chatRef = useRef(null)
+
+  const modules = {
+    IPS: ['IP威胁情报', '域名风险检测', '恶意软件分析', '漏洞扫描'],
+    RAG: ['威胁情报报告', 'IOC知识库', '应急响应指南', 'APT组织分析'],
+  }
+
+  const placeholderQuestions = [
+    '查找某个IP的风险情报',
+    '查询域名是否在黑名单中',
+    '检测是否存在恶意软件',
+    '获取某个组织的威胁报告',
+  ]
+
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight
+    }
+  }, [chatLog])
 
   async function handleSend() {
     if (!message.trim() || isLoading) return
@@ -56,12 +74,15 @@ export default function App() {
       if (data.thread_id) setThreadId(data.thread_id)
 
       if (data.interrupt) {
-        setInterrupt(data.interrupt)
+        setChatLog((c) => [...c, {
+          type: 'interrupt',
+          interrupt: data.interrupt,
+          modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2)
+        }])
         setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
         setIsLoading(false)
       } else {
         setChatLog((c) => [...c, { from: 'ai', text: data.response }])
-        setInterrupt(null)
         setIsLoading(false)
       }
     } catch (e) {
@@ -81,10 +102,18 @@ export default function App() {
     setIsLoading(true)
     try {
       const data = await resumeChat(threadId, true, modified)
-      setInterrupt(null)
-      setChatLog((c) => [...c, { from: 'ai', text: data.response }])
+      setChatLog((c) => {
+        const newLog = c.filter((m) => m.type !== 'interrupt')
+        const interruptMsg = c.find((m) => m.type === 'interrupt')
+        const toolName = interruptMsg?.interrupt?.tool_name || interruptMsg?.interrupt?.tool || 'tool'
+        const argsText = modifiedArgsText
+        return [...newLog, { from: 'system', text: `[Approved] ${toolName}\nArgs: ${argsText}` }, { from: 'ai', text: data.response }]
+      })
     } catch (e) {
-      setChatLog((c) => [...c, { from: 'error', text: String(e) }])
+      setChatLog((c) => {
+        const newLog = c.filter((m) => m.type !== 'interrupt')
+        return [...newLog, { from: 'error', text: String(e) }]
+      })
     } finally {
       setIsLoading(false)
     }
@@ -94,35 +123,72 @@ export default function App() {
     setIsLoading(true)
     try {
       const data = await resumeChat(threadId, false, null)
-      setInterrupt(null)
-      setChatLog((c) => [...c, { from: 'ai', text: data.response }])
+      setChatLog((c) => {
+        const newLog = c.filter((m) => m.type !== 'interrupt')
+        const interruptMsg = c.find((m) => m.type === 'interrupt')
+        const toolName = interruptMsg?.interrupt?.tool_name || interruptMsg?.interrupt?.tool || 'tool'
+return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: 'ai', text: data.response }]
+      })
     } catch (e) {
-      setChatLog((c) => [...c, { from: 'error', text: String(e) }])
+      setChatLog((c) => {
+        const newLog = c.filter((m) => m.type !== 'interrupt')
+        return [...newLog, { from: 'error', text: String(e) }]
+      })
     } finally {
       setIsLoading(false)
     }
-  }
+}
 
   return (
     <div className="container">
-      <h1>Agent Chat</h1>
+      <h1>对话</h1>
 
-      <div className="chat">
-        {chatLog.map((m, i) => (
-          <div key={i} className={`msg msg-${m.from}`}>
-            <pre>{m.text}</pre>
+      <div className="chat" ref={chatRef}>
+        {chatLog.length === 0 && (
+          <div className="welcome-guide">
+            <div className="welcome-header">
+              <span className="welcome-icon">🛡️</span>
+              <span>欢迎使用威胁情报助手</span>
+            </div>
+            <div className="welcome-modules">
+              <h3>可用模块 ({mode})</h3>
+              <ul>
+                {modules[mode].map((m, i) => <li key={i}>{m}</li>)}
+              </ul>
+            </div>
+            <div className="welcome-questions">
+              <h3>你可以这样问我:</h3>
+              <div className="question-chips">
+                {placeholderQuestions.map((q, i) => (
+                  <button key={i} className="question-chip" onClick={() => setMessage(q)}>{q}</button>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-        {interrupt && (
-          <InterruptCheck
-            interrupt={interrupt}
-            modifiedArgsText={modifiedArgsText}
-            setModifiedArgsText={setModifiedArgsText}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            isLoading={isLoading}
-          />
         )}
+        {chatLog.map((m, i) => (
+          m.type === 'interrupt' ? (
+            <div key={i} className="msg-wrapper msg-system-wrapper">
+              <InterruptMessage
+                interrupt={m.interrupt}
+                modifiedArgsText={m.modifiedArgsText}
+                setModifiedArgsText={(text) => {
+                  setModifiedArgsText(text)
+                  setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, modifiedArgsText: text } : item))
+                }}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                isLoading={isLoading}
+              />
+            </div>
+          ) : (
+            <div key={i} className={`msg-wrapper msg-${m.from}-wrapper`}>
+              <div className={`msg msg-${m.from}`}>
+                <pre>{m.text}</pre>
+              </div>
+            </div>
+          )
+        ))}
       </div>
 
       <div className="composer">
@@ -134,6 +200,13 @@ export default function App() {
           disabled={isLoading}
         />
         <div className="composer-actions">
+          <div className="mode-selector">
+            <label>工作流:</label>
+            <select value={mode} onChange={(e) => setMode(e.target.value)} disabled={isLoading}>
+              <option value="IPS">IPS</option>
+              <option value="RAG">RAG</option>
+            </select>
+          </div>
           <button className="btn btn-primary" onClick={handleSend} disabled={isLoading}>
             {isLoading ? <span className="spinner"></span> : 'Send'}
           </button>

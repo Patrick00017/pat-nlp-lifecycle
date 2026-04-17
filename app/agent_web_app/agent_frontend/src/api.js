@@ -1,6 +1,6 @@
 const BASE = 'http://localhost:8000'
 
-export async function sendChat(message, threadId = null) {
+export async function sendChat(message, threadId = null, mode = 'IPS') {
   const body = { message }
   if (threadId){
     body.thread_id = threadId
@@ -8,7 +8,7 @@ export async function sendChat(message, threadId = null) {
   else{
     body.thread_id = crypto.randomUUID()
   }
-  
+
   const res = await fetch(`${BASE}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
