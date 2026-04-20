@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { sendChat, resumeChat } from './api'
+import { sendChat, resumeChat, sendChatStream, connectSSE } from './api'
 
 function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, onApprove, onReject, isLoading }) {
   return (
@@ -38,12 +38,17 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, on
 
 export default function App() {
   const [message, setMessage] = useState('')
-  const [threadId, setThreadId] = useState(null)
+  const [threadId, setThreadId] = useState(crypto.randomUUID())
   const [chatLog, setChatLog] = useState([])
   const [modifiedArgsText, setModifiedArgsText] = useState('{}')
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState('IPS')
+  const [callMethod, setCallMethod] = useState("Invoke")
   const chatRef = useRef(null)
+  const tokensRef = useRef("")
+
+  const [tokens, setTokens] = useState("")
+  const [isComplete, setIsComplete] = useState(false)
 
   const modules = {
     IPS: ['IP威胁情报', '域名风险检测', '恶意软件分析', '漏洞扫描'],
@@ -63,6 +68,47 @@ export default function App() {
     }
   }, [chatLog])
 
+  useEffect(() => {
+    // for token level server sent events
+    // const eventSource = new EventSource(`http://localhost:8000/chat/stream`);
+
+    // eventSource.onmessage = (event) => {
+    //   const data = JSON.parse(event.data);
+    //   console.log(data)
+    //   if (data.type == "message")
+    //     setTokens((prevTokens) => [...prevTokens, prevTokens + data.content]);
+    //   else if (data.type == "interrupt"){
+    //     if (tokens !== ""){
+    //       setChatLog((c) => [...c, { from: 'ai', text: tokens }])
+    //       setTokens("")
+    //     }
+    //     setChatLog((c) => [...c, {
+    //       type: 'interrupt',
+    //       interrupt: data.value.tool_name,
+    //       modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2)
+    //     }])
+    //     setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
+    //     setIsLoading(false)
+    //   }
+    //   else if (data.type == "done"){
+    //     setChatLog((c) => [...c, { from: 'ai', text: tokens }])
+    //     setIsLoading(false)
+    //     setTokens("");
+    //     setIsComplete(true);
+    //     eventSource.close();
+    //   }
+    // };
+
+    // eventSource.onerror = (error) => {
+    //   console.error("SSE 错误：", error);
+    //   eventSource.close();
+    // };
+
+    // return () => {
+    //   eventSource.close();
+    // };
+  }, [])
+
   async function handleSend() {
     if (!message.trim() || isLoading) return
     const userMsg = message
@@ -70,21 +116,80 @@ export default function App() {
     setIsLoading(true)
     try {
       setChatLog((c) => [...c, { from: 'user', text: userMsg }])
-      const data = await sendChat(userMsg, threadId)
-      if (data.thread_id) setThreadId(data.thread_id)
+      if (callMethod === "Stream"){
+        const payload = { message }
+        if (threadId){
+          payload.thread_id = threadId
+        }
+        else{
+          payload.thread_id = crypto.randomUUID()
+        }
 
-      if (data.interrupt) {
-        setChatLog((c) => [...c, {
-          type: 'interrupt',
-          interrupt: data.interrupt,
-          modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2)
-        }])
-        setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
-        setIsLoading(false)
+        connectSSE("http://localhost:8000/chat/stream", payload,
+          (rawData) => {
+              // rawData is like: {"type": "message", "content": "text"} or {"type": "thread_id", "value": "..."}
+              // Sometimes it includes "data: " prefix, handle both cases
+              let jsonStr = rawData
+              try {
+                const raw = JSON.parse(jsonStr)
+                let msgStr = raw
+                if (msgStr.startsWith('data: ')) {
+                  msgStr = msgStr.slice(6).trim()
+                }
+                let data = JSON.parse(msgStr)
+
+                if (data.type === 'message') {
+                  // setTokens((prev) => prev + data.content)
+                  setTokens((prev) => {
+                    tokensRef.current = prev + data.content
+                    return tokensRef.current
+                  })
+                } else if (data.type === 'interrupt') {
+                  if (tokensRef.current !== ""){
+                    setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
+                    setTokens("")
+                  }
+                  setChatLog((c) => [...c, {
+                    type: 'interrupt',
+                    interrupt: {'tool_name': data.value.tool_name},
+                    modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2)
+                  }])
+                  setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
+                  setIsLoading(false)
+                } else if (data.type === 'done') {
+                  console.log("done. tokens:" + tokensRef.current)
+                  setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
+                  setIsLoading(false)
+                  setTokens("");
+                  setIsComplete(true)
+                }
+              } catch (e) {
+                console.error("Parse error:", e, "Raw:", rawData)
+              }
+          },
+          (err) => {
+            console.error("SSE error:", err)
+            setChatLog((c) => [...c, { from: 'error', text: String(err) }])
+            setIsLoading(false)
+          }
+        )
       } else {
-        setChatLog((c) => [...c, { from: 'ai', text: data.response }])
-        setIsLoading(false)
+        const data = await sendChat(userMsg, threadId)
+        if (data.thread_id) setThreadId(data.thread_id)
+        if (data.interrupt) {
+          setChatLog((c) => [...c, {
+            type: 'interrupt',
+            interrupt: data.interrupt,
+            modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2)
+          }])
+          setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
+          setIsLoading(false)
+        } else {
+          setChatLog((c) => [...c, { from: 'ai', text: data.response }])
+          setIsLoading(false)
+        }
       }
+      
     } catch (e) {
       setChatLog((c) => [...c, { from: 'error', text: String(e) }])
       setIsLoading(false)
@@ -189,8 +294,14 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
             </div>
           )
         ))}
+        {tokens && (
+          <div className="msg-wrapper msg-ai-wrapper">
+            <div className="msg msg-ai">
+              <pre>{tokens}<span className="cursor">▋</span></pre>
+            </div>
+          </div>
+        )}
       </div>
-
       <div className="composer">
         <textarea
           placeholder="Type your message..."
@@ -205,6 +316,13 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
             <select value={mode} onChange={(e) => setMode(e.target.value)} disabled={isLoading}>
               <option value="IPS">IPS</option>
               <option value="RAG">RAG</option>
+            </select>
+          </div>
+          <div className="call-selector">
+            <label>Call:</label>
+            <select value={callMethod} onChange={(e) => setCallMethod(e.target.value)} disabled={isLoading}>
+              <option value="Invoke">Invoke</option>
+              <option value="Stream">Stream</option>
             </select>
           </div>
           <button className="btn btn-primary" onClick={handleSend} disabled={isLoading}>
