@@ -1,3 +1,4 @@
+import json
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 from pydantic import BaseModel, Field
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, BaseMessage
@@ -25,10 +26,10 @@ class AgentState(TypedDict):
 #     return f"搜索结果：关于 '{query}' 的模拟信息。"
 
 
-class CodeInput(BaseModel):
-    """Input for weather queries."""
+# class CodeInput(BaseModel):
+#     """Input for weather queries."""
 
-    code: str = Field(description="Code to execute")
+#     code: str = Field(description="Code to execute")
 
 
 # @tool(args_schema=CodeInput)
@@ -43,13 +44,14 @@ tool_map = {tool.name: tool for tool in tools}
 
 # ------------------ 初始化模型 ------------------
 llm = ChatOpenAI(
-    temperature=0.5,
+    temperature=0,
     # model="models/mistral-7b-openorca.Q8_0.gguff",
     openai_api_base="http://127.0.0.1:8080/v1",
     openai_api_key="ed",
     streaming=True,
 )
 llm_with_tools = llm.bind_tools(tools)
+
 
 # checkpointer = InMemorySaver()
 # agent = create_agent(llm, [execute_code], checkpointer=checkpointer)
@@ -60,6 +62,7 @@ def call_model(state: AgentState) -> Dict[str, Any]:
     """调用 LLM，决定下一步动作。"""
     messages = [state["messages"][-1]]
     response = llm_with_tools.invoke(messages)
+    # print(f"response: {response}")
     return {"messages": [response]}
 
 
@@ -116,3 +119,32 @@ builder.add_edge("ask_user_approval", END)  # 工具执行后直接结束
 # # 使用内存检查点保存器（生产环境可换成数据库）
 memory = MemorySaver()
 graph = builder.compile(checkpointer=memory)
+
+if __name__ == "__main__":
+    config = {"configurable": {"thread_id": "1"}}
+    input_state = {
+        "messages": [
+            HumanMessage(
+                content="query glue set function events in the system and return events list, start time is 2026-01-08 14:03:50.690, and end time is 2026-01-08 15:03:50.690, and desire material is P.-.-.8.J"
+            )
+        ]
+    }
+    for event in graph.stream(
+        input_state, config=config, stream_mode=["messages", "values"]
+    ):
+        print(f"event: {event} \n\n")
+        # identify the event type
+        event_type = event[0]  # can be messages or values
+        if event_type == "messages":
+            # go yield this token
+            ai_msg_content = event[1][0].content
+            print(
+                f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+            )
+        elif event_type == "values":
+            ai_msg = event[1]["messages"][-1]
+            if "__interrupt__" in ai_msg:
+                interrupt_data = ai_msg["__interrupt__"][0].value
+                print(
+                    f"data: {json.dumps({'type': 'interrupt', 'value': interrupt_data})}\n\n"
+                )

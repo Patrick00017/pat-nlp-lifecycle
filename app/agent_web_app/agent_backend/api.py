@@ -10,6 +10,7 @@ import uvicorn
 from langgraph.types import interrupt, Command
 from langgraph.errors import GraphInterrupt
 from ips_log_agent import graph as ips_log_agent
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 # from rag_agent import response as rag_response
 
@@ -144,7 +145,7 @@ async def resume(request: ResumeRequest):
 #         raise HTTPException(status_code=500, detail=f"Error.{e}")
 
 
-@app.post("/chat/stream")
+@app.post("/chat/stream", response_class=EventSourceResponse)
 async def chat_stream(request: ChatRequest):
     """发送消息到 Agent，使用 Server-Sent Events 流式返回。"""
     thread_id = request.thread_id or str(uuid.uuid4())
@@ -152,31 +153,72 @@ async def chat_stream(request: ChatRequest):
 
     input_state = {"messages": [HumanMessage(content=request.message)]}
 
-    async def event_generator():
-        yield f"data: {json.dumps({'type': 'thread_id', 'value': thread_id})}\n\n"
-
-        try:
-            for event in ips_log_agent.stream(
-                input_state, config=config, stream_mode="values"
-            ):
-                messages = event.get("messages", [])
-                if messages:
-                    last_msg = messages[-1]
-                    if hasattr(last_msg, "content"):
-                        content = last_msg.content
-                        yield f"data: {json.dumps({'type': 'message', 'content': content})}\n\n"
-
-                if "__interrupt__" in event:
-                    interrupt_data = event["__interrupt__"][0].value
+    yield f"data: {json.dumps({'type': 'thread_id', 'value': thread_id})}\n\n"
+    try:
+        for event in ips_log_agent.stream(
+            input_state, config=config, stream_mode=["messages", "values"]
+        ):
+            # identify the event type
+            event_type = event[0]  # can be messages or values
+            if event_type == "messages":
+                # go yield this token
+                ai_msg_content = event[1][0].content
+                yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                # print(
+                #     f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                # )
+            elif event_type == "values":
+                ai_msg = event[1]
+                # print(f"ai message: {ai_msg}")
+                # print(f'{"__interrupt__" in ai_msg}')
+                if "__interrupt__" in ai_msg:
+                    interrupt_data = ai_msg["__interrupt__"][0].value
                     yield f"data: {json.dumps({'type': 'interrupt', 'value': interrupt_data})}\n\n"
                     return
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
 
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+@app.post("/resume/stream", response_class=EventSourceResponse)
+async def resume_stream(request: ResumeRequest):
+    """继续被中断的会话。"""
+    thread_id = request.thread_id
+    config = {"configurable": {"thread_id": thread_id}}
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    # 构造恢复命令
+    resume_value = {
+        "approved": request.approved,
+        "modified_args": request.modified_args,
+    }
+
+    try:
+        # 使用 Command(resume=...) 恢复
+        for event in ips_log_agent.stream(
+            Command(resume=resume_value),
+            config=config,
+            stream_mode=["messages", "values"],
+        ):
+            # identify the event type
+            event_type = event[0]  # can be messages or values
+            if event_type == "messages":
+                # go yield this token
+                ai_msg_content = event[1][0].content
+                yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                # print(
+                #     f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                # )
+            elif event_type == "values":
+                ai_msg = event[1]
+                # print(f"ai message: {ai_msg}")
+                # print(f'{"__interrupt__" in ai_msg}')
+                if "__interrupt__" in ai_msg:
+                    interrupt_data = ai_msg["__interrupt__"][0].value
+                    yield f"data: {json.dumps({'type': 'interrupt', 'value': interrupt_data})}\n\n"
+                    return
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
 
 
 if __name__ == "__main__":
