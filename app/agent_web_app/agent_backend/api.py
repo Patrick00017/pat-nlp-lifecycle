@@ -162,8 +162,12 @@ async def chat_stream(request: ChatRequest):
             event_type = event[0]  # can be messages or values
             if event_type == "messages":
                 # go yield this token
+                is_reason = event[1][0].additional_kwargs.get("reason", False)
                 ai_msg_content = event[1][0].content
-                yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                if is_reason:
+                    yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
             elif event_type == "values":
                 ai_msg = event[1]
                 if "__interrupt__" in ai_msg:
@@ -198,8 +202,12 @@ async def resume_stream(request: ResumeRequest):
             event_type = event[0]  # can be messages or values
             if event_type == "messages":
                 # go yield this token
+                is_reason = event[1][0].additional_kwargs.get("reason", False)
                 ai_msg_content = event[1][0].content
-                yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                if is_reason:
+                    yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
             elif event_type == "values":
                 ai_msg = event[1]
                 if "__interrupt__" in ai_msg:

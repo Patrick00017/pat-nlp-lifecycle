@@ -101,7 +101,7 @@ def get_material_change_in_log(start_time: str, end_time: str):
 @tool(args_schema=LogArgs)
 def get_glue_set_func_call_in_log(start_time: str, end_time: str, desire_material: str):
     """get the glue set func call in log, this func will extract the set func event with material lifecycle events"""
-    return "get_glue_set_func_call_in_log"
+    return "## get_glue_set_func_call_in_log \n\n ### hello glue set func \n\n asdadadasdasdasd"
 
 
 @tool(args_schema=TrackArgs)

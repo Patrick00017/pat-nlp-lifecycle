@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { sendChat, resumeChat, sendChatStream, connectSSE } from './api'
 
 function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, onApprove, onReject, isLoading }) {
@@ -74,17 +76,87 @@ export default function App() {
     setMessage('')
     setIsLoading(true)
     try {
-      setChatLog((c) => [...c, { from: 'user', text: userMsg }])
-      if (callMethod === "Stream"){
-        const payload = { message }
-        if (threadId){
-          payload.thread_id = threadId
-        }
-        else{
-          payload.thread_id = crypto.randomUUID()
-        }
+      if(mode === "IPS"){
+        setChatLog((c) => [...c, { from: 'user', text: userMsg }])
+        if (callMethod === "Stream"){
+          const payload = { message }
+          if (threadId){
+            payload.thread_id = threadId
+          }
+          else{
+            payload.thread_id = crypto.randomUUID()
+          }
 
-        connectSSE("http://localhost:8000/chat/stream", payload,
+          connectSSE("http://localhost:8000/chat/stream", payload,
+            (rawData) => {
+                // rawData is like: {"type": "message", "content": "text"} or {"type": "thread_id", "value": "..."}
+                // Sometimes it includes "data: " prefix, handle both cases
+                let jsonStr = rawData
+                try {
+                  const raw = JSON.parse(jsonStr)
+                  let msgStr = raw
+                  if (msgStr.startsWith('data: ')) {
+                    msgStr = msgStr.slice(6).trim()
+                  }
+                  let data = JSON.parse(msgStr)
+
+                  if (data.type === 'message') {
+                    // setTokens((prev) => prev + data.content)
+                    setTokens((prev) => {
+                      tokensRef.current = prev + data.content
+                      return tokensRef.current
+                    })
+                  } else if (data.type === 'interrupt') {
+                    if (tokensRef.current !== ""){
+                      setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
+                      setTokens("")
+                    }
+                    setChatLog((c) => [...c, {
+                      type: 'interrupt',
+                      interrupt: {'tool_name': data.value.tool_name},
+                      modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2)
+                    }])
+                    setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
+                    setIsLoading(false)
+                  } else if (data.type === 'done') {
+                    console.log("done. tokens:" + tokensRef.current)
+                    setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
+                    setIsLoading(false)
+                    setTokens("");
+                    setIsComplete(true)
+                  }
+                } catch (e) {
+                  console.error("Parse error:", e, "Raw:", rawData)
+                }
+            },
+            (err) => {
+              console.error("SSE error:", err)
+              setChatLog((c) => [...c, { from: 'error', text: String(err) }])
+              setIsLoading(false)
+            }
+          )
+        } else {
+          const data = await sendChat(userMsg, threadId)
+          if (data.thread_id) setThreadId(data.thread_id)
+          if (data.interrupt) {
+            setChatLog((c) => [...c, {
+              type: 'interrupt',
+              interrupt: data.interrupt,
+              modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2)
+            }])
+            setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
+            setIsLoading(false)
+          } else {
+            setChatLog((c) => [...c, { from: 'ai', text: data.response }])
+            setIsLoading(false)
+          }
+        }
+      }
+      else if(mode === "RAG"){
+        setChatLog((c) => [...c, { from: 'user', text: userMsg }])
+        // rag request
+        const payload = { message }
+        connectSSE("http://localhost:8000/rag", payload,
           (rawData) => {
               // rawData is like: {"type": "message", "content": "text"} or {"type": "thread_id", "value": "..."}
               // Sometimes it includes "data: " prefix, handle both cases
@@ -132,23 +204,7 @@ export default function App() {
             setIsLoading(false)
           }
         )
-      } else {
-        const data = await sendChat(userMsg, threadId)
-        if (data.thread_id) setThreadId(data.thread_id)
-        if (data.interrupt) {
-          setChatLog((c) => [...c, {
-            type: 'interrupt',
-            interrupt: data.interrupt,
-            modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2)
-          }])
-          setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
-          setIsLoading(false)
-        } else {
-          setChatLog((c) => [...c, { from: 'ai', text: data.response }])
-          setIsLoading(false)
-        }
       }
-      
     } catch (e) {
       setChatLog((c) => [...c, { from: 'error', text: String(e) }])
       setIsLoading(false)
@@ -230,33 +286,37 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
             </div>
           </div>
         )}
-        {chatLog.map((m, i) => (
-          m.type === 'interrupt' ? (
-            <div key={i} className="msg-wrapper msg-system-wrapper">
-              <InterruptMessage
-                interrupt={m.interrupt}
-                modifiedArgsText={m.modifiedArgsText}
-                setModifiedArgsText={(text) => {
-                  setModifiedArgsText(text)
-                  setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, modifiedArgsText: text } : item))
-                }}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                isLoading={isLoading}
-              />
-            </div>
-          ) : (
+        {chatLog.map((m, i) => {
+          if (m.type === 'interrupt') {
+            return (
+              <div key={i} className="msg-wrapper msg-system-wrapper">
+                <InterruptMessage
+                  interrupt={m.interrupt}
+                  modifiedArgsText={m.modifiedArgsText}
+                  setModifiedArgsText={(text) => {
+                    setModifiedArgsText(text)
+                    setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, modifiedArgsText: text } : item))
+                  }}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  isLoading={isLoading}
+                />
+              </div>
+            )
+          }
+          return (
             <div key={i} className={`msg-wrapper msg-${m.from}-wrapper`}>
               <div className={`msg msg-${m.from}`}>
-                <pre>{m.text}</pre>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
               </div>
             </div>
           )
-        ))}
+        })}
         {tokens && (
           <div className="msg-wrapper msg-ai-wrapper">
             <div className="msg msg-ai">
-              <pre>{tokens}<span className="cursor">▋</span></pre>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{tokens}</ReactMarkdown>
+              <span className="cursor">▋</span>
             </div>
           </div>
         )}
