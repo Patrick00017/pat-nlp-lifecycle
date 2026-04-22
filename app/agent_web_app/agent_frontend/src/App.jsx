@@ -212,8 +212,8 @@ export default function App() {
                   setIsLoading(false);
                   setMessageTokens("");
                   setReasonTokens("");
-                  messageTokensRef.current = ""
-                  reasonTokensRef.current = ""
+                  // messageTokensRef.current = ""
+                  // reasonTokensRef.current = ""
                   setIsComplete(true)
                 }
               } catch (e) {
