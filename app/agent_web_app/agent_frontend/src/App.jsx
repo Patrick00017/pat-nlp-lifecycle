@@ -66,7 +66,7 @@ export default function App() {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
-  }, [chatLog])
+  }, [chatLog, tokens])
 
   async function handleSend() {
     if (!message.trim() || isLoading) return
