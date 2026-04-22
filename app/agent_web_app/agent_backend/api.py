@@ -164,13 +164,8 @@ async def chat_stream(request: ChatRequest):
                 # go yield this token
                 ai_msg_content = event[1][0].content
                 yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
-                # print(
-                #     f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
-                # )
             elif event_type == "values":
                 ai_msg = event[1]
-                # print(f"ai message: {ai_msg}")
-                # print(f'{"__interrupt__" in ai_msg}')
                 if "__interrupt__" in ai_msg:
                     interrupt_data = ai_msg["__interrupt__"][0].value
                     yield f"data: {json.dumps({'type': 'interrupt', 'value': interrupt_data})}\n\n"
@@ -205,13 +200,8 @@ async def resume_stream(request: ResumeRequest):
                 # go yield this token
                 ai_msg_content = event[1][0].content
                 yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
-                # print(
-                #     f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
-                # )
             elif event_type == "values":
                 ai_msg = event[1]
-                # print(f"ai message: {ai_msg}")
-                # print(f'{"__interrupt__" in ai_msg}')
                 if "__interrupt__" in ai_msg:
                     interrupt_data = ai_msg["__interrupt__"][0].value
                     yield f"data: {json.dumps({'type': 'interrupt', 'value': interrupt_data})}\n\n"

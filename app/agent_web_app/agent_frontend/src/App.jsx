@@ -51,15 +51,15 @@ export default function App() {
   const [isComplete, setIsComplete] = useState(false)
 
   const modules = {
-    IPS: ['IP威胁情报', '域名风险检测', '恶意软件分析', '漏洞扫描'],
-    RAG: ['威胁情报报告', 'IOC知识库', '应急响应指南', 'APT组织分析'],
+    IPS: ['胶水参数分析', 'MP压力辊参数分析', '接纸机张力参数分析', '真空泵参数分析'],
+    RAG: ['服务器硬件配置说明', '用户角色说明', '数据说明', '功能说明'],
   }
 
   const placeholderQuestions = [
-    '查找某个IP的风险情报',
-    '查询域名是否在黑名单中',
-    '检测是否存在恶意软件',
-    '获取某个组织的威胁报告',
+    '分析一下在时间段2026.4.22上午9点至2026.4.22下午1点的胶水参数赋值情况',
+    '分析一下在时间段2026.4.22上午9点至2026.4.22下午1点的MP压力辊赋值情况',
+    '强换功能有哪两种方式？有什么区别？',
+    '如何自定义未完工订单列表的显示？',
   ]
 
   useEffect(() => {
@@ -67,47 +67,6 @@ export default function App() {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
   }, [chatLog])
-
-  useEffect(() => {
-    // for token level server sent events
-    // const eventSource = new EventSource(`http://localhost:8000/chat/stream`);
-
-    // eventSource.onmessage = (event) => {
-    //   const data = JSON.parse(event.data);
-    //   console.log(data)
-    //   if (data.type == "message")
-    //     setTokens((prevTokens) => [...prevTokens, prevTokens + data.content]);
-    //   else if (data.type == "interrupt"){
-    //     if (tokens !== ""){
-    //       setChatLog((c) => [...c, { from: 'ai', text: tokens }])
-    //       setTokens("")
-    //     }
-    //     setChatLog((c) => [...c, {
-    //       type: 'interrupt',
-    //       interrupt: data.value.tool_name,
-    //       modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2)
-    //     }])
-    //     setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
-    //     setIsLoading(false)
-    //   }
-    //   else if (data.type == "done"){
-    //     setChatLog((c) => [...c, { from: 'ai', text: tokens }])
-    //     setIsLoading(false)
-    //     setTokens("");
-    //     setIsComplete(true);
-    //     eventSource.close();
-    //   }
-    // };
-
-    // eventSource.onerror = (error) => {
-    //   console.error("SSE 错误：", error);
-    //   eventSource.close();
-    // };
-
-    // return () => {
-    //   eventSource.close();
-    // };
-  }, [])
 
   async function handleSend() {
     if (!message.trim() || isLoading) return
@@ -253,7 +212,7 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
           <div className="welcome-guide">
             <div className="welcome-header">
               <span className="welcome-icon">🛡️</span>
-              <span>欢迎使用威胁情报助手</span>
+              <span>欢迎使用瓦楞辊产线助手</span>
             </div>
             <div className="welcome-modules">
               <h3>可用模块 ({mode})</h3>
