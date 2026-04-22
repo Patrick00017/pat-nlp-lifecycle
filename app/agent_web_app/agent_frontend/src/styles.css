@@ -253,6 +253,34 @@ h1 {
   text-decoration: underline;
 }
 
+.msg-reason {
+  background: rgba(0, 0, 0, 0.03);
+  border-left: 3px solid #93c5fd;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.msg-reason p {
+  margin: 0 0 4px 0;
+}
+
+.msg-reason p:last-child {
+  margin-bottom: 0;
+}
+
+.msg-reason pre,
+.msg-reason code {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.msg > .msg-reason + p,
+.msg > .msg-reason + div {
+  margin-top: 8px;
+}
+
 .composer {
   background: #ffffff;
   border: 1px solid #e2e8f0;

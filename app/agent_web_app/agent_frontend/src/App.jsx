@@ -47,9 +47,11 @@ export default function App() {
   const [mode, setMode] = useState('IPS')
   const [callMethod, setCallMethod] = useState("Invoke")
   const chatRef = useRef(null)
-  const tokensRef = useRef("")
+  const messageTokensRef = useRef("")
+  const reasonTokensRef = useRef("")
 
-  const [tokens, setTokens] = useState("")
+  const [messageTokens, setMessageTokens] = useState("")
+  const [reasonTokens, setReasonTokens] = useState("")
   const [isComplete, setIsComplete] = useState(false)
 
   const modules = {
@@ -68,7 +70,7 @@ export default function App() {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
-  }, [chatLog, tokens])
+  }, [chatLog, messageTokens, reasonTokens])
 
   async function handleSend() {
     if (!message.trim() || isLoading) return
@@ -89,7 +91,7 @@ export default function App() {
 
           connectSSE("http://localhost:8000/chat/stream", payload,
             (rawData) => {
-                // rawData is like: {"type": "message", "content": "text"} or {"type": "thread_id", "value": "..."}
+                // rawData is like: {"type": "message", "content": "text"} or {"type": "reason", "content": "..."}
                 // Sometimes it includes "data: " prefix, handle both cases
                 let jsonStr = rawData
                 try {
@@ -100,16 +102,23 @@ export default function App() {
                   }
                   let data = JSON.parse(msgStr)
 
-                  if (data.type === 'message') {
-                    // setTokens((prev) => prev + data.content)
-                    setTokens((prev) => {
-                      tokensRef.current = prev + data.content
-                      return tokensRef.current
+                  if (data.type === 'reason') {
+                    setReasonTokens((prev) => {
+                      reasonTokensRef.current = prev + data.content
+                      return reasonTokensRef.current
+                    })
+                  } else if (data.type === 'message') {
+                    setMessageTokens((prev) => {
+                      messageTokensRef.current = prev + data.content
+                      return messageTokensRef.current
                     })
                   } else if (data.type === 'interrupt') {
-                    if (tokensRef.current !== ""){
-                      setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
-                      setTokens("")
+                    if (messageTokensRef.current !== "" || reasonTokensRef.current !== ""){
+                      setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                      setMessageTokens("")
+                      setReasonTokens("")
+                      messageTokensRef.current = ""
+                      reasonTokensRef.current = ""
                     }
                     setChatLog((c) => [...c, {
                       type: 'interrupt',
@@ -119,10 +128,13 @@ export default function App() {
                     setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                     setIsLoading(false)
                   } else if (data.type === 'done') {
-                    console.log("done. tokens:" + tokensRef.current)
-                    setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
+                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                    // console.log("done. reason:" + reasonTokensRef.current + ", message:" + messageTokensRef.current)
                     setIsLoading(false)
-                    setTokens("");
+                    setMessageTokens("");
+                    setReasonTokens("");
+                    // messageTokensRef.current = ""
+                    // reasonTokensRef.current = ""
                     setIsComplete(true)
                   }
                 } catch (e) {
@@ -158,7 +170,7 @@ export default function App() {
         const payload = { message }
         connectSSE("http://localhost:8000/rag", payload,
           (rawData) => {
-              // rawData is like: {"type": "message", "content": "text"} or {"type": "thread_id", "value": "..."}
+              // rawData is like: {"type": "message", "content": "text"} or {"type": "reason", "content": "..."}
               // Sometimes it includes "data: " prefix, handle both cases
               let jsonStr = rawData
               try {
@@ -169,16 +181,23 @@ export default function App() {
                 }
                 let data = JSON.parse(msgStr)
 
-                if (data.type === 'message') {
-                  // setTokens((prev) => prev + data.content)
-                  setTokens((prev) => {
-                    tokensRef.current = prev + data.content
-                    return tokensRef.current
+                if (data.type === 'reason') {
+                  setReasonTokens((prev) => {
+                    reasonTokensRef.current = prev + data.content
+                    return reasonTokensRef.current
+                  })
+                } else if (data.type === 'message') {
+                  setMessageTokens((prev) => {
+                    messageTokensRef.current = prev + data.content
+                    return messageTokensRef.current
                   })
                 } else if (data.type === 'interrupt') {
-                  if (tokensRef.current !== ""){
-                    setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
-                    setTokens("")
+                  if (messageTokensRef.current !== "" || reasonTokensRef.current !== ""){
+                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                    setMessageTokens("")
+                    setReasonTokens("")
+                    messageTokensRef.current = ""
+                    reasonTokensRef.current = ""
                   }
                   setChatLog((c) => [...c, {
                     type: 'interrupt',
@@ -188,10 +207,13 @@ export default function App() {
                   setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                   setIsLoading(false)
                 } else if (data.type === 'done') {
-                  console.log("done. tokens:" + tokensRef.current)
-                  setChatLog((c) => [...c, { from: 'ai', text: tokensRef.current }])
-                  setIsLoading(false)
-                  setTokens("");
+                  console.log("done. reason:" + reasonTokensRef.current + ", message:" + messageTokensRef.current)
+                  setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                  setIsLoading(false);
+                  setMessageTokens("");
+                  setReasonTokens("");
+                  messageTokensRef.current = ""
+                  reasonTokensRef.current = ""
                   setIsComplete(true)
                 }
               } catch (e) {
@@ -307,15 +329,29 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
           return (
             <div key={i} className={`msg-wrapper msg-${m.from}-wrapper`}>
               <div className={`msg msg-${m.from}`}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+                {m.reason && (
+                  <div className="msg-reason">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.reason}</ReactMarkdown>
+                  </div>
+                )}
+                {(m.content || m.text) && (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || m.text}</ReactMarkdown>
+                )}
               </div>
             </div>
           )
         })}
-        {tokens && (
+        {(messageTokens || reasonTokens) && (
           <div className="msg-wrapper msg-ai-wrapper">
             <div className="msg msg-ai">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{tokens}</ReactMarkdown>
+              {reasonTokens && (
+                <div className="msg-reason">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{reasonTokens}</ReactMarkdown>
+                </div>
+              )}
+              {messageTokens && (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{messageTokens}</ReactMarkdown>
+              )}
               <span className="cursor">▋</span>
             </div>
           </div>
