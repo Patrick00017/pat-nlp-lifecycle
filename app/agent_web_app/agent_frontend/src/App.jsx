@@ -13,26 +13,34 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, mo
     setModifiedArgsText(JSON.stringify(newArgs, null, 2))
   }
 
+  const getTypeBadge = (type) => {
+    if (type.includes("bool")) return <span className="type-badge type-bool">bool</span>
+    if (type.includes("int")) return <span className="type-badge type-int">int</span>
+    if (type.includes("float")) return <span className="type-badge type-float">float</span>
+    return <span className="type-badge type-str">str</span>
+  }
+
   const renderField = (key, value, type) => {
     const baseType = type.includes("bool") ? "bool" : type.includes("int") || type.includes("float") ? "number" : "str"
 
     if (baseType === "bool") {
       return (
-        <label className="arg-field arg-checkbox">
+        <label className="arg-toggle">
           <input
             type="checkbox"
             checked={value || false}
             onChange={(e) => handleFieldChange(key, e.target.checked)}
             disabled={isLoading}
           />
-          <span className="arg-value">{String(value ?? false)}</span>
+          <span className="toggle-slider"></span>
+          <span className="toggle-label">{value ? "ON" : "OFF"}</span>
         </label>
       )
     }
     if (baseType === "number") {
       return (
         <input
-          className="arg-field arg-input"
+          className="arg-input"
           type="number"
           value={value ?? ""}
           onChange={(e) => handleFieldChange(key, parseFloat(e.target.value) || 0)}
@@ -42,10 +50,10 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, mo
     }
     return (
       <textarea
-        className="arg-field arg-textarea"
+        className="arg-textarea"
         value={value ?? ""}
         onChange={(e) => handleFieldChange(key, e.target.value)}
-        rows={2}
+        rows={1}
         disabled={isLoading}
       />
     )
@@ -59,16 +67,23 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, mo
       </div>
       <div className="interrupt-body">
         <div className="interrupt-tool">
-          <span className="label">Tool:</span>
-          <span className="value">{interrupt.tool_name || interrupt.tool}</span>
+          <span className="label">Tool</span>
+          <div className="tool-badge">
+            <svg className="tool-icon" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+            </svg>
+            <span className="tool-name">{interrupt.tool_name || interrupt.tool}</span>
+          </div>
         </div>
         <div className="interrupt-args">
-          <span className="label">Arguments:</span>
+          <span className="label">Arguments</span>
           {modifiedArgsSchema && Object.keys(modifiedArgsSchema).length > 0 ? (
             <div className="arg-fields">
               {Object.entries(modifiedArgsSchema).map(([key, type]) => (
                 <div key={key} className="arg-row">
-                  <label className="arg-key">{key}:</label>
+                  <div className="arg-label">
+                    <span className="arg-key">{key} {getTypeBadge(type)}</span>
+                  </div>
                   {renderField(key, argsObj[key], type)}
                 </div>
               ))}
@@ -78,18 +93,24 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, mo
               className="args-textarea"
               value={modifiedArgsText}
               onChange={(e) => setModifiedArgsText(e.target.value)}
-              rows={8}
+              rows={4}
               disabled={isLoading}
             />
           )}
         </div>
       </div>
       <div className="interrupt-actions">
-        <button className="btn btn-primary" onClick={onApprove} disabled={isLoading}>
-          {isLoading ? <span className="spinner"></span> : 'Approve & Run'}
-        </button>
-        <button className="btn btn-secondary" onClick={onReject} disabled={isLoading}>
+        <button className="btn btn-reject" onClick={onReject} disabled={isLoading}>
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
           {isLoading ? <span className="spinner"></span> : 'Reject'}
+        </button>
+        <button className="btn btn-approve" onClick={onApprove} disabled={isLoading}>
+          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          {isLoading ? <span className="spinner"></span> : 'Approve & Run'}
         </button>
       </div>
     </div>
