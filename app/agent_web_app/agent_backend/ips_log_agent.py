@@ -81,13 +81,25 @@ def ask_user_approval(state: AgentState) -> Dict[str, Any]:
     """
     last_message = state["messages"][-1]
     tool_call = last_message.tool_calls[0]
+    tool_name = tool_call["name"]
+
+    # 提取 tool_args_schema（参数名 -> 类型）
+    tool_args_schema = {}
+    if tool_name in tool_map:
+        schema = tool_map[tool_name].args_schema
+        if schema and hasattr(schema, "model_fields"):
+            tool_args_schema = {
+                field_name: str(field_info.annotation).replace("<class '", "").replace("'>", "").replace("typing.", "")
+                for field_name, field_info in schema.model_fields.items()
+            }
 
     # interrupt 会暂停图执行，并将数据返回给客户端
     user_decision = interrupt(
         {
             "type": "tool_approval",
-            "tool_name": tool_call["name"],
+            "tool_name": tool_name,
             "tool_args": tool_call["args"],
+            "tool_args_schema": tool_args_schema,
         }
     )
 

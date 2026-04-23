@@ -3,7 +3,54 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { sendChat, resumeChat, sendChatStream, connectSSE } from './api'
 
-function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, onApprove, onReject, isLoading }) {
+function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, modifiedArgsSchema, onApprove, onReject, isLoading }) {
+  const argsObj = React.useMemo(() => {
+    try { return JSON.parse(modifiedArgsText) } catch { return {} }
+  }, [modifiedArgsText])
+
+  const handleFieldChange = (key, value) => {
+    const newArgs = { ...argsObj, [key]: value }
+    setModifiedArgsText(JSON.stringify(newArgs, null, 2))
+  }
+
+  const renderField = (key, value, type) => {
+    const baseType = type.includes("bool") ? "bool" : type.includes("int") || type.includes("float") ? "number" : "str"
+
+    if (baseType === "bool") {
+      return (
+        <label className="arg-field arg-checkbox">
+          <input
+            type="checkbox"
+            checked={value || false}
+            onChange={(e) => handleFieldChange(key, e.target.checked)}
+            disabled={isLoading}
+          />
+          <span className="arg-value">{String(value ?? false)}</span>
+        </label>
+      )
+    }
+    if (baseType === "number") {
+      return (
+        <input
+          className="arg-field arg-input"
+          type="number"
+          value={value ?? ""}
+          onChange={(e) => handleFieldChange(key, parseFloat(e.target.value) || 0)}
+          disabled={isLoading}
+        />
+      )
+    }
+    return (
+      <textarea
+        className="arg-field arg-textarea"
+        value={value ?? ""}
+        onChange={(e) => handleFieldChange(key, e.target.value)}
+        rows={2}
+        disabled={isLoading}
+      />
+    )
+  }
+
   return (
     <div className="interrupt-card">
       <div className="interrupt-header">
@@ -17,13 +64,24 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, on
         </div>
         <div className="interrupt-args">
           <span className="label">Arguments:</span>
-          <textarea
-            className="args-textarea"
-            value={modifiedArgsText}
-            onChange={(e) => setModifiedArgsText(e.target.value)}
-            rows={8}
-            disabled={isLoading}
-          />
+          {modifiedArgsSchema && Object.keys(modifiedArgsSchema).length > 0 ? (
+            <div className="arg-fields">
+              {Object.entries(modifiedArgsSchema).map(([key, type]) => (
+                <div key={key} className="arg-row">
+                  <label className="arg-key">{key}:</label>
+                  {renderField(key, argsObj[key], type)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <textarea
+              className="args-textarea"
+              value={modifiedArgsText}
+              onChange={(e) => setModifiedArgsText(e.target.value)}
+              rows={8}
+              disabled={isLoading}
+            />
+          )}
         </div>
       </div>
       <div className="interrupt-actions">
@@ -132,7 +190,8 @@ export default function App() {
                     setChatLog((c) => [...c, {
                       type: 'interrupt',
                       interrupt: {'tool_name': data.value.tool_name},
-                      modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2)
+                      modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
+                      modifiedArgsSchema: data.value.tool_args_schema || {}
                     }])
                     setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                     setIsLoading(false)
@@ -165,7 +224,8 @@ export default function App() {
             setChatLog((c) => [...c, {
               type: 'interrupt',
               interrupt: data.interrupt,
-              modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2)
+              modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2),
+              modifiedArgsSchema: data.interrupt.tool_args_schema || {}
             }])
             setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
             setIsLoading(false)
@@ -220,7 +280,8 @@ export default function App() {
                   setChatLog((c) => [...c, {
                     type: 'interrupt',
                     interrupt: {'tool_name': data.value.tool_name},
-                    modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2)
+                    modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
+                    modifiedArgsSchema: data.value.tool_args_schema || {}
                   }])
                   setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                   setIsLoading(false)
@@ -335,6 +396,7 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
                 <InterruptMessage
                   interrupt={m.interrupt}
                   modifiedArgsText={m.modifiedArgsText}
+                  modifiedArgsSchema={m.modifiedArgsSchema || {}}
                   setModifiedArgsText={(text) => {
                     setModifiedArgsText(text)
                     setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, modifiedArgsText: text } : item))
