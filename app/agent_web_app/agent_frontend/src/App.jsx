@@ -134,24 +134,36 @@ export default function App() {
   const [reasonTokens, setReasonTokens] = useState("")
   const [docsTokens, setDocsTokens] = useState("")
   const [isComplete, setIsComplete] = useState(false)
+  const [isAutoScroll, setIsAutoScroll] = useState(true)
 
   const modules = {
     IPS: ['胶水参数分析', 'MP压力辊参数分析', '接纸机张力参数分析', '真空泵参数分析'],
     RAG: ['服务器硬件配置说明', '用户角色说明', '数据说明', '功能说明'],
   }
 
-  const placeholderQuestions = [
+const placeholderQuestions = [
     '分析一下在时间段2026.4.22上午9点至2026.4.22下午1点的胶水参数赋值情况',
-    '分析一下在时间段2026.4.22上午9点至2026.4.22下午1点的MP压力辊赋值情况',
+    '分析一下在时间段2026.4.22上午9点至2026.4.22下午1点的MP压力辊参数赋值情况',
     '强换功能有哪两种方式？有什么区别？',
     '如何自定义未完工订单列表的显示？',
   ]
 
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight
+    if (chatRef.current && isAutoScroll) {
+      chatRef.current.scrollTo({
+        top: chatRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
     }
-  }, [chatLog, messageTokens, reasonTokens])
+  }, [chatLog, messageTokens, reasonTokens, docsTokens, isAutoScroll])
+
+  const handleScroll = () => {
+    if (chatRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatRef.current
+      const threshold = 100
+      setIsAutoScroll(scrollHeight - scrollTop - clientHeight < threshold)
+    }
+  }
 
   async function handleSend() {
     if (!message.trim() || isLoading) return
@@ -387,7 +399,7 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
     <div className="container">
       <h1>对话</h1>
 
-      <div className="chat" ref={chatRef}>
+      <div className="chat" ref={chatRef} onScroll={handleScroll}>
         {chatLog.length === 0 && (
           <div className="welcome-guide">
             <div className="welcome-header">
