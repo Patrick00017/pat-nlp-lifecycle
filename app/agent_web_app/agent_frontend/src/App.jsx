@@ -49,9 +49,11 @@ export default function App() {
   const chatRef = useRef(null)
   const messageTokensRef = useRef("")
   const reasonTokensRef = useRef("")
+  const docsTokensRef = useRef("")
 
   const [messageTokens, setMessageTokens] = useState("")
   const [reasonTokens, setReasonTokens] = useState("")
+  const [docsTokens, setDocsTokens] = useState("")
   const [isComplete, setIsComplete] = useState(false)
 
   const modules = {
@@ -112,13 +114,20 @@ export default function App() {
                       messageTokensRef.current = prev + data.content
                       return messageTokensRef.current
                     })
+                  } else if (data.type === 'docs') {
+                    setDocsTokens((prev) => {
+                      docsTokensRef.current = prev + data.content
+                      return docsTokensRef.current
+                    })
                   } else if (data.type === 'interrupt') {
-                    if (messageTokensRef.current !== "" || reasonTokensRef.current !== ""){
-                      setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                    if (messageTokensRef.current !== "" || reasonTokensRef.current !== "" || docsTokensRef.current !== ""){
+                      setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
                       setMessageTokens("")
                       setReasonTokens("")
+                      setDocsTokens("")
                       messageTokensRef.current = ""
                       reasonTokensRef.current = ""
+                      docsTokensRef.current = ""
                     }
                     setChatLog((c) => [...c, {
                       type: 'interrupt',
@@ -128,13 +137,15 @@ export default function App() {
                     setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                     setIsLoading(false)
                   } else if (data.type === 'done') {
-                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
                     // console.log("done. reason:" + reasonTokensRef.current + ", message:" + messageTokensRef.current)
                     setIsLoading(false)
                     setMessageTokens("");
                     setReasonTokens("");
+                    setDocsTokens("");
                     // messageTokensRef.current = ""
                     // reasonTokensRef.current = ""
+                    // docsTokensRef.current = ""
                     setIsComplete(true)
                   }
                 } catch (e) {
@@ -191,13 +202,20 @@ export default function App() {
                     messageTokensRef.current = prev + data.content
                     return messageTokensRef.current
                   })
+                } else if (data.type === 'docs') {
+                  setDocsTokens((prev) => {
+                    docsTokensRef.current = prev + data.content
+                    return docsTokensRef.current
+                  })
                 } else if (data.type === 'interrupt') {
-                  if (messageTokensRef.current !== "" || reasonTokensRef.current !== ""){
-                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                  if (messageTokensRef.current !== "" || reasonTokensRef.current !== "" || docsTokensRef.current !== ""){
+                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
                     setMessageTokens("")
                     setReasonTokens("")
+                    setDocsTokens("")
                     messageTokensRef.current = ""
                     reasonTokensRef.current = ""
+                    docsTokensRef.current = ""
                   }
                   setChatLog((c) => [...c, {
                     type: 'interrupt',
@@ -207,13 +225,15 @@ export default function App() {
                   setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                   setIsLoading(false)
                 } else if (data.type === 'done') {
-                  console.log("done. reason:" + reasonTokensRef.current + ", message:" + messageTokensRef.current)
-                  setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, content: messageTokensRef.current }])
+                  console.log("done. reason:" + reasonTokensRef.current + ", docs:" + docsTokensRef.current + ", message:" + messageTokensRef.current)
+                  setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
                   setIsLoading(false);
                   setMessageTokens("");
                   setReasonTokens("");
+                  setDocsTokens("");
                   // messageTokensRef.current = ""
                   // reasonTokensRef.current = ""
+                  // docsTokensRef.current = ""
                   setIsComplete(true)
                 }
               } catch (e) {
@@ -330,9 +350,28 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
             <div key={i} className={`msg-wrapper msg-${m.from}-wrapper`}>
               <div className={`msg msg-${m.from}`}>
                 {m.reason && (
-                  <div className="msg-reason">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.reason}</ReactMarkdown>
-                  </div>
+                  <>
+                    <button className="msg-toggle-btn" onClick={() => setChatLog(c => c.map((item, idx) => idx === i ? { ...item, showReason: !item.showReason } : item))}>
+                      {m.showReason ? '▼' : '▶'} Reason
+                    </button>
+                    {m.showReason && (
+                      <div className="msg-reason">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.reason}</ReactMarkdown>
+                      </div>
+                    )}
+                  </>
+                )}
+                {m.docs && (
+                  <>
+                    <button className="msg-toggle-btn" onClick={() => setChatLog(c => c.map((item, idx) => idx === i ? { ...item, showDocs: !item.showDocs } : item))}>
+                      {m.showDocs ? '▼' : '▶'} Docs
+                    </button>
+                    {m.showDocs && (
+                      <div className="msg-docs">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.docs}</ReactMarkdown>
+                      </div>
+                    )}
+                  </>
                 )}
                 {(m.content || m.text) && (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || m.text}</ReactMarkdown>

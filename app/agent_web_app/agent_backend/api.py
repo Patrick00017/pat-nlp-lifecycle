@@ -174,7 +174,7 @@ async def rag_tool(request: SimpleRequest):
                         yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
             elif isinstance(event[1][0], ToolMessageChunk):
                 ai_msg_content = event[1][0].content
-                yield f"data: {json.dump({'type': 'docs', 'content': ai_msg_content})}\n\n"
+                yield f"data: {json.dumps({'type': 'docs', 'content': ai_msg_content})}\n\n"
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
     except Exception as e:
         yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
