@@ -17,7 +17,8 @@ import uvicorn
 from langgraph.types import interrupt, Command
 from langgraph.errors import GraphInterrupt
 from ips_log_agent import graph as ips_log_agent
-from rag_agent import rag_tool_agent
+
+# from rag_agent import rag_tool_agent
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 # from rag_agent import response as rag_response
@@ -153,31 +154,31 @@ async def resume(request: ResumeRequest):
 #         raise HTTPException(status_code=500, detail=f"Error.{e}")
 
 
-@app.post("/rag/tool", response_class=EventSourceResponse)
-async def rag_tool(request: SimpleRequest):
-    """发送消息到 Agent，使用 Server-Sent Events 流式返回。"""
-    input_state = {"messages": [HumanMessage(content=request.message)]}
-    try:
-        for event in rag_tool_agent.stream(
-            input_state, stream_mode=["messages", "values"]
-        ):
-            # identify the event type
-            if isinstance(event[1][0], AIMessageChunk):
-                event_type = event[0]  # can be messages or values
-                if event_type == "messages":
-                    # go yield this token
-                    is_reason = event[1][0].additional_kwargs.get("reason", False)
-                    ai_msg_content = event[1][0].content
-                    if is_reason:
-                        yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
-                    else:
-                        yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
-            elif isinstance(event[1][0], ToolMessageChunk):
-                ai_msg_content = event[1][0].content
-                yield f"data: {json.dumps({'type': 'docs', 'content': ai_msg_content})}\n\n"
-        yield f"data: {json.dumps({'type': 'done'})}\n\n"
-    except Exception as e:
-        yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+# @app.post("/rag/tool", response_class=EventSourceResponse)
+# async def rag_tool(request: SimpleRequest):
+#     """发送消息到 Agent，使用 Server-Sent Events 流式返回。"""
+#     input_state = {"messages": [HumanMessage(content=request.message)]}
+#     try:
+#         for event in rag_tool_agent.stream(
+#             input_state, stream_mode=["messages", "values"]
+#         ):
+#             # identify the event type
+#             if isinstance(event[1][0], AIMessageChunk):
+#                 event_type = event[0]  # can be messages or values
+#                 if event_type == "messages":
+#                     # go yield this token
+#                     is_reason = event[1][0].additional_kwargs.get("reason", False)
+#                     ai_msg_content = event[1][0].content
+#                     if is_reason:
+#                         yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
+#                     else:
+#                         yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+#             elif isinstance(event[1][0], ToolMessageChunk):
+#                 ai_msg_content = event[1][0].content
+#                 yield f"data: {json.dumps({'type': 'docs', 'content': ai_msg_content})}\n\n"
+#         yield f"data: {json.dumps({'type': 'done'})}\n\n"
+#     except Exception as e:
+#         yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
 
 
 @app.post("/chat/stream", response_class=EventSourceResponse)

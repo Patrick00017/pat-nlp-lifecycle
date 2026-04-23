@@ -88,7 +88,6 @@ def ask_user_approval(state: AgentState) -> Dict[str, Any]:
             "type": "tool_approval",
             "tool_name": tool_call["name"],
             "tool_args": tool_call["args"],
-            # "tool_id": tool_call["id"],
         }
     )
 
