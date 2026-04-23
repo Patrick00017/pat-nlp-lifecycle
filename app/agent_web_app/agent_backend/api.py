@@ -147,7 +147,7 @@ async def resume(request: ResumeRequest):
 
 
 @app.post("/rag/tool", response_class=EventSourceResponse)
-async def chat_stream(request: ChatRequest):
+async def rag_tool(request: ChatRequest):
     """发送消息到 Agent，使用 Server-Sent Events 流式返回。"""
     thread_id = request.thread_id or str(uuid.uuid4())
     config = {"configurable": {"thread_id": thread_id}}
