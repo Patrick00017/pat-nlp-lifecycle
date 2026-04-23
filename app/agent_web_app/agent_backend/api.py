@@ -1,7 +1,14 @@
 import json
 import uuid
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, BaseMessage
+from langchain_core.messages import (
+    AIMessage,
+    HumanMessage,
+    ToolMessage,
+    BaseMessage,
+    AIMessageChunk,
+    ToolMessageChunk,
+)
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -147,28 +154,27 @@ async def resume(request: ResumeRequest):
 
 
 @app.post("/rag/tool", response_class=EventSourceResponse)
-async def rag_tool(request: ChatRequest):
+async def rag_tool(request: SimpleRequest):
     """发送消息到 Agent，使用 Server-Sent Events 流式返回。"""
-    thread_id = request.thread_id or str(uuid.uuid4())
-    config = {"configurable": {"thread_id": thread_id}}
-
     input_state = {"messages": [HumanMessage(content=request.message)]}
-
-    yield f"data: {json.dumps({'type': 'thread_id', 'value': thread_id})}\n\n"
     try:
         for event in rag_tool_agent.stream(
-            input_state, config=config, stream_mode=["messages", "values"]
+            input_state, stream_mode=["messages", "values"]
         ):
             # identify the event type
-            event_type = event[0]  # can be messages or values
-            if event_type == "messages":
-                # go yield this token
-                is_reason = event[1][0].additional_kwargs.get("reason", False)
+            if isinstance(event[1][0], AIMessageChunk):
+                event_type = event[0]  # can be messages or values
+                if event_type == "messages":
+                    # go yield this token
+                    is_reason = event[1][0].additional_kwargs.get("reason", False)
+                    ai_msg_content = event[1][0].content
+                    if is_reason:
+                        yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+            elif isinstance(event[1][0], ToolMessageChunk):
                 ai_msg_content = event[1][0].content
-                if is_reason:
-                    yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
-                else:
-                    yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
+                yield f"data: {json.dump({'type': 'docs', 'content': ai_msg_content})}\n\n"
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
     except Exception as e:
         yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
