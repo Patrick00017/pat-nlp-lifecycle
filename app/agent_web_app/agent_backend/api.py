@@ -255,5 +255,31 @@ async def resume_stream(request: ResumeRequest):
         yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
 
 
+@app.get("/tool/list")
+async def list_tools():
+    """返回所有可用工具列表"""
+    from ips_log_agent import tool_map
+
+    tools = []
+    for name, tool in tool_map.items():
+        schema = {}
+        if tool.args_schema and hasattr(tool.args_schema, "model_fields"):
+            schema = {
+                field_name: {
+                    "type": str(field_info.annotation),
+                    "description": getattr(field_info, 'description', '')
+                }
+                for field_name, field_info in tool.args_schema.model_fields.items()
+            }
+
+        tools.append({
+            "name": name,
+            "description": tool.description,
+            "schema": schema
+        })
+
+    return {"tools": tools}
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
