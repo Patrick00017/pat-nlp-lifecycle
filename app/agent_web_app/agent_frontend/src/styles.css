@@ -73,6 +73,7 @@ h1 {
   background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
   border: 1px solid #bfdbfe;
   color: #1e40af;
+  overflow: auto;
 }
 
 .msg-user {

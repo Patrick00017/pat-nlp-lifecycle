@@ -173,7 +173,7 @@ async def resume(request: ResumeRequest):
 #                         yield f"data: {json.dumps({'type': 'reason', 'content': ai_msg_content})}\n\n"
 #                     else:
 #                         yield f"data: {json.dumps({'type': 'message', 'content': ai_msg_content})}\n\n"
-#             elif isinstance(event[1][0], ToolMessageChunk):
+#             elif isinstance(event[1][0], ToolMessage):
 #                 ai_msg_content = event[1][0].content
 #                 yield f"data: {json.dumps({'type': 'docs', 'content': ai_msg_content})}\n\n"
 #         yield f"data: {json.dumps({'type': 'done'})}\n\n"

@@ -124,7 +124,7 @@ export default function App() {
   const [modifiedArgsText, setModifiedArgsText] = useState('{}')
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState('IPS')
-  const [callMethod, setCallMethod] = useState("Invoke")
+  const [callMethod, setCallMethod] = useState("Stream")
   const chatRef = useRef(null)
   const messageTokensRef = useRef("")
   const reasonTokensRef = useRef("")
@@ -495,13 +495,13 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
               <option value="RAG">RAG</option>
             </select>
           </div>
-          <div className="call-selector">
+          {/* <div className="call-selector">
             <label>Call:</label>
             <select value={callMethod} onChange={(e) => setCallMethod(e.target.value)} disabled={isLoading}>
               <option value="Invoke">Invoke</option>
               <option value="Stream">Stream</option>
             </select>
-          </div>
+          </div> */}
           <button className="btn btn-primary" onClick={handleSend} disabled={isLoading}>
             {isLoading ? <span className="spinner"></span> : 'Send'}
           </button>
