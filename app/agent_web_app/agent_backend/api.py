@@ -265,18 +265,15 @@ async def list_tools():
         schema = {}
         if tool.args_schema and hasattr(tool.args_schema, "model_fields"):
             schema = {
-                field_name: {
-                    "type": str(field_info.annotation),
-                    "description": getattr(field_info, 'description', '')
-                }
+                field_name: str(field_info.annotation)
+                .replace("<class '", "")
+                .replace("'>", "")
+                .replace("typing.", "")
                 for field_name, field_info in tool.args_schema.model_fields.items()
             }
-
-        tools.append({
-            "name": name,
-            "description": tool.description,
-            "schema": schema
-        })
+            tools.append(
+                {"name": name, "description": tool.description, "schema": schema}
+            )
 
     return {"tools": tools}
 
