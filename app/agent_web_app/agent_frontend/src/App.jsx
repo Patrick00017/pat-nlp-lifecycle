@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { sendChat, resumeChat, sendChatStream, connectSSE } from './api'
+import { sendChat, resumeChat, sendChatStream, connectSSE, fetchTools } from './api'
 
-function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, modifiedArgsSchema, onApprove, onReject, isLoading }) {
+function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, modifiedArgsSchema, onApprove, onReject, isLoading, tools, onToolChange, originalToolName, originalArgsText, originalSchema }) {
   const argsObj = React.useMemo(() => {
     try { return JSON.parse(modifiedArgsText) } catch { return {} }
   }, [modifiedArgsText])
@@ -19,6 +19,25 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, mo
     if (type.includes("float")) return <span className="type-badge type-float">float</span>
     return <span className="type-badge type-str">str</span>
   }
+
+  const handleToolChange = (newToolName) => {
+    const selectedTool = tools.find(t => t.name === newToolName)
+    if (selectedTool && onToolChange) {
+      const defaultArgs = {}
+      Object.keys(selectedTool.schema || {}).forEach(key => {
+        defaultArgs[key] = ''
+      })
+      setModifiedArgsText(JSON.stringify(defaultArgs, null, 2))
+      onToolChange(newToolName, selectedTool.schema)
+    }
+  }
+
+  const handleResetToOriginal = () => {
+    setModifiedArgsText(originalArgsText)
+    onToolChange(originalToolName, originalSchema)
+  }
+
+  const currentToolName = interrupt.tool_name || interrupt.tool || ''
 
   const renderField = (key, value, type) => {
     const baseType = type.includes("bool") ? "bool" : type.includes("int") || type.includes("float") ? "number" : "str"
@@ -68,12 +87,37 @@ function InterruptMessage({ interrupt, modifiedArgsText, setModifiedArgsText, mo
       <div className="interrupt-body">
         <div className="interrupt-tool">
           <span className="label">Tool</span>
-          <div className="tool-badge">
-            <svg className="tool-icon" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
-            <span className="tool-name">{interrupt.tool_name || interrupt.tool}</span>
-          </div>
+          {tools && tools.length > 0 ? (
+            <div className="tool-select-row">
+              <select
+                className="tool-select"
+                value={currentToolName}
+                onChange={(e) => handleToolChange(e.target.value)}
+                disabled={isLoading}
+              >
+                {tools.map(tool => (
+                  <option key={tool.name} value={tool.name}>{tool.name}</option>
+                ))}
+              </select>
+              {originalToolName && (
+                <button
+                  className="btn btn-reset"
+                  onClick={handleResetToOriginal}
+                  disabled={isLoading}
+                  title="Reset to original tool and arguments"
+                >
+                  ↺ Reset
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="tool-badge">
+              <svg className="tool-icon" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+              </svg>
+              <span className="tool-name">{currentToolName}</span>
+            </div>
+          )}
         </div>
         <div className="interrupt-args">
           <span className="label">Arguments</span>
@@ -125,6 +169,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState('IPS')
   const [callMethod, setCallMethod] = useState("Stream")
+  const [tools, setTools] = useState([])
   const chatRef = useRef(null)
   const messageTokensRef = useRef("")
   const reasonTokensRef = useRef("")
@@ -148,7 +193,7 @@ const placeholderQuestions = [
     '如何自定义未完工订单列表的显示？',
   ]
 
-  useEffect(() => {
+useEffect(() => {
     if (chatRef.current && isAutoScroll) {
       chatRef.current.scrollTo({
         top: chatRef.current.scrollHeight,
@@ -156,6 +201,18 @@ const placeholderQuestions = [
       })
     }
   }, [chatLog, messageTokens, reasonTokens, docsTokens, isAutoScroll])
+
+  useEffect(() => {
+    async function loadTools() {
+      try {
+        const data = await fetchTools()
+        setTools(data.tools || [])
+      } catch (e) {
+        console.error('Failed to load tools:', e)
+      }
+    }
+    loadTools()
+  }, [])
 
   const handleScroll = () => {
     if (chatRef.current) {
@@ -224,7 +281,10 @@ const placeholderQuestions = [
                       type: 'interrupt',
                       interrupt: {'tool_name': data.value.tool_name},
                       modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
-                      modifiedArgsSchema: data.value.tool_args_schema || {}
+                      modifiedArgsSchema: data.value.tool_args_schema || {},
+                      originalToolName: data.value.tool_name,
+                      originalArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
+                      originalSchema: data.value.tool_args_schema || {}
                     }])
                     setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                     setIsLoading(false)
@@ -258,7 +318,10 @@ const placeholderQuestions = [
               type: 'interrupt',
               interrupt: data.interrupt,
               modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2),
-              modifiedArgsSchema: data.interrupt.tool_args_schema || {}
+              modifiedArgsSchema: data.interrupt.tool_args_schema || {},
+              originalToolName: data.interrupt.tool_name,
+              originalArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2),
+              originalSchema: data.interrupt.tool_args_schema || {}
             }])
             setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
             setIsLoading(false)
@@ -314,7 +377,10 @@ const placeholderQuestions = [
                     type: 'interrupt',
                     interrupt: {'tool_name': data.value.tool_name},
                     modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
-                    modifiedArgsSchema: data.value.tool_args_schema || {}
+                    modifiedArgsSchema: data.value.tool_args_schema || {},
+                    originalToolName: data.value.tool_name,
+                    originalArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
+                    originalSchema: data.value.tool_args_schema || {}
                   }])
                   setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
                   setIsLoading(false)
@@ -432,11 +498,18 @@ return [...newLog, { from: 'system', text: `[Rejected] ${toolName}` }, { from: '
                   modifiedArgsSchema={m.modifiedArgsSchema || {}}
                   setModifiedArgsText={(text) => {
                     setModifiedArgsText(text)
-                    setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, modifiedArgsText: text } : item))
+                    setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, modifiedArgsText: text, modifiedArgsSchema: item.modifiedArgsSchema } : item))
                   }}
                   onApprove={handleApprove}
                   onReject={handleReject}
                   isLoading={isLoading}
+                  tools={tools}
+                  onToolChange={(newToolName, newSchema) => {
+                    setChatLog((c) => c.map((item, idx) => idx === i ? { ...item, interrupt: { ...item.interrupt, tool_name: newToolName }, modifiedArgsSchema: newSchema } : item))
+                  }}
+                  originalToolName={m.originalToolName || m.interrupt.tool_name || m.interrupt.tool}
+                  originalArgsText={m.originalArgsText}
+                  originalSchema={m.originalSchema || {}}
                 />
               </div>
             )

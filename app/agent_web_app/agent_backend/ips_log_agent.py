@@ -89,7 +89,10 @@ def ask_user_approval(state: AgentState) -> Dict[str, Any]:
         schema = tool_map[tool_name].args_schema
         if schema and hasattr(schema, "model_fields"):
             tool_args_schema = {
-                field_name: str(field_info.annotation).replace("<class '", "").replace("'>", "").replace("typing.", "")
+                field_name: str(field_info.annotation)
+                .replace("<class '", "")
+                .replace("'>", "")
+                .replace("typing.", "")
                 for field_name, field_info in schema.model_fields.items()
             }
 
@@ -110,8 +113,9 @@ def ask_user_approval(state: AgentState) -> Dict[str, Any]:
         # 执行工具
         tool_instance = tool_map[tool_call["name"]]
         result = tool_instance.invoke(new_args)
+        # print(f"func result : {result}")
         # 返回 AIMessage，因为tool call直接对结果进行分析
-        return {"messages": [AIMessage(content=result)]}
+        return {"messages": [AIMessage(content=str(result))]}
     else:
         # 用户拒绝执行工具
         return {"messages": [AIMessage(content="用户取消了工具调用")]}

@@ -56,6 +56,12 @@ export async function health() {
   return res.json()
 }
 
+export async function fetchTools() {
+  const res = await fetch(`${BASE}/tool/list`)
+  if (!res.ok) throw new Error(`Fetch tools failed: ${res.status}`)
+  return res.json()
+}
+
 export async function connectSSE(url, payload, onMessage, onError) {
   try {
     await fetchEventSource(url, {
