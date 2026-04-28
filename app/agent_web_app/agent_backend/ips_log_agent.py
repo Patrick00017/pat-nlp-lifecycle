@@ -111,14 +111,14 @@ def ask_user_approval(state: AgentState) -> Dict[str, Any]:
         # 使用用户修改后的参数（或原参数）
         new_args = user_decision.get("modified_args", tool_call["args"])
         # 执行工具
-        tool_instance = tool_map[tool_call["name"]]
+        tool_instance = tool_map[user_decision.get("tool_name", tool_name)]
         result = tool_instance.invoke(new_args)
         # print(f"func result : {result}")
         # 返回 AIMessage，因为tool call直接对结果进行分析
         return {"messages": [AIMessage(content=str(result))]}
     else:
         # 用户拒绝执行工具
-        return {"messages": [AIMessage(content="用户取消了工具调用")]}
+        return {"messages": [AIMessage(content=f"用户取消了工具调用, {tool_name}")]}
 
 
 # ------------------ 构建图 ------------------

@@ -5,6 +5,93 @@ import { sendChat, resumeChat, sendChatStream, connectSSE, fetchTools } from './
 import InterruptMessage from './components/InterruptMessage'
 import MessageComposer from './components/MessageComposer'
 
+const API_ENDPOINTS = {
+  IPS_STREAM: 'http://localhost:8000/chat/stream',
+  IPS_INVOKE: 'http://localhost:8000/chat',
+  RAG: 'http://localhost:8000/rag',
+}
+
+function parseSSEData(rawData) {
+  try {
+    const raw = JSON.parse(rawData)
+    let msgStr = raw
+    if (msgStr.startsWith('data: ')) {
+      msgStr = msgStr.slice(6).trim()
+    }
+    return JSON.parse(msgStr)
+  } catch (e) {
+    console.error("Parse error:", e, "Raw:", rawData)
+    return null
+  }
+}
+
+function createInterruptPayload(data) {
+  return {
+    type: 'interrupt',
+    interrupt: { tool_name: data.value.tool_name },
+    modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
+    modifiedArgsSchema: data.value.tool_args_schema || {},
+    originalToolName: data.value.tool_name,
+    originalArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
+    originalSchema: data.value.tool_args_schema || {}
+  }
+}
+
+function createSSECallbacks({
+  setChatLog,
+  setMessageTokens,
+  setReasonTokens,
+  setDocsTokens,
+  setModifiedArgsText,
+  setIsLoading,
+  setIsComplete,
+  messageTokensRef,
+  reasonTokensRef,
+  docsTokensRef
+}) {
+  return {
+    onReason: (content) => {
+      reasonTokensRef.current += content
+      setReasonTokens(reasonTokensRef.current)
+    },
+    onMessage: (content) => {
+      messageTokensRef.current += content
+      setMessageTokens(messageTokensRef.current)
+    },
+    onDocs: (content) => {
+      docsTokensRef.current += content
+      setDocsTokens(docsTokensRef.current)
+    },
+    onInterrupt: (data) => {
+      const hasContent = messageTokensRef.current || reasonTokensRef.current || docsTokensRef.current
+      if (hasContent) {
+        setChatLog(c => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
+        messageTokensRef.current = ""
+        reasonTokensRef.current = ""
+        docsTokensRef.current = ""
+        setMessageTokens("")
+        setReasonTokens("")
+        setDocsTokens("")
+      }
+      setChatLog(c => [...c, createInterruptPayload(data)])
+      setModifiedArgsText(createInterruptPayload(data).modifiedArgsText)
+      setIsLoading(false)
+    },
+    onDone: () => {
+      setChatLog(c => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
+      setIsLoading(false)
+      setMessageTokens("")
+      setReasonTokens("")
+      setDocsTokens("")
+      setIsComplete(true)
+    },
+    onError: (err) => {
+      setChatLog(c => [...c, { from: 'error', text: String(err) }])
+      setIsLoading(false)
+    }
+  }
+}
+
 export default function App() {
   const [message, setMessage] = useState('')
   const [threadId, setThreadId] = useState(crypto.randomUUID())
@@ -71,188 +158,86 @@ useEffect(() => {
     const userMsg = message
     setMessage('')
     setIsLoading(true)
+    setMessageTokens('')
+    setReasonTokens('')
+    setDocsTokens('')
+    messageTokensRef.current = ''
+    reasonTokensRef.current = ''
+    docsTokensRef.current = ''
+    setIsComplete(false)
+
+    const callbacks = createSSECallbacks({
+      setChatLog,
+      setMessageTokens,
+      setReasonTokens,
+      setDocsTokens,
+      setModifiedArgsText,
+      setIsLoading,
+      setIsComplete,
+      messageTokensRef,
+      reasonTokensRef,
+      docsTokensRef
+    })
+
     try {
-      if(mode === "IPS"){
-        setChatLog((c) => [...c, { from: 'user', text: userMsg }])
-        if (callMethod === "Stream"){
-          const payload = { message }
-          if (threadId){
+      if (mode === 'IPS') {
+        setChatLog(c => [...c, { from: 'user', text: userMsg }])
+        
+        if (callMethod === 'Stream') {
+          const payload = { message: userMsg }
+          if (threadId) {
             payload.thread_id = threadId
-          }
-          else{
-            payload.thread_id = crypto.randomUUID()
+          } else {
+            const newThreadId = crypto.randomUUID()
+            setThreadId(newThreadId)
+            payload.thread_id = newThreadId
           }
 
-          connectSSE("http://localhost:8000/chat/stream", payload,
+          connectSSE(API_ENDPOINTS.IPS_STREAM, payload,
             (rawData) => {
-                // rawData is like: {"type": "message", "content": "text"} or {"type": "reason", "content": "..."}
-                // Sometimes it includes "data: " prefix, handle both cases
-                let jsonStr = rawData
-                try {
-                  const raw = JSON.parse(jsonStr)
-                  let msgStr = raw
-                  if (msgStr.startsWith('data: ')) {
-                    msgStr = msgStr.slice(6).trim()
-                  }
-                  let data = JSON.parse(msgStr)
+              const data = parseSSEData(rawData)
+              if (!data) return
 
-                  if (data.type === 'reason') {
-                    setReasonTokens((prev) => {
-                      reasonTokensRef.current = prev + data.content
-                      return reasonTokensRef.current
-                    })
-                  } else if (data.type === 'message') {
-                    setMessageTokens((prev) => {
-                      messageTokensRef.current = prev + data.content
-                      return messageTokensRef.current
-                    })
-                  } else if (data.type === 'docs') {
-                    setDocsTokens((prev) => {
-                      docsTokensRef.current = prev + data.content
-                      return docsTokensRef.current
-                    })
-                  } else if (data.type === 'interrupt') {
-                    if (messageTokensRef.current !== "" || reasonTokensRef.current !== "" || docsTokensRef.current !== ""){
-                      setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
-                      setMessageTokens("")
-                      setReasonTokens("")
-                      setDocsTokens("")
-                      messageTokensRef.current = ""
-                      reasonTokensRef.current = ""
-                      docsTokensRef.current = ""
-                    }
-                    setChatLog((c) => [...c, {
-                      type: 'interrupt',
-                      interrupt: {'tool_name': data.value.tool_name},
-                      modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
-                      modifiedArgsSchema: data.value.tool_args_schema || {},
-                      originalToolName: data.value.tool_name,
-                      originalArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
-                      originalSchema: data.value.tool_args_schema || {}
-                    }])
-                    setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
-                    setIsLoading(false)
-                  } else if (data.type === 'done') {
-                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
-                    // console.log("done. reason:" + reasonTokensRef.current + ", message:" + messageTokensRef.current)
-                    setIsLoading(false)
-                    setMessageTokens("");
-                    setReasonTokens("");
-                    setDocsTokens("");
-                    // messageTokensRef.current = ""
-                    // reasonTokensRef.current = ""
-                    // docsTokensRef.current = ""
-                    setIsComplete(true)
-                  }
-                } catch (e) {
-                  console.error("Parse error:", e, "Raw:", rawData)
-                }
+              if (data.type === 'reason') callbacks.onReason(data.content)
+              else if (data.type === 'message') callbacks.onMessage(data.content)
+              else if (data.type === 'docs') callbacks.onDocs(data.content)
+              else if (data.type === 'interrupt') callbacks.onInterrupt(data)
+              else if (data.type === 'done') callbacks.onDone()
             },
-            (err) => {
-              console.error("SSE error:", err)
-              setChatLog((c) => [...c, { from: 'error', text: String(err) }])
-              setIsLoading(false)
-            }
+            callbacks.onError
           )
         } else {
           const data = await sendChat(userMsg, threadId)
           if (data.thread_id) setThreadId(data.thread_id)
           if (data.interrupt) {
-            setChatLog((c) => [...c, {
-              type: 'interrupt',
-              interrupt: data.interrupt,
-              modifiedArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2),
-              modifiedArgsSchema: data.interrupt.tool_args_schema || {},
-              originalToolName: data.interrupt.tool_name,
-              originalArgsText: JSON.stringify(data.interrupt.tool_args || {}, null, 2),
-              originalSchema: data.interrupt.tool_args_schema || {}
-            }])
+            setChatLog(c => [...c, { type: 'interrupt', ...createInterruptPayload({ value: { tool_name: data.interrupt.tool_name, tool_args: data.interrupt.tool_args, tool_args_schema: data.interrupt.tool_args_schema } }) }])
             setModifiedArgsText(JSON.stringify(data.interrupt.tool_args || {}, null, 2))
             setIsLoading(false)
           } else {
-            setChatLog((c) => [...c, { from: 'ai', text: data.response }])
+            setChatLog(c => [...c, { from: 'ai', text: data.response }])
             setIsLoading(false)
           }
         }
-      }
-      else if(mode === "RAG"){
-        setChatLog((c) => [...c, { from: 'user', text: userMsg }])
-        // rag request
-        const payload = { message }
-        connectSSE("http://localhost:8000/rag", payload,
-          (rawData) => {
-              // rawData is like: {"type": "message", "content": "text"} or {"type": "reason", "content": "..."}
-              // Sometimes it includes "data: " prefix, handle both cases
-              let jsonStr = rawData
-              try {
-                const raw = JSON.parse(jsonStr)
-                let msgStr = raw
-                if (msgStr.startsWith('data: ')) {
-                  msgStr = msgStr.slice(6).trim()
-                }
-                let data = JSON.parse(msgStr)
+      } else if (mode === 'RAG') {
+        setChatLog(c => [...c, { from: 'user', text: userMsg }])
+        const payload = { message: userMsg }
 
-                if (data.type === 'reason') {
-                  setReasonTokens((prev) => {
-                    reasonTokensRef.current = prev + data.content
-                    return reasonTokensRef.current
-                  })
-                } else if (data.type === 'message') {
-                  setMessageTokens((prev) => {
-                    messageTokensRef.current = prev + data.content
-                    return messageTokensRef.current
-                  })
-                } else if (data.type === 'docs') {
-                  setDocsTokens((prev) => {
-                    docsTokensRef.current = prev + data.content
-                    return docsTokensRef.current
-                  })
-                } else if (data.type === 'interrupt') {
-                  if (messageTokensRef.current !== "" || reasonTokensRef.current !== "" || docsTokensRef.current !== ""){
-                    setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
-                    setMessageTokens("")
-                    setReasonTokens("")
-                    setDocsTokens("")
-                    messageTokensRef.current = ""
-                    reasonTokensRef.current = ""
-                    docsTokensRef.current = ""
-                  }
-                  setChatLog((c) => [...c, {
-                    type: 'interrupt',
-                    interrupt: {'tool_name': data.value.tool_name},
-                    modifiedArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
-                    modifiedArgsSchema: data.value.tool_args_schema || {},
-                    originalToolName: data.value.tool_name,
-                    originalArgsText: JSON.stringify(data.value.tool_args || {}, null, 2),
-                    originalSchema: data.value.tool_args_schema || {}
-                  }])
-                  setModifiedArgsText(JSON.stringify(data.value.tool_args || {}, null, 2))
-                  setIsLoading(false)
-                } else if (data.type === 'done') {
-                  console.log("done. reason:" + reasonTokensRef.current + ", docs:" + docsTokensRef.current + ", message:" + messageTokensRef.current)
-                  setChatLog((c) => [...c, { from: 'ai', reason: reasonTokensRef.current, docs: docsTokensRef.current, content: messageTokensRef.current, showReason: true, showDocs: false }])
-                  setIsLoading(false);
-                  setMessageTokens("");
-                  setReasonTokens("");
-                  setDocsTokens("");
-                  // messageTokensRef.current = ""
-                  // reasonTokensRef.current = ""
-                  // docsTokensRef.current = ""
-                  setIsComplete(true)
-                }
-              } catch (e) {
-                console.error("Parse error:", e, "Raw:", rawData)
-              }
+        connectSSE(API_ENDPOINTS.RAG, payload,
+          (rawData) => {
+            const data = parseSSEData(rawData)
+            if (!data) return
+
+            if (data.type === 'reason') callbacks.onReason(data.content)
+            else if (data.type === 'message') callbacks.onMessage(data.content)
+            else if (data.type === 'docs') callbacks.onDocs(data.content)
+            else if (data.type === 'interrupt') callbacks.onInterrupt(data)
+            else if (data.type === 'done') callbacks.onDone()
           },
-          (err) => {
-            console.error("SSE error:", err)
-            setChatLog((c) => [...c, { from: 'error', text: String(err) }])
-            setIsLoading(false)
-          }
+          callbacks.onError
         )
       }
     } catch (e) {
-      setChatLog((c) => [...c, { from: 'error', text: String(e) }])
+      setChatLog(c => [...c, { from: 'error', text: String(e) }])
       setIsLoading(false)
     }
   }

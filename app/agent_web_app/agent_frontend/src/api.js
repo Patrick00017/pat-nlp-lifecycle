@@ -66,6 +66,7 @@ export async function connectSSE(url, payload, onMessage, onError) {
   try {
     await fetchEventSource(url, {
       method: 'POST',
+      openWhenHidden: true,
       headers: {
         // 'Authorization': 'Bearer YOUR_TOKEN',
         "Content-Type": "application/json"
