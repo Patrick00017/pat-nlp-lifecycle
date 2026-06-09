@@ -17,6 +17,8 @@ import uvicorn
 from langgraph.types import interrupt, Command
 from langgraph.errors import GraphInterrupt
 from ips_log_agent import graph as ips_log_agent
+from constant import LLAMA_SERVER_URL, FIXED_TOOLS
+from utils import parse_function_calls
 
 # from rag_agent import rag_tool_agent
 from fastapi.sse import EventSourceResponse, ServerSentEvent
@@ -56,6 +58,11 @@ class ChatResponse(BaseModel):
     thread_id: str
     response: str
     interrupt: Optional[Dict] = None  # 如果中断发生，返回中断信息
+
+
+class FuncQueryRequest(BaseModel):
+    messages: list
+    max_tokens: Optional[int] = 128
 
 
 class SimpleRequest(BaseModel):
@@ -276,6 +283,30 @@ async def list_tools():
             )
 
     return {"tools": tools}
+
+
+@app.post("/func/query")
+async def func_query(request: FuncQueryRequest):
+    import httpx
+
+    payload = {
+        "messages": request.messages,
+        "tools": FIXED_TOOLS,
+        "tool_choice": "auto",
+        "max_tokens": request.max_tokens,
+    }
+
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(LLAMA_SERVER_URL, json=payload)
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+
+    llm_response = resp.json()
+    content = llm_response["choices"][0]["message"]["content"]
+    tool_calls = parse_function_calls(content)
+
+    return {"tool_calls": tool_calls}
 
 
 if __name__ == "__main__":

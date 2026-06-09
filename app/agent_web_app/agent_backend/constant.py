@@ -13,6 +13,103 @@ handle_func_to_splicer_part = {
 
 }
 
+LLAMA_SERVER_URL = "http://localhost:8080/v1/chat/completions"
+
+FIXED_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_material_change_in_log",
+            "description": "Queries the material change log within a specified time range.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "start_time": {
+                        "type": "STRING",
+                        "description": "Start time in YYYY-MM-DD HH:MM:SS.mmm"
+                    },
+                    "end_time": {
+                        "type": "STRING",
+                        "description": "End time in YYYY-MM-DD HH:MM:SS.mmm"
+                    }
+                },
+                "required": ["start_time", "end_time"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_glue_set_func_call_in_log",
+            "description": "Queries whether the glue setting function was called for a specific material at a given time.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "time": {
+                        "type": "STRING",
+                        "description": "The specific time in YYYY-MM-DD HH:MM:SS.mmm"
+                    },
+                    "desire_material": {
+                        "type": "STRING",
+                        "description": "The material identifier to check"
+                    }
+                },
+                "required": ["time", "desire_material"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "track_material_in_log",
+            "description": "Tracks the lifecycle and movement of a specific material within a time range.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "start_time": {
+                        "type": "STRING",
+                        "description": "Start time in YYYY-MM-DD HH:MM:SS.mmm"
+                    },
+                    "end_time": {
+                        "type": "STRING",
+                        "description": "End time in YYYY-MM-DD HH:MM:SS.mmm"
+                    },
+                    "material": {
+                        "type": "STRING",
+                        "description": "The material identifier to track"
+                    }
+                },
+                "required": ["start_time", "end_time", "material"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_pressroll_mp_set_func_call_in_log",
+            "description": "Queries MP pressure roller setting function calls for a specific material within a time range.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "start_time": {
+                        "type": "STRING",
+                        "description": "Start time in YYYY-MM-DD HH:MM:SS.mmm"
+                    },
+                    "end_time": {
+                        "type": "STRING",
+                        "description": "End time in YYYY-MM-DD HH:MM:SS.mmm"
+                    },
+                    "desire_material": {
+                        "type": "STRING",
+                        "description": "The material identifier to check"
+                    }
+                },
+                "required": ["start_time", "end_time", "desire_material"]
+            }
+        }
+    }
+]
+
 module_types = [
     "BTS.Server.Start.CommHelper",
     "BTS.Server.Start.IPSBizs.AlarmBiz",

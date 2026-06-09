@@ -1,4 +1,5 @@
 import json
+import re
 import yaml
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 
@@ -103,3 +104,28 @@ def extract_h3_headings_v2(markdown_file: str) -> Dict[str, str]:
         result[current_title] = "".join(current_content).strip()
 
     return result
+
+
+def parse_function_calls(content: str) -> list:
+    pattern = r'<start_function_call>(.*?)<end_function_call>'
+    calls = []
+    for match in re.finditer(pattern, content, re.DOTALL):
+        block = match.group(1).strip()
+        func_match = re.match(r'call:(\w+)\{(.*)\}', block, re.DOTALL)
+        if not func_match:
+            continue
+        name = func_match.group(1)
+        args_text = func_match.group(2)
+        args = {}
+        for arg_match in re.finditer(r'(\w+):<escape>(.*?)<escape>', args_text):
+            key = arg_match.group(1)
+            val = arg_match.group(2)
+            args[key] = val
+        if not args:
+            args_match = re.match(r'(\w+):(.*)', args_text)
+            if args_match:
+                key = args_match.group(1)
+                val = args_match.group(2).strip()
+                args[key] = None if val == "None" else val
+        calls.append({"name": name, "arguments": args})
+    return calls
