@@ -65,6 +65,10 @@ class FuncQueryRequest(BaseModel):
     max_tokens: Optional[int] = 128
 
 
+class FuncCallRequest(BaseModel):
+    tool_calls: list
+
+
 class SimpleRequest(BaseModel):
     message: str
 
@@ -307,6 +311,27 @@ async def func_query(request: FuncQueryRequest):
     tool_calls = parse_function_calls(content)
 
     return {"tool_calls": tool_calls}
+
+
+@app.post("/func/call")
+async def func_call(request: FuncCallRequest):
+    from tools_definition import tools
+
+    tool_map = {t.name: t for t in tools}
+    results = []
+    for tc in request.tool_calls:
+        name = tc["name"]
+        args = tc.get("arguments", {})
+        tool = tool_map.get(name)
+        if tool is None:
+            results.append({"name": name, "error": f"Tool '{name}' not found"})
+        else:
+            try:
+                result = tool.invoke(args)
+                results.append({"name": name, "result": result})
+            except Exception as e:
+                results.append({"name": name, "error": str(e)})
+    return {"results": results}
 
 
 if __name__ == "__main__":

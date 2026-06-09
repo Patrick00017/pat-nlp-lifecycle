@@ -110,6 +110,12 @@ def track_material_in_log(start_time: str, end_time: str, material: str):
     return "track_material_in_log"
 
 
+@tool(args_schema=LogArgs)
+def get_pressroll_mp_set_func_call_in_log(start_time: str, end_time: str, desire_material: str):
+    """get the mp pressure roller set func call in log"""
+    return "get_pressroll_mp_set_func_call_in_log"
+
+
 tools = [
     add_numbers,
     multiply_numbers,
@@ -118,6 +124,7 @@ tools = [
     get_material_change_in_log,
     get_glue_set_func_call_in_log,
     track_material_in_log,
+    get_pressroll_mp_set_func_call_in_log,
 ]
 
 # tools = [
