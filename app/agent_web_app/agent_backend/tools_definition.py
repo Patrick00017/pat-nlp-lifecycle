@@ -93,7 +93,7 @@ def divide_numbers(a: float, b: float) -> float:
 
 
 @tool(args_schema=LogArgs)
-def get_material_change_in_log(start_time: str, end_time: str):
+def get_material_change_in_log(start_time: str, end_time: str, desire_material: str):
     """get material chaneg in log"""
     return "get_material_change_in_log"
 
@@ -111,7 +111,9 @@ def track_material_in_log(start_time: str, end_time: str, material: str):
 
 
 @tool(args_schema=LogArgs)
-def get_pressroll_mp_set_func_call_in_log(start_time: str, end_time: str, desire_material: str):
+def get_pressroll_mp_set_func_call_in_log(
+    start_time: str, end_time: str, desire_material: str
+):
     """get the mp pressure roller set func call in log"""
     return "get_pressroll_mp_set_func_call_in_log"
 

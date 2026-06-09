@@ -19,6 +19,7 @@ from langgraph.errors import GraphInterrupt
 from ips_log_agent import graph as ips_log_agent
 from constant import LLAMA_SERVER_URL, FIXED_TOOLS
 from utils import parse_function_calls
+from analysis_engine import router as analysis_router
 
 # from rag_agent import rag_tool_agent
 from fastapi.sse import EventSourceResponse, ServerSentEvent
@@ -332,6 +333,9 @@ async def func_call(request: FuncCallRequest):
             except Exception as e:
                 results.append({"name": name, "error": str(e)})
     return {"results": results}
+
+
+app.include_router(analysis_router)
 
 
 if __name__ == "__main__":
