@@ -45,25 +45,25 @@ export default function DataAnalysis() {
     try {
       const resp = await funcQuery(nextMessages)
       const toolCalls = resp.tool_calls || []
+      const assistantContent = resp.content || ''
 
-      if (toolCalls.length === 0) {
-        setChatLog(c => [...c, { type: 'info', text: '无法识别为分析操作，请换个问题描述' }])
-        setMessages(nextMessages)
-        setIsQuerying(false)
-        return
+      setMessages([...nextMessages, { role: 'assistant', content: assistantContent }])
+
+      if (toolCalls.length > 0) {
+        const tc = toolCalls[0]
+        const toolDef = ANALYSIS_TOOLS[tc.name]
+        if (!toolDef) {
+          setChatLog(c => [...c, { type: 'info', text: `工具 "${tc.name}" 不支持分析` }])
+          setIsQuerying(false)
+          return
+        }
+        if (assistantContent) {
+          setChatLog(c => [...c, { type: 'ai', text: assistantContent }])
+        }
+        setChatLog(c => [...c, { type: 'tool_call', toolCall: tc, toolDef }])
+      } else {
+        setChatLog(c => [...c, { type: 'ai', text: assistantContent || '无法识别为分析操作' }])
       }
-
-      const tc = toolCalls[0]
-      const toolDef = ANALYSIS_TOOLS[tc.name]
-      if (!toolDef) {
-        setChatLog(c => [...c, { type: 'info', text: `工具 "${tc.name}" 不支持分析，请换个问题` }])
-        setMessages(nextMessages)
-        setIsQuerying(false)
-        return
-      }
-
-      setMessages([...nextMessages, { role: 'assistant', content: JSON.stringify(tc) }])
-      setChatLog(c => [...c, { type: 'tool_call', toolCall: tc, toolDef }])
     } catch (e) {
       setChatLog(c => [...c, { type: 'error', text: `查询失败: ${e.message}` }])
     }
@@ -263,6 +263,13 @@ export default function DataAnalysis() {
                 </button>
               </div>
             </div>
+          </div>
+        )
+
+      case 'ai':
+        return (
+          <div key={index} className="msg-wrapper msg-ai-wrapper">
+            <div className="msg msg-ai"><ReactMarkdown remarkPlugins={[remarkGfm]}>{entry.text}</ReactMarkdown></div>
           </div>
         )
 

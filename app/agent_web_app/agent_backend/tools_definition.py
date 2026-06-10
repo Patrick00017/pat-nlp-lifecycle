@@ -56,6 +56,13 @@ class LogArgs(BaseModel):
     )
 
 
+class AnalysisArgs(BaseModel):
+    time: str = Field(description="The time the user cares about.")
+    desire_material: str = Field(
+        "The desire material from user(e.g., P.-.-.8.J or N.-.-.7.N)"
+    )
+
+
 class TrackArgs(BaseModel):
     start_time: str = Field(
         description="The start time of the log query range in 'YYYY-MM-DD HH:MM:SS.sss' format (e.g., '2026-01-08 14:03:50.690')."
@@ -98,8 +105,8 @@ def get_material_change_in_log(start_time: str, end_time: str, desire_material: 
     return "get_material_change_in_log"
 
 
-@tool(args_schema=LogArgs)
-def get_glue_set_func_call_in_log(start_time: str, end_time: str, desire_material: str):
+@tool(args_schema=AnalysisArgs)
+def get_glue_set_func_call_in_log(time: str, desire_material: str):
     """get the glue set func call in log, this func will extract the set func event with material lifecycle events"""
     return "## get_glue_set_func_call_in_log \n\n ### hello glue set func \n\n asdadadasdasdasd"
 

@@ -311,7 +311,7 @@ async def func_query(request: FuncQueryRequest):
     content = llm_response["choices"][0]["message"]["content"]
     tool_calls = parse_function_calls(content)
 
-    return {"tool_calls": tool_calls}
+    return {"tool_calls": tool_calls, "content": content}
 
 
 @app.post("/func/call")
