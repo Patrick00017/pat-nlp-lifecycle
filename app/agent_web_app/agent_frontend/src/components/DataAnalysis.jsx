@@ -57,9 +57,6 @@ export default function DataAnalysis() {
           setIsQuerying(false)
           return
         }
-        if (assistantContent) {
-          setChatLog(c => [...c, { type: 'ai', text: assistantContent }])
-        }
         setChatLog(c => [...c, { type: 'tool_call', toolCall: tc, toolDef }])
       } else {
         setChatLog(c => [...c, { type: 'ai', text: assistantContent || '无法识别为分析操作' }])
@@ -158,7 +155,7 @@ export default function DataAnalysis() {
       case 'tool_call':
         return (
           <div key={index} className="msg-wrapper msg-system-wrapper">
-            <div className="interrupt-card" style={{ marginBottom: 0 }}>
+            <div className="interrupt-card">
               <div className="interrupt-header">
                 <span className="interrupt-icon">🔍</span>
                 <h3>识别到分析操作</h3>
@@ -218,9 +215,11 @@ export default function DataAnalysis() {
 
               {entry.executionPath.length > 0 && (
                 <div className="analysis-path">
+                  <span className="analysis-path-label">分析路径</span>
                   {entry.executionPath.map((nodeId, i) => (
-                    <span key={nodeId} className="analysis-path-chip">
-                      {nodeId}{i < entry.executionPath.length - 1 ? ' →' : ''}
+                    <span key={nodeId} style={{ display: 'contents' }}>
+                      {i > 0 && <span className="analysis-path-arrow">→</span>}
+                      <span className="analysis-path-chip">{nodeId}</span>
                     </span>
                   ))}
                 </div>
