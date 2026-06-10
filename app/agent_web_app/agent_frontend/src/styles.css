@@ -862,3 +862,92 @@ h1 {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Analysis Data Tab ── */
+.analysis-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.analysis-path-chip {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.analysis-node-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analysis-node-btn {
+  padding: 10px 16px;
+  border: 1px solid #bfdbfe;
+  background: #f0f9ff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1e40af;
+  transition: all 0.2s;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.analysis-node-btn:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+}
+
+.analysis-node-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.analysis-node-btn .node-name {
+  font-weight: 500;
+}
+
+.analysis-node-btn .node-desc {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.analysis-stepback-btn {
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #64748b;
+  transition: background 0.2s;
+}
+
+.analysis-stepback-btn:hover {
+  background: #f8fafc;
+}
+
+.analysis-stepback-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.analysis-done-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}

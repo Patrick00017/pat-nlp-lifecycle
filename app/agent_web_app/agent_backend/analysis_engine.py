@@ -271,8 +271,14 @@ async def stepback_analysis(body: dict):
             {"id": entry_node.id, "name": entry_node.name, "description": entry_node.description}
         ]
 
+    previous_result = ""
+    if state.execution_path:
+        last_id = state.execution_path[-1]
+        previous_result = state.analysis_results.get(last_id, "")
+
     return {
         "undone_node": undone_node_id,
+        "previous_result": previous_result,
         "execution_path": state.execution_path,
         "available_nodes": next_nodes,
         "is_terminal": len(next_nodes) == 0,

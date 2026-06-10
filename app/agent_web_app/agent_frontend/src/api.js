@@ -62,6 +62,56 @@ export async function fetchTools() {
   return res.json()
 }
 
+export async function funcQuery(messages, maxTokens = 128) {
+  const res = await fetch(`${BASE}/func/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, max_tokens: maxTokens }),
+  })
+  if (!res.ok) throw new Error(`Func query failed: ${res.status}`)
+  return res.json()
+}
+
+export async function funcCall(toolCalls) {
+  const res = await fetch(`${BASE}/func/call`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tool_calls: toolCalls }),
+  })
+  if (!res.ok) throw new Error(`Func call failed: ${res.status}`)
+  return res.json()
+}
+
+export async function analysisInit(toolName, toolArgs, toolResult = null) {
+  const res = await fetch(`${BASE}/analysis/init`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tool_name: toolName, tool_args: toolArgs, tool_result: toolResult }),
+  })
+  if (!res.ok) throw new Error(`Analysis init failed: ${res.status}`)
+  return res.json()
+}
+
+export async function analysisStep(stateId, nodeId) {
+  const res = await fetch(`${BASE}/analysis/step`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state_id: stateId, node_id: nodeId }),
+  })
+  if (!res.ok) throw new Error(`Analysis step failed: ${res.status}`)
+  return res.json()
+}
+
+export async function analysisStepback(stateId) {
+  const res = await fetch(`${BASE}/analysis/stepback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state_id: stateId }),
+  })
+  if (!res.ok) throw new Error(`Analysis stepback failed: ${res.status}`)
+  return res.json()
+}
+
 export async function connectSSE(url, payload, onMessage, onError) {
   try {
     await fetchEventSource(url, {
