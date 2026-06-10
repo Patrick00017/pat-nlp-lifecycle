@@ -984,3 +984,20 @@ h1 {
   font-weight: 600;
   font-size: 14px;
 }
+
+.chat-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #94a3b8;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.chat-divider::before,
+.chat-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}

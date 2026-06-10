@@ -18,6 +18,7 @@ export default function DataAnalysis() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [isStepping, setIsStepping] = useState(false)
   const chatRef = useRef(null)
+  const hasExecutedRef = useRef(false)
 
   useEffect(() => {
     if (chatRef.current) {
@@ -36,11 +37,20 @@ export default function DataAnalysis() {
     const text = inputMessage.trim()
     if (!text || isQuerying) return
 
+    const isNewSession = hasExecutedRef.current
+    if (isNewSession) {
+      hasExecutedRef.current = false
+      setMessages([])
+      setChatLog(c => [...c, { type: 'divider' }])
+    }
+
     setInputMessage('')
     setChatLog(c => [...c, { type: 'user', text }])
     setIsQuerying(true)
 
-    const nextMessages = [...messages, { role: 'user', content: text }]
+    const nextMessages = isNewSession
+      ? [{ role: 'user', content: text }]
+      : [...messages, { role: 'user', content: text }]
 
     try {
       const resp = await funcQuery(nextMessages)
@@ -103,6 +113,7 @@ export default function DataAnalysis() {
         availableNodes: initResp.available_nodes,
         isTerminal: initResp.available_nodes.length === 0,
       }])
+      hasExecutedRef.current = true
     } catch (e) {
       setChatLog(c => [...c, { type: 'error', text: `执行失败: ${e.message}` }])
     }
@@ -271,6 +282,9 @@ export default function DataAnalysis() {
             <div className="msg msg-ai"><ReactMarkdown remarkPlugins={[remarkGfm]}>{entry.text}</ReactMarkdown></div>
           </div>
         )
+
+      case 'divider':
+        return <div key={index} className="chat-divider" />
 
       case 'error':
         return (
