@@ -2,6 +2,7 @@ import uuid
 from typing import Any, Callable, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from cachetools import TTLCache
 
 
 # ──────────────────────────────────────────────
@@ -157,7 +158,7 @@ TOOL_STATE_EXTRACTORS = {
 # ──────────────────────────────────────────────
 router = APIRouter(prefix="/analysis")
 
-states: Dict[str, AnalysisState] = {}
+states: TTLCache[str, AnalysisState] = TTLCache(maxsize=128, ttl=1800)
 
 
 @router.post("/init")
@@ -238,6 +239,43 @@ async def step_analysis(body: dict):
         "available_nodes": next_nodes,
         "execution_path": state.execution_path,
         "is_terminal": len(node.next_nodes) == 0,
+    }
+
+
+@router.post("/stepback")
+async def stepback_analysis(body: dict):
+    state_id = body.get("state_id")
+
+    if state_id not in states:
+        raise HTTPException(status_code=404, detail=f"State '{state_id}' not found")
+
+    state = states[state_id]
+
+    if not state.execution_path:
+        raise HTTPException(status_code=400, detail="No steps to step back from")
+
+    undone_node_id = state.execution_path.pop()
+    state.analysis_results.pop(undone_node_id, None)
+
+    if state.execution_path:
+        last_node_id = state.execution_path[-1]
+        last_node = NODES[last_node_id]
+        next_nodes = [
+            {"id": nn.id, "name": nn.name, "description": nn.description}
+            for nn in (NODES[nid] for nid in last_node.next_nodes)
+        ]
+    else:
+        entry_id = ENTRY_NODE_MAP[state.tool_name]
+        entry_node = NODES[entry_id]
+        next_nodes = [
+            {"id": entry_node.id, "name": entry_node.name, "description": entry_node.description}
+        ]
+
+    return {
+        "undone_node": undone_node_id,
+        "execution_path": state.execution_path,
+        "available_nodes": next_nodes,
+        "is_terminal": len(next_nodes) == 0,
     }
 
 
