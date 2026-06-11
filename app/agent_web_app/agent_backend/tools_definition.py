@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
+from log_parser import test_ips_and_glue_template, test_pressroll_mp_template
+from event_extractor import GlueEventExtractor, PressrollMPEventExtractor
 
 # ----------------------------------------------------------------------------
 #                TEMPLATE FOR ADDING A NEW CUSTOM TOOL
@@ -108,7 +111,14 @@ def get_material_change_in_log(start_time: str, end_time: str, desire_material: 
 @tool(args_schema=AnalysisArgs)
 def get_glue_set_func_call_in_log(time: str, desire_material: str):
     """get the glue set func call in log, this func will extract the set func event with material lifecycle events"""
-    return "## get_glue_set_func_call_in_log \n\n ### hello glue set func \n\n asdadadasdasdasd"
+    dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
+    start_time = (dt - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")
+    end_time = (dt + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")
+    extractor: GlueEventExtractor = test_ips_and_glue_template(
+        start_time=start_time, end_time=end_time
+    )
+    results = extractor.get_glue_set_function_full_event()
+    print(results)
 
 
 @tool(args_schema=TrackArgs)
