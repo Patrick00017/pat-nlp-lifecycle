@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { funcQuery, funcCall, analysisInit, analysisStep, analysisStepback } from '../api'
+import { funcQuery, analysisInit, analysisStep, analysisStepback } from '../api'
 
 const ANALYSIS_TOOLS = {
   get_material_change_in_log:       { label: '材料变更分析', entryNode: 'mc_timeline' },
@@ -49,7 +49,7 @@ export default function DataAnalysis() {
     setIsQuerying(true)
 
     const nextMessages = isNewSession
-      ? [{ role: 'user', content: text }]
+      ? [{ role: "developer", content: "当前日期: 2024年7月3日 星期三"},{ role: 'user', content: text }]
       : [...messages, { role: 'user', content: text }]
 
     try {
@@ -92,18 +92,7 @@ export default function DataAnalysis() {
     setIsExecuting(true)
 
     try {
-      const callResp = await funcCall([{ name: entry.toolCall.name, arguments: entry.toolCall.arguments }])
-      const result = callResp.results?.[0]
-      if (result?.error) {
-        setChatLog(c => [...c, { type: 'error', text: `工具执行失败: ${result.error}` }])
-        setIsExecuting(false)
-        return
-      }
-
-      const toolResult = result?.result ?? ''
-      setChatLog(c => [...c, { type: 'tool_result', result: toolResult }])
-
-      const initResp = await analysisInit(entry.toolCall.name, entry.toolCall.arguments, toolResult)
+      const initResp = await analysisInit(entry.toolCall.name, entry.toolCall.arguments)
       setChatLog(c => [...c, {
         type: 'analysis',
         stateId: initResp.state_id,
@@ -203,13 +192,6 @@ export default function DataAnalysis() {
                 </button>
               </div>
             </div>
-          </div>
-        )
-
-      case 'tool_result':
-        return (
-          <div key={index} className="msg-wrapper msg-ai-wrapper">
-            <div className="msg msg-ai"><ReactMarkdown remarkPlugins={[remarkGfm]}>{entry.result}</ReactMarkdown></div>
           </div>
         )
 

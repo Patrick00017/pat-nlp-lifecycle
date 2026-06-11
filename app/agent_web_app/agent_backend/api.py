@@ -329,7 +329,7 @@ async def func_call(request: FuncCallRequest):
         else:
             try:
                 result = tool.invoke(args)
-                results.append({"name": name, "result": result})
+                results.append({"name": name, "result": str(result)})
             except Exception as e:
                 results.append({"name": name, "error": str(e)})
     return {"results": results}

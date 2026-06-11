@@ -112,13 +112,15 @@ def get_material_change_in_log(start_time: str, end_time: str, desire_material: 
 def get_glue_set_func_call_in_log(time: str, desire_material: str):
     """get the glue set func call in log, this func will extract the set func event with material lifecycle events"""
     dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
-    start_time = (dt - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")
-    end_time = (dt + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")
+    start_time = (dt - timedelta(minutes=60)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    end_time = (dt + timedelta(minutes=60)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    print(start_time)
+    print(end_time)
     extractor: GlueEventExtractor = test_ips_and_glue_template(
         start_time=start_time, end_time=end_time
     )
     results = extractor.get_glue_set_function_full_event()
-    print(results)
+    return results
 
 
 @tool(args_schema=TrackArgs)

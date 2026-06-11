@@ -1,4 +1,6 @@
 import uuid
+import re
+from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -33,6 +35,15 @@ class AnalysisNode:
         self.next_nodes = next_nodes
 
 
+def _parse_new_material(msg: str) -> str:
+    """从 lifecycle msg 中解析换入的新材料
+    输入: '(-,0,-) -> (8,2400,B)'
+    输出: '8'
+    """
+    match = re.search(r'->\s*\(([^,]+)', msg)
+    return match.group(1).strip() if match else ''
+
+
 # ──────────────────────────────────────────────
 # 3. 占位处理函数
 # ──────────────────────────────────────────────
@@ -53,17 +64,112 @@ def _mc_report(state: AnalysisState) -> str:
     return f"[换材分析报告] 基于以下分析生成：\n{prev}"
 
 def _glue_list(state: AnalysisState) -> str:
-    return f"[事件列表] 胶量设定事件 ({state.start_time} ~ {state.end_time})：\n  - 10:01:00 → 胶量设至 120g/m²\n  - 10:15:00 → 胶量设至 115g/m²\n  - 10:30:00 → 胶量设至 125g/m²"
+    """胶量关联分析: 按时间线列出每次胶量设定及关联的换材事件"""
+    results = state.tool_result
+    if not results:
+        return "[事件列表] 无胶量设定事件数据"
+    lines = []
+    for record in results:
+        func = record['func']
+        material = record['material']
+        set_time = record['time']
+        lifecycle = record.get('lifecycle', {})
+        time_short = set_time[:19]
+        lines.append(f"=== {func} ({material}) @ {time_short} ===")
+        events = []
+        for part in ['ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df']:
+            info = lifecycle.get(part)
+            if info and info.get('msg'):
+                events.append((info['time'], f"[{part.upper()}] {info['msg']}"))
+        events.sort(key=lambda x: x[0])
+        for t, msg in events:
+            lines.append(f"  {t[:19]} → {msg}")
+        lines.append("  ---")
+        lines.append(f"  {time_short} → 胶量设定: {func}")
+        lines.append("")
+    return "\n".join(lines)
 
 def _glue_trend(state: AnalysisState) -> str:
-    return f"[趋势分析] 胶量变化趋势：\n  - 初始: 120g/m²\n  - 最低: 115g/m²\n  - 最高: 125g/m²\n  - 结论: 胶量呈现小幅波动，趋势稳定"
+    """胶量趋势分析: 提取 set_values 中各车速点的胶量值，分析变化趋势"""
+    results = state.tool_result
+    if not results:
+        return "[趋势分析] 无胶量设定事件数据"
+    lines = []
+    for record in results:
+        func = record['func']
+        material = record['material']
+        for part_key, part_data in record['set_values'].items():
+            columns = part_data['columns']
+            data = part_data['data']
+            speed_idx = columns.index('speed')
+            value_idx = columns.index('value')
+            points = [(int(row[speed_idx]), float(str(row[value_idx]).split('\\r')[0])) for row in data]
+            points.sort(key=lambda x: x[0])
+            vals = [v for _, v in points]
+            init_v, final_v = vals[0], vals[-1]
+            min_v, max_v = min(vals), max(vals)
+            trend = "上升" if final_v > init_v else "下降" if final_v < init_v else "稳定"
+            lines.append(f"=== {func} ({material}) {part_key} ===")
+            lines.append(f"  {'车速':>5} | {'胶量':>8}")
+            for s, v in points:
+                marker = " ← 最低" if v == min_v else " ← 最高" if v == max_v else ""
+                lines.append(f"  {s:>5} | {v:>8.2f}{marker}")
+            lines.append(f"  趋势: {trend} ({init_v:.2f} → {final_v:.2f}), 最高={max_v:.2f}, 最低={min_v:.2f}")
+            lines.append("")
+    return "\n".join(lines)
 
 def _glue_cross(state: AnalysisState) -> str:
-    return f"[关联分析] 胶量设定与换材关联：\n  - 10:01 胶量变更 → 10:02 材料切换为 P\n  - 10:15 胶量变更 → 10:16 材料切换为 N"
+    """材质匹配校验: 比对设定材质与 lifecycle 中各部件实际换入的材质"""
+    results = state.tool_result
+    if not results:
+        return "[材质校验] 无数据"
+    lines = []
+    for record in results:
+        func = record['func']
+        material = record['material']
+        part = record.get('part', '')
+        lifecycle = record.get('lifecycle', {})
+        lines.append(f"=== {func} ({material}) ===")
+        if part in ('SF1', 'SF2'):
+            parts_arr = material.split('/')
+            if len(parts_arr) != 2:
+                continue
+            ms_m, ls_m = parts_arr
+            ms_p = 'ms1' if part == 'SF1' else 'ms2'
+            ls_p = 'ls1' if part == 'SF1' else 'ls2'
+            for p, exp in [(ms_p, ms_m), (ls_p, ls_m)]:
+                info = lifecycle.get(p)
+                if info and info.get('msg'):
+                    actual = _parse_new_material(info['msg'])
+                    ok = "✓" if actual == exp else "✗ 错位"
+                    lines.append(f"  [{p.upper()}] {info['msg']} → 期望[{exp}] {ok}")
+        elif part == 'DF':
+            mat_parts = material.split('.')
+            part_map = {'ls0': 0, 'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}
+            for p, idx in part_map.items():
+                info = lifecycle.get(p)
+                if info and info.get('msg'):
+                    actual = _parse_new_material(info['msg'])
+                    expected = mat_parts[idx] if idx < len(mat_parts) else '-'
+                    ok = "✓" if actual == expected else "✗ 错位"
+                    lines.append(f"  [{p.upper()}] {info['msg']} → 期望[{expected}] {ok}")
+            df_info = lifecycle.get('df')
+            if df_info and df_info.get('msg'):
+                actual = _parse_new_material(df_info['msg'])
+                ok = "✓" if actual == material else "✗ 错位"
+                lines.append(f"  [DF] {df_info['msg']} → 期望[{material}] {ok}")
+        lines.append("")
+    return "\n".join(lines)
 
 def _glue_report(state: AnalysisState) -> str:
-    prev = state.analysis_results.get(state.execution_path[-2], "") if len(state.execution_path) >= 2 else ""
-    return f"[胶量分析报告] 基于以下分析生成：\n{prev}"
+    """汇总 trend 和 cross 的分析结果"""
+    parts = []
+    for node_id in ['glue_trend', 'glue_cross']:
+        if node_id in state.analysis_results:
+            parts.append(state.analysis_results[node_id])
+    if not parts:
+        return "[胶量分析报告] 请先运行趋势分析和材质校验"
+    return "[胶量分析报告]\n\n" + "\n---\n".join(parts)
 
 def _track_lifecycle(state: AnalysisState) -> str:
     return f"[生命周期总览] 材料 {state.material} 的流转路径：\n  - LS0 → MS1 → LS1 → MS2 → LS2\n  - 当前状态: LS2 在位中"
@@ -136,8 +242,8 @@ TOOL_STATE_EXTRACTORS = {
         "material": args.get("material"),
     },
     "get_glue_set_func_call_in_log": lambda args: {
-        "start_time": args.get("time"),
-        "end_time": args.get("time"),
+        "start_time": (datetime.strptime(args.get("time"), "%Y-%m-%d %H:%M:%S.%f") - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+        "end_time": (datetime.strptime(args.get("time"), "%Y-%m-%d %H:%M:%S.%f") + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         "material": args.get("desire_material"),
     },
     "track_material_in_log": lambda args: {
@@ -170,6 +276,17 @@ async def init_analysis(body: dict):
     if tool_name not in ENTRY_NODE_MAP:
         available = list(ENTRY_NODE_MAP.keys())
         raise HTTPException(status_code=400, detail=f"Unknown tool '{tool_name}', available: {available}")
+
+    if tool_result is None:
+        from tools_definition import tools
+        tm = {t.name: t for t in tools}
+        t = tm.get(tool_name)
+        if t is None:
+            raise HTTPException(status_code=400, detail=f"Tool '{tool_name}' not found in tools_definition")
+        try:
+            tool_result = t.invoke(tool_args)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
 
     extractor = TOOL_STATE_EXTRACTORS[tool_name]
     extracted = extractor(tool_args)
