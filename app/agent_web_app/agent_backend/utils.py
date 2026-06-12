@@ -1,7 +1,23 @@
 import json
 import re
 import yaml
+from datetime import datetime
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
+
+
+def parse_time_flexible(time_str: str) -> datetime:
+    """支持多种时间格式的解析"""
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M.%f",
+        "%Y-%m-%d %H:%M",
+    ):
+        try:
+            return datetime.strptime(time_str.strip(), fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"time data '{time_str}' does not match any supported format")
 
 def load_config(config_path="config.yaml"):
     """Load database configuration from a YAML file."""

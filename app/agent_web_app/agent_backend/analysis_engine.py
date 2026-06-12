@@ -5,6 +5,8 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from cachetools import TTLCache
+from glue_diagnostic import GlueRecordDiagnostic
+from utils import parse_time_flexible
 
 
 # ──────────────────────────────────────────────
@@ -223,6 +225,14 @@ def _glue_diagnose(state: AnalysisState) -> str:
                 lines.append(f"- 最低赋值: {min(values):.2f} (下限: {min_glues[0]:.2f}) {'⚠️ 触底' if touched_min else '✅ 正常'}")
                 lines.append(f"- 最高赋值: {max(values):.2f} (上限: {max_glues[0]:.2f}) {'⚠️ 触顶' if touched_max else '✅ 正常'}")
                 lines.append("")
+        # 深度诊断 (9 项)
+        diag = GlueRecordDiagnostic(record, None)
+        checks = diag.diagnose_all()
+        lines.append("**深度诊断 (9 项)**")
+        lines.append("| 检查项 | 结果 | 详情 |")
+        lines.append("|--------|------|------|")
+        for c in checks:
+            lines.append(f"| {c.name} | {c.icon} | {c.detail} |")
         lines.append("")
     return "\n".join(lines)
 
@@ -454,8 +464,8 @@ TOOL_STATE_EXTRACTORS = {
         "material": args.get("material"),
     },
     "get_glue_set_func_call_in_log": lambda args: {
-        "start_time": (datetime.strptime(args.get("time"), "%Y-%m-%d %H:%M:%S.%f") - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
-        "end_time": (datetime.strptime(args.get("time"), "%Y-%m-%d %H:%M:%S.%f") + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+        "start_time": (parse_time_flexible(args.get("time")) - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+        "end_time": (parse_time_flexible(args.get("time")) + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
         "material": args.get("desire_material"),
     },
     "track_material_in_log": lambda args: {

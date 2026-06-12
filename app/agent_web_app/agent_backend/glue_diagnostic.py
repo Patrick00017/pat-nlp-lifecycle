@@ -54,10 +54,11 @@ from typing import Any, Optional
 
 
 def _d(val) -> Decimal:
-    """安全转为 Decimal，处理字符串/数字/None。"""
+    """安全转为 Decimal，处理字符串/数字/None 及 \r 后缀。"""
     if val is None:
         return Decimal(0)
-    return Decimal(str(val))
+    s = str(val).split('\\r')[0].strip()
+    return Decimal(s)
 
 
 def _rd(val: Decimal, ndigits: int = 2) -> Decimal:

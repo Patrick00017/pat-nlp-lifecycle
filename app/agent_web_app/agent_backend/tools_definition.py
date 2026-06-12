@@ -3,6 +3,7 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from log_parser import test_ips_and_glue_template, test_pressroll_mp_template
 from event_extractor import GlueEventExtractor, PressrollMPEventExtractor
+from utils import parse_time_flexible
 
 # ----------------------------------------------------------------------------
 #                TEMPLATE FOR ADDING A NEW CUSTOM TOOL
@@ -111,7 +112,7 @@ def get_material_change_in_log(start_time: str, end_time: str, desire_material: 
 @tool(args_schema=AnalysisArgs)
 def get_glue_set_func_call_in_log(time: str, desire_material: str):
     """get the glue set func call in log, this func will extract the set func event with material lifecycle events"""
-    dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
+    dt = parse_time_flexible(time)
     start_time = (dt - timedelta(minutes=60)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     end_time = (dt + timedelta(minutes=60)).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     print(start_time)
