@@ -11,3 +11,20 @@ basedatabase:
   database: "shly-basedb"
   username: "sa"
   password: "Bts001"
+
+opencode:
+  host: "127.0.0.1"
+  port: 4096
+  password: "my-opencode-password"
+  project_directory: "D:/code/pat-nlp-lifecycle"
+  mcp_servers:
+    sqlserver:
+      type: local
+      command:
+        - "conda"
+        - "run"
+        - "-n"
+        - "pat-nlp-lifecycle"
+        - "python"
+        - "mcp_sqlserver.py"
+      cwd: "./agent_backend"

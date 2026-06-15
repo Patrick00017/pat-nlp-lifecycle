@@ -337,6 +337,9 @@ async def func_call(request: FuncCallRequest):
 
 app.include_router(analysis_router)
 
+from opencode_router import router as opencode_router
+app.include_router(opencode_router)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
