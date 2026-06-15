@@ -59,24 +59,37 @@ async def opencode_chat_stream(request: OpenCodeChatRequest):
 
     async def event_stream():
         try:
-            if request.thread_id:
-                session_id = request.thread_id
-            else:
-                session_id = await orch.create_session(agent=request.agent)
+            session_id = (
+                request.thread_id
+                or await orch.create_session(agent=request.agent)
+            )
 
             yield f"data: {json.dumps({'type': 'thread_id', 'value': session_id})}\n\n"
 
-            messages = await orch.prompt(session_id, request.message)
-            for msg in messages:
-                role = msg.get("role", "")
-                parts = msg.get("parts", [])
-                for part in parts if isinstance(parts, list) else []:
-                    if isinstance(part, dict) and part.get("type") == "text":
-                        yield f"data: {json.dumps({'type': 'message', 'content': part.get('text', '')})}\n\n"
-                    elif isinstance(part, dict) and part.get("type") == "tool":
-                        yield f"data: {json.dumps({'type': 'tool', 'name': part.get('name')})}\n\n"
-                    elif isinstance(part, dict) and part.get("type") == "reasoning":
-                        yield f"data: {json.dumps({'type': 'reason', 'content': part.get('text', '')})}\n\n"
+            part_types: dict[str, str] = {}
+
+            async for event in orch.stream_chat(session_id, request.message):
+                payload = event.get("payload", {})
+                evt_type = payload.get("type", "")
+                props = payload.get("properties", {})
+
+                if evt_type == "message.part.updated":
+                    part = props.get("part", {})
+                    pid = part.get("id")
+                    part_type = part.get("type", "")
+                    if pid and part_type:
+                        part_types[pid] = part_type
+
+                elif evt_type == "message.part.delta":
+                    pid = props.get("partID")
+                    delta = props.get("delta", "")
+                    if not delta:
+                        continue
+                    part_type = part_types.get(pid, "text")
+                    if part_type == "reasoning":
+                        yield f"data: {json.dumps({'type': 'reason', 'content': delta})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'message', 'content': delta})}\n\n"
 
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
         except Exception as e:

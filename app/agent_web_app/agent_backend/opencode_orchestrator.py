@@ -1,4 +1,5 @@
 import os
+import json
 import asyncio
 import logging
 from typing import Any
@@ -144,6 +145,81 @@ class OpencodeOrchestrator:
 
         logger.info("Prompt submitted, fetching all messages...")
         return await self.get_messages(session_id, order="asc")
+
+    async def stream_chat(self, session_id: str, text: str):
+        """Async generator yielding raw event dicts from /global/event SSE during message processing."""
+        event_queue: asyncio.Queue[dict | None] = asyncio.Queue()
+
+        async def _read_events():
+            try:
+                async with httpx.AsyncClient(
+                    base_url=self.base_url, auth=self._auth, timeout=None
+                ) as c:
+                    async with c.stream("GET", "/global/event") as resp:
+                        async for line in resp.aiter_lines():
+                            if line.startswith("data: "):
+                                await event_queue.put(json.loads(line[6:]))
+            except Exception as e:
+                logger.exception("event reader error")
+            finally:
+                await event_queue.put(None)
+
+        async def _send_message():
+            try:
+                payload = {"parts": [{"type": "text", "text": text}]}
+                await self.client.post(
+                    f"/session/{session_id}/message", json=payload
+                )
+            except Exception as e:
+                logger.exception("send message error")
+
+        reader = asyncio.create_task(_read_events())
+        sender = asyncio.create_task(_send_message())
+
+        while True:
+            try:
+                event = await asyncio.wait_for(event_queue.get(), timeout=120)
+            except asyncio.TimeoutError:
+                logger.warning("stream_chat timed out waiting for events")
+                break
+            if event is None:
+                break
+
+            payload = event.get("payload", {})
+            props = payload.get("properties", {})
+            evt_session = (
+                props.get("sessionID")
+                or props.get("session_id")
+                or event.get("sessionID")
+            )
+            if evt_session and evt_session != session_id:
+                continue
+
+            yield event
+
+            if payload.get("type") in ("session.idle",):
+                break
+            if (
+                payload.get("type") == "session.status"
+                and isinstance(props.get("status"), dict)
+                and props.get("status", {}).get("type") == "idle"
+            ):
+                break
+            if (
+                payload.get("type") == "message.part.updated"
+                and isinstance(props.get("part"), dict)
+                and props.get("part", {}).get("type") == "step-finish"
+                and props.get("part", {}).get("reason") == "stop"
+            ):
+                break
+
+        reader.cancel()
+        try:
+            await reader
+        except (asyncio.CancelledError, Exception):
+            pass
+        if not sender.done():
+            await sender
 
     async def get_messages(self, session_id: str, order="asc", limit=50) -> list[dict]:
         resp = await self.client.get(
