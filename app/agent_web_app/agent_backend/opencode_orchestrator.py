@@ -30,11 +30,13 @@ def _extract_tool_calls(messages: list[dict]) -> list[dict]:
         parts = msg.get("parts", [])
         for part in parts if isinstance(parts, list) else []:
             if isinstance(part, dict) and part.get("type") == "tool":
-                calls.append({
-                    "name": part.get("name"),
-                    "input": part.get("input"),
-                    "result": part.get("result"),
-                })
+                calls.append(
+                    {
+                        "name": part.get("name"),
+                        "input": part.get("input"),
+                        "result": part.get("result"),
+                    }
+                )
     return calls
 
 
@@ -58,7 +60,9 @@ class OpencodeOrchestrator:
     @property
     def client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
-            self._client = httpx.AsyncClient(base_url=self.base_url, auth=self._auth, timeout=120)
+            self._client = httpx.AsyncClient(
+                base_url=self.base_url, auth=self._auth, timeout=300
+            )
         return self._client
 
     async def ensure_server_running(self, wait_seconds: int = 10) -> bool:
@@ -76,7 +80,9 @@ class OpencodeOrchestrator:
 
     async def _health_check(self) -> bool:
         try:
-            async with httpx.AsyncClient(base_url=self.base_url, auth=self._auth, timeout=5) as c:
+            async with httpx.AsyncClient(
+                base_url=self.base_url, auth=self._auth, timeout=5
+            ) as c:
                 resp = await c.get("/global/health")
                 return resp.status_code == 200
         except Exception:
@@ -107,7 +113,9 @@ class OpencodeOrchestrator:
         except asyncio.CancelledError:
             pass
 
-    async def create_session(self, agent: str = "general", directory: str | None = None) -> str:
+    async def create_session(
+        self, agent: str = "general", directory: str | None = None
+    ) -> str:
         dir_path = directory or self.project_directory
         logger.info("Creating session (agent=%s, dir=%s)", agent, dir_path)
         payload: dict[str, Any] = {}
@@ -190,7 +198,9 @@ class OpencodeOrchestrator:
         resp.raise_for_status()
         return resp.content
 
-    async def list_files(self, path: str = "", directory: str | None = None) -> list[dict]:
+    async def list_files(
+        self, path: str = "", directory: str | None = None
+    ) -> list[dict]:
         params: dict[str, str] = {"path": path}
         if directory:
             params["directory"] = directory

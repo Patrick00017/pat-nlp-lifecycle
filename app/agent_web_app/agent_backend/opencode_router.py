@@ -128,6 +128,52 @@ async def opencode_get_session(session_id: str):
     return {"session": info, "messages": messages}
 
 
+@router.get("/diagnose")
+async def opencode_diagnose():
+    import time
+    import httpx
+    orch = get_orchestrator()
+    result = {
+        "config": {
+            "host": orch.host,
+            "port": orch.port,
+            "base_url": orch.base_url,
+        }
+    }
+
+    t0 = time.time()
+    try:
+        async with httpx.AsyncClient(base_url=orch.base_url, auth=orch._auth, timeout=5) as c:
+            resp = await c.get("/global/health")
+            result["health_check"] = {
+                "ok": resp.status_code == 200,
+                "status_code": resp.status_code,
+                "elapsed_ms": round((time.time() - t0) * 1000),
+            }
+    except Exception as e:
+        result["health_check"] = {
+            "ok": False,
+            "error": repr(e),
+            "elapsed_ms": round((time.time() - t0) * 1000),
+        }
+
+    if result["health_check"].get("ok"):
+        try:
+            t0 = time.time()
+            sid = await orch.create_session(agent="general")
+            result["create_session"] = {
+                "ok": True,
+                "session_id": sid,
+                "elapsed_ms": round((time.time() - t0) * 1000),
+            }
+            info = await orch.get_session_info(sid)
+            result["session_info"] = info
+        except Exception as e:
+            result["create_session"] = {"ok": False, "error": repr(e)}
+
+    return result
+
+
 @router.get("/agents")
 async def opencode_list_agents():
     orch = get_orchestrator()

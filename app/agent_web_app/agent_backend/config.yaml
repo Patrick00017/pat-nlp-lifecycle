@@ -14,7 +14,7 @@ basedatabase:
 
 opencode:
   host: "127.0.0.1"
-  port: 4096
+  port: 4097
   password: "my-opencode-password"
   project_directory: "D:/code/pat-nlp-lifecycle"
   mcp_servers:

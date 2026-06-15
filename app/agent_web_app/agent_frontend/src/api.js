@@ -112,6 +112,43 @@ export async function analysisStepback(stateId) {
   return res.json()
 }
 
+export async function listOpenCodeAgents() {
+  const res = await fetch(`${BASE}/opencode/agents`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (!res.ok) throw new Error(`List agents failed: ${res.status}`)
+  return res.json()
+}
+
+export async function createOpenCodeSession(agent = 'general') {
+  const res = await fetch(`${BASE}/opencode/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent }),
+  })
+  if (!res.ok) throw new Error(`Create session failed: ${res.status}`)
+  return res.json()
+}
+
+export async function listOpenCodeSessions(limit = 20) {
+  const res = await fetch(`${BASE}/opencode/sessions?limit=${limit}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (!res.ok) throw new Error(`List sessions failed: ${res.status}`)
+  return res.json()
+}
+
+export async function getOpenCodeSession(sessionId) {
+  const res = await fetch(`${BASE}/opencode/session/${sessionId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (!res.ok) throw new Error(`Get session failed: ${res.status}`)
+  return res.json()
+}
+
 export async function connectSSE(url, payload, onMessage, onError) {
   try {
     await fetchEventSource(url, {
