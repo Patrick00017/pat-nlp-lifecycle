@@ -4,6 +4,8 @@ from collections import defaultdict
 
 
 class GlueGapDiagnostic:
+    TRIG_LABELS = {'G7': '换材触发', 'G11': '立即换材'}
+
     def __init__(self, extractor, warp_extractor=None):
         self.extractor = extractor
         self.warp_extractor = warp_extractor
@@ -77,7 +79,7 @@ class GlueGapDiagnostic:
                     'cycle_index': c['index'],
                     'start_time': str(start_time),
                     'start_type': start_type,
-                    'detail': f'{start_type}触发的周期({start_time})缺少G12或G15结束事件'
+                    'detail': f'{start_type}（{self.TRIG_LABELS.get(start_type, "其他触发")}）触发的周期({start_time})缺少G12（写值完成）或G15（写值前取消）结束事件'
                 })
             elif c['end'] == 'cancelled_pre_write' and g14_count == 0:
                 anomalies.append({
@@ -151,10 +153,12 @@ class GlueGapDiagnostic:
             values = []
             for r in rows:
                 try:
-                    speeds.append(float(r[0]) if r[0] else 0)
-                    values.append(float(r[-1]) if r[-1] else 0)
+                    s = float(r[0]) if r[0] else 0
+                    v = float(r[-1]) if r[-1] else 0
                 except (ValueError, TypeError):
                     continue
+                speeds.append(s)
+                values.append(v)
             if len(speeds) < 2:
                 continue
             start_time = c['start'].get('Date', '')
@@ -244,7 +248,7 @@ class GlueGapDiagnostic:
                     'type': 'immediate_change',
                     'cycle_index': c['index'],
                     'time': str(start_time),
-                    'detail': f'触发G11立即换材 —— 偏移量={offset}, 材质={material}'
+                    'detail': f'周期#{c["index"]}: 触发G11立即换材 —— 偏移量={offset}, 材质={material}'
                 })
             df_lifecycle = lifecycle.get('df', {}).get('msg', '')
             if df_lifecycle and material:
@@ -256,12 +260,34 @@ class GlueGapDiagnostic:
                         'type': 'material_mismatch',
                         'cycle_index': c['index'],
                         'time': str(start_time),
-                        'detail': f'DF生命周期材质"{df_msg_material}"与G7材质"{material}"不一致'
+                        'detail': f'周期#{c["index"]}: DF生命周期材质"{df_msg_material}"与G7材质"{material}"不一致'
                     })
         return issues
 
+    @staticmethod
+    def _extract_layer_values(set_values):
+        """Extract per-layer speed→value pairs from set_values."""
+        layers = []
+        for layer, ld in set_values.items():
+            data = ld.get('data', [])
+            cols = ld.get('columns', [])
+            try:
+                si = cols.index('speed')
+                vi = cols.index('value')
+            except (ValueError, IndexError):
+                layers.append({'name': layer, 'segments': []})
+                continue
+            segs = []
+            for r in data:
+                try:
+                    segs.append({'speed': r[si], 'value': r[vi]})
+                except IndexError:
+                    continue
+            layers.append({'name': layer, 'segments': segs})
+        return layers
+
     # ── Dimension 5: Root Cause Traceback ──
-    def traceback(self, target_time, expected_values=None):
+    def traceback(self, target_time, expected_values=None, recent_count=5):
         ts_target = self._to_ts(target_time)
         ts_target = pd.Timestamp(ts_target) if not isinstance(ts_target, pd.Timestamp) else ts_target
 
@@ -378,9 +404,94 @@ class GlueGapDiagnostic:
             result['warp_active'] = len(nearby) > 0
             result['warp_events_nearby'] = nearby[:10]
 
-        anomalies = self.check_cycle_completeness()
-        result['cycle_anomalies'] = [a for a in anomalies
+        all_anomalies = self.check_cycle_completeness()
+        result['cycle_anomalies'] = [a for a in all_anomalies
                                      if active_cycle and a['cycle_index'] == active_cycle['index']]
+
+        # ── Recent Assignment Events ──
+        ts_min = ts_target - pd.Timedelta(hours=1)
+        recent = []
+        mc_all = self.check_material_consistency()
+        for c in reversed(self.cycles):
+            end_ts = None
+            if c['end'] == 'complete' and c.get('end_event'):
+                raw = c['end_event'].get('Date', '')
+                try:
+                    end_ts = pd.Timestamp(raw) if not isinstance(raw, pd.Timestamp) else raw
+                except Exception:
+                    continue
+            elif c['end'] == 'cancelled_pre_write' and c.get('end_event'):
+                raw = c['end_event'].get('Date', '')
+                try:
+                    end_ts = pd.Timestamp(raw) if not isinstance(raw, pd.Timestamp) else raw
+                except Exception:
+                    continue
+            elif c['end'] == 'interrupted':
+                raw = c['start'].get('Date', '')
+                try:
+                    end_ts = pd.Timestamp(raw) if not isinstance(raw, pd.Timestamp) else raw
+                except Exception:
+                    continue
+            if end_ts is None:
+                continue
+            if end_ts > ts_target:
+                continue
+            if end_ts < ts_min:
+                break
+
+            sfe = c.get('set_func_event')
+            entry = {
+                'index': c['index'],
+                'start_time': str(c['start'].get('Date', '')),
+                'end_time': str(end_ts),
+                'end': c['end'],
+                'start_type': c['start'].get('EventId', ''),
+                'material': sfe.get('material', 'N/A') if sfe else 'N/A',
+                'layers': self._extract_layer_values(sfe.get('set_values', {})) if sfe else [],
+                'is_active': active_cycle is not None and c['index'] == active_cycle['index'],
+            }
+
+            tags = []
+            for a in all_anomalies:
+                if a['cycle_index'] == c['index']:
+                    tag_map = {'no_termination': '被抢断', 'fallback_used': '降级匹配',
+                               'g12_no_g14': '缺计算', 'pre_write_cancel_no_calc': '取消无计算',
+                               'excessive_calculation': '重复计算'}
+                    tags.append(tag_map.get(a['type'], a['type']))
+
+            # direct warp_offset check on set_values
+            if sfe:
+                has_warp = False
+                for ld in sfe.get('set_values', {}).values():
+                    cols = ld.get('columns', [])
+                    off_name = next((n for n in ('warp_offset', 'offset') if n in cols), None)
+                    if off_name is None:
+                        continue
+                    off_idx = cols.index(off_name)
+                    for r in ld.get('data', []):
+                        try:
+                            if float(r[off_idx]) != 0.0:
+                                has_warp = True
+                                break
+                        except (ValueError, TypeError, IndexError):
+                            continue
+                    if has_warp:
+                        break
+                if has_warp:
+                    tags.append('弯翘影响')
+
+            # ── 材质不匹配错误 ──
+            for mm in mc_all:
+                if mm.get('type') == 'material_mismatch' and mm['cycle_index'] == c['index']:
+                    entry['error_detail'] = mm['detail']
+                    tags.append('材质不匹配')
+                    break
+
+            entry['anomalies'] = tags
+            recent.append(entry)
+            if len(recent) >= recent_count:
+                break
+        result['recent_assignments'] = recent
 
         return result
 
@@ -410,7 +521,9 @@ class GlueGapDiagnostic:
                 lines.append('|------|-----|')
                 lines.append(f'| 周期开始时间 | `{ac["start_time"]}` |')
                 lines.append(f'| G12写值完成时间 | `{ac["g12_time"]}` |')
-                lines.append(f'| 触发类型 | `{ac["start_type"]}` |')
+                st = ac["start_type"]
+                trig_desc = self.TRIG_LABELS.get(st, '其他触发')
+                lines.append(f'| 触发类型 | `{st}（{trig_desc}）` |')
                 lines.append(f'| 材质 | `{ac["material"]}` |')
                 lines.append(f'| 楞型 | `{ac["flute_type"]}` |')
                 lines.append('')
@@ -566,6 +679,47 @@ class GlueGapDiagnostic:
                     lines.append(f'| {wt} | `{detail}` | {we} |')
                 lines.append('')
 
+            # ── Recent Assignment Events ──
+            recent = tb.get('recent_assignments', [])
+            if recent:
+                lines.append('## 最近赋值事件序列')
+                lines.append('')
+                lines.append(f'目标时间点 `{tb["target_time"]}` 前最近的 {len(recent)} 次赋值事件：')
+                lines.append('')
+                lines.append('| 序号 | 触发时间 | 完成时间 | 材质 | 层 | 最终值 | 异常标签 | 错误 |')
+                lines.append('|------|---------|---------|------|----|--------|---------|------|')
+                for pos, ra in enumerate(recent):
+                    rev_idx = len(recent) - pos
+                    idx_label = f"T-{rev_idx} (#{ra['index']})"
+                    if ra.get('is_active'):
+                        idx_label = f"T-{rev_idx} (#{ra['index']}) ←生效"
+                    t_start = str(ra['start_time']).split('.')[0] if '.' in str(ra['start_time']) else str(ra['start_time'])[:19]
+                    t_end = str(ra['end_time']).split('.')[0] if '.' in str(ra['end_time']) else str(ra['end_time'])[:19]
+                    material = ra['material']
+                    layer_names = ', '.join(l['name'] for l in ra['layers']) if ra['layers'] else '-'
+                    if ra['end'] == 'complete':
+                        layer_parts = []
+                        for lyr in ra['layers']:
+                            segs = lyr.get('segments', [])
+                            if segs:
+                                val_str = ' / '.join(f"@{s['speed']}={s['value']}" for s in segs[:4])
+                                if len(segs) > 4:
+                                    val_str += ' / ...'
+                                layer_parts.append(f"{lyr['name']}: {val_str}")
+                            else:
+                                layer_parts.append(f"{lyr['name']}: (无数据)")
+                        values_str = '; '.join(layer_parts)
+                    elif ra['end'] == 'cancelled_pre_write':
+                        values_str = '(写值取消)'
+                        layer_names = '-'
+                    else:
+                        values_str = '(中断)'
+                        layer_names = '-'
+                    anom_str = ', '.join(ra['anomalies']) if ra['anomalies'] else '-'
+                    err_str = ra.get('error_detail', '-')
+                    lines.append(f'| {idx_label} | {t_start} | {t_end} | {material} | {layer_names} | {values_str} | {anom_str} | {err_str} |')
+                lines.append('')
+
         lines.append('---')
         lines.append('')
         lines.append('# 总体周期统计')
@@ -592,16 +746,16 @@ class GlueGapDiagnostic:
             lines.append('')
             for a in anom_all:
                 type_labels = {
-                    'no_termination': '无终止事件',
-                    'fallback_used': '降级匹配 (G10)',
-                    'g12_no_g14': 'G12无G14',
-                    'pre_write_cancel_no_calc': '写值取消无计算',
-                    'excessive_calculation': '过多计算',
+                    'no_termination': '无终止事件（无G12/G15）',
+                    'fallback_used': '降级匹配（G10）',
+                    'g12_no_g14': '写值完成无计算（G12无G14）',
+                    'pre_write_cancel_no_calc': '写值取消无计算（G15无G14）',
+                    'excessive_calculation': '过多计算（G14>3）',
                     'value_jump': '值跳变',
                     'speed_not_monotonic': '车速不单调',
                     'negative_value': '负值',
                     'exceeds_hard_limit': '超硬限制',
-                    'immediate_change': '立即换材',
+                    'immediate_change': '立即换材（G11）',
                     'material_mismatch': '材质不匹配',
                     'warp_influence': '弯翘调平影响',
                 }
@@ -609,12 +763,24 @@ class GlueGapDiagnostic:
                 lines.append(f'- 周期 #{a["cycle_index"]} | `{label}` | {a["detail"]}')
             lines.append('')
 
+        # ── ❌ 确认错误汇总（仅材质不匹配） ──
+        mm_issues = self.check_material_consistency()
+        mm_real = [m for m in mm_issues if m.get('type') == 'material_mismatch']
+        if mm_real:
+            lines.append('## ❌ 确认错误汇总')
+            lines.append('')
+            lines.append('| 周期 | 类型 | 说明 |')
+            lines.append('|------|------|------|')
+            for m in mm_real:
+                lines.append(f'| #{m["cycle_index"]} | 材质不匹配 | {m["detail"]} |')
+            lines.append('')
+
         return '\n'.join(lines)
 
     def print_cycle_summary(self):
         lines = []
-        lines.append(f"{'序号':<5} {'触发':<8} {'结束状态':<22} {'计算部位':<10} {'G8':<4} {'G10':<4} {'G15':<4}")
-        lines.append('-' * 60)
+        lines.append(f"{'序号':<5} {'触发原因':<16} {'结束状态':<22} {'计算部位':<10} {'G8(延迟取消)':<12} {'G10(降匹配)':<12} {'G15(写取消)':<12}")
+        lines.append('-' * 92)
         for c in self.cycles:
             g14_layers = set()
             for e in c['events']:
@@ -625,7 +791,8 @@ class GlueGapDiagnostic:
             has_g8 = any(e.get('EventId') == 'G8' for e in c['events'])
             has_g10 = any(e.get('EventId') == 'G10' for e in c['events'])
             has_g15 = c['end'] == 'cancelled_pre_write'
-            trigger = c['start'].get('EventId', '?')
+            eid = c['start'].get('EventId', '?')
+            trigger = f"{eid}（{self.TRIG_LABELS.get(eid, '?')}）"
             end_labels = {
                 'complete': '完成赋值',
                 'cancelled_pre_write': '写值前取消',
@@ -634,5 +801,5 @@ class GlueGapDiagnostic:
             }
             end_type = end_labels.get(c['end'], c['end'] or '?')
             layers = ','.join(sorted(g14_layers)) if g14_layers else '-'
-            lines.append(f"{c['index']:<5} {trigger:<8} {end_type:<22} {layers:<10} {str(has_g8):<4} {str(has_g10):<4} {str(has_g15):<4}")
+            lines.append(f"{c['index']:<5} {trigger:<16} {end_type:<22} {layers:<10} {str(has_g8):<12} {str(has_g10):<12} {str(has_g15):<12}")
         return '\n'.join(lines)

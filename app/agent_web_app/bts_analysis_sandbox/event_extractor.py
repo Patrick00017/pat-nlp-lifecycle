@@ -285,6 +285,7 @@ class GlueEventExtractor(KeyEventExtractor):
             }
             for i in range(1, 9, 1):
                 temp = [filtered_data[f'speed{i}'], filtered_data[f'min_glue{i}'], filtered_data[f'max_glue{i}'], filtered_data[f'min_weight{i}'], filtered_data[f'max_weight{i}'], filtered_data[f'current_glue_weight{i}'], filtered_data[f'speed_factor{i}'], filtered_data[f'min_speed{i}'], filtered_data[f'qdm_factor{i}'], filtered_data[f'ui_factor{i}'], filtered_data.get(f'warp_offset{i}', '0'), filtered_data[f'value{i}']]
+                data['data'].append(temp)
 
             # add gu values to data
             self.gu_value_state[glue_part] = data
