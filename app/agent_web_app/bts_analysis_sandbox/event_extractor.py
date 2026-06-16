@@ -284,6 +284,9 @@ class GlueEventExtractor(KeyEventExtractor):
 
             # add gu values to data
             self.gu_value_state[glue_part] = data
+        elif row['EventId'] == 'G15':
+            # GU pre-write cancellation: values were calculated but never written to device
+            self.gu_value_state = {}
 
     def track_machine_material_lifecycle(self, events, index):
         set_func_event = events[index]
