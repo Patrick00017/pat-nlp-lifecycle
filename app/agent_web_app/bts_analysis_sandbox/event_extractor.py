@@ -203,10 +203,15 @@ class GlueEventExtractor(KeyEventExtractor):
         self.gu_value_state = {}
         # sf value state
         self.sf_value_state = {}
+        # raw parsed rows for diagnostic analysis
+        self.raw_parsed_rows = []
 
     def process(self, row):
         # print(row['EventId'])
         self.process_log_row(row) # for material change event
+        # store raw parsed row for diagnostic analysis
+        if pd.notna(row.get('EventId')):
+            self.raw_parsed_rows.append(row.to_dict())
         # for glue event
         if row['EventId'] == 'G12':
             # setgluegu set gu value

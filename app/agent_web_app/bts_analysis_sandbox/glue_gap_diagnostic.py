@@ -1,0 +1,498 @@
+import pandas as pd
+from datetime import datetime
+from collections import defaultdict
+
+
+class GlueGapDiagnostic:
+    def __init__(self, extractor):
+        self.extractor = extractor
+        self.raw_events = extractor.raw_parsed_rows
+        self.raw_events.sort(key=lambda x: str(x.get('Date', '')))
+        self.set_func_events = extractor.get_glue_set_function_full_event()
+        self.cycles = self._group_cycles()
+
+    def _to_ts(self, val):
+        if isinstance(val, pd.Timestamp):
+            return val
+        if isinstance(val, str):
+            try:
+                return pd.Timestamp(val)
+            except Exception:
+                return val
+        return val
+
+    def _group_cycles(self):
+        cycles = []
+        current = None
+        for evt in self.raw_events:
+            eid = evt.get('EventId')
+            if eid in ('G7', 'G11'):
+                if current:
+                    if current.get('end') is None:
+                        current['end'] = 'interrupted'
+                    cycles.append(current)
+                current = {'start': evt, 'events': [], 'end': None, 'end_event': None}
+                current['events'].append(evt)
+            elif current is None:
+                continue
+            else:
+                current['events'].append(evt)
+                if eid == 'G12':
+                    current['end'] = 'complete'
+                    current['end_event'] = evt
+                    g12_time = str(evt.get('Date', ''))
+                    for sfe in self.set_func_events:
+                        if str(sfe.get('time', '')) == g12_time:
+                            current['set_func_event'] = sfe
+                            break
+                    cycles.append(current)
+                    current = None
+                elif eid == 'G15':
+                    current['end'] = 'cancelled_pre_write'
+                    current['end_event'] = evt
+                    cycles.append(current)
+                    current = None
+        if current:
+            if current.get('end') is None:
+                current['end'] = 'interrupted'
+            cycles.append(current)
+        for i, c in enumerate(cycles):
+            c['index'] = i
+        return cycles
+
+    # ── Dimension 1: Cycle Completeness ──
+    def check_cycle_completeness(self):
+        anomalies = []
+        for c in self.cycles:
+            g14_count = sum(1 for e in c['events'] if e.get('EventId') == 'G14')
+            has_g8 = any(e.get('EventId') == 'G8' for e in c['events'])
+            has_g10 = any(e.get('EventId') == 'G10' for e in c['events'])
+            start_type = c['start'].get('EventId', '')
+            start_time = c['start'].get('Date', '')
+
+            if c['end'] == 'interrupted':
+                anomalies.append({
+                    'type': 'no_termination',
+                    'cycle_index': c['index'],
+                    'start_time': str(start_time),
+                    'start_type': start_type,
+                    'detail': f'{start_type}触发的周期({start_time})缺少G12或G15结束事件'
+                })
+            elif c['end'] == 'cancelled_pre_write' and g14_count == 0:
+                anomalies.append({
+                    'type': 'pre_write_cancel_no_calc',
+                    'cycle_index': c['index'],
+                    'start_time': str(start_time),
+                    'detail': '写值前被取消(G15)但没有G14计算事件 —— 计算可能失败'
+                })
+            elif c['end'] == 'complete' and g14_count == 0:
+                anomalies.append({
+                    'type': 'g12_no_g14',
+                    'cycle_index': c['index'],
+                    'start_time': str(start_time),
+                    'detail': 'G12写值完成但未发现G14计算事件'
+                })
+            elif c['end'] == 'complete' and has_g10:
+                anomalies.append({
+                    'type': 'fallback_used',
+                    'cycle_index': c['index'],
+                    'start_time': str(start_time),
+                    'detail': 'G10降级匹配被触发 —— 材质与设备部位映射不匹配'
+                })
+            elif g14_count > 3:
+                anomalies.append({
+                    'type': 'excessive_calculation',
+                    'cycle_index': c['index'],
+                    'start_time': str(start_time),
+                    'detail': f'单个周期内有{g14_count}次G14计算 —— 重复计算过多'
+                })
+        return anomalies
+
+    # ── Dimension 2: Cancellation Rate ──
+    def calc_cancellation_rate(self):
+        total_g7 = sum(1 for c in self.cycles if c['start'].get('EventId') == 'G7')
+        total_g11 = sum(1 for c in self.cycles if c['start'].get('EventId') == 'G11')
+        total_cycles = len(self.cycles)
+        g8_count = sum(1 for c in self.cycles
+                       for e in c['events'] if e.get('EventId') == 'G8')
+        g15_count = sum(1 for c in self.cycles if c['end'] == 'cancelled_pre_write')
+        completed = sum(1 for c in self.cycles if c['end'] == 'complete')
+        interrupted = sum(1 for c in self.cycles if c['end'] == 'interrupted')
+
+        return {
+            'total_cycles': total_cycles,
+            'g7_starts': total_g7,
+            'g11_starts': total_g11,
+            'completed': completed,
+            'cancelled_pre_write': g15_count,
+            'cancelled_delay': g8_count,
+            'interrupted': interrupted,
+            'cancellation_rate': round((g8_count + g15_count) / max(total_cycles, 1) * 100, 1),
+            'alert': (g8_count + g15_count) / max(total_cycles, 1) > 0.3
+        }
+
+    # ── Dimension 3: Value Plausibility ──
+    def check_value_plausibility(self, layer='GU1'):
+        issues = []
+        for c in self.cycles:
+            if c['end'] != 'complete':
+                continue
+            sfe = c.get('set_func_event')
+            if not sfe:
+                continue
+            layer_data = sfe.get('set_values', {}).get(layer)
+            if not layer_data:
+                continue
+            rows = layer_data.get('data', [])
+            if not rows:
+                continue
+            speeds = []
+            values = []
+            for r in rows:
+                try:
+                    speeds.append(float(r[0]) if r[0] else 0)
+                    values.append(float(r[-1]) if r[-1] else 0)
+                except (ValueError, TypeError):
+                    continue
+            if len(speeds) < 2:
+                continue
+            start_time = c['start'].get('Date', '')
+            for i in range(1, len(speeds)):
+                if speeds[i] <= speeds[i - 1]:
+                    issues.append({
+                        'type': 'speed_not_monotonic',
+                        'cycle_index': c['index'],
+                        'time': str(start_time),
+                        'layer': layer,
+                        'detail': f'车速段{i}不单调递增: {speeds[i-1]} -> {speeds[i]}'
+                    })
+                jump = abs(values[i] - values[i - 1])
+                if jump > 2.0:
+                    issues.append({
+                        'type': 'value_jump',
+                        'cycle_index': c['index'],
+                        'time': str(start_time),
+                        'layer': layer,
+                        'detail': f'车速段{i}糊间隙值跳变: {values[i-1]} -> {values[i]} (差值={jump:.2f})'
+                    })
+            if len(values) > 0:
+                vmin, vmax = min(values), max(values)
+                if vmin < 0:
+                    issues.append({
+                        'type': 'negative_value',
+                        'cycle_index': c['index'],
+                        'time': str(start_time),
+                        'layer': layer,
+                        'detail': f'糊间隙值为负数: {vmin}'
+                    })
+                if vmax > 60:
+                    issues.append({
+                        'type': 'exceeds_hard_limit',
+                        'cycle_index': c['index'],
+                        'time': str(start_time),
+                        'layer': layer,
+                        'detail': f'糊间隙值{vmax}超过硬限制60'
+                    })
+        return issues
+
+    # ── Dimension 4: Material Consistency ──
+    def check_material_consistency(self):
+        issues = []
+        for c in self.cycles:
+            if c['end'] != 'complete':
+                continue
+            sfe = c.get('set_func_event')
+            if not sfe:
+                continue
+            material = sfe.get('material', '')
+            lifecycle = sfe.get('lifecycle', {})
+            start_time = c['start'].get('Date', '')
+            has_g11 = c['start'].get('EventId') == 'G11'
+            if has_g11:
+                g11_pv = c['start'].get('ParsedValues', {})
+                offset = g11_pv.get('OffSetValue', 'N/A')
+                issues.append({
+                    'type': 'immediate_change',
+                    'cycle_index': c['index'],
+                    'time': str(start_time),
+                    'detail': f'触发G11立即换材 —— 偏移量={offset}, 材质={material}'
+                })
+            df_lifecycle = lifecycle.get('df', {}).get('msg', '')
+            if df_lifecycle and material:
+                parts = material.split('.')
+                material_codes = [p for p in parts if p != '-']
+                df_msg_material = df_lifecycle.split('->')[-1].strip().strip('()').split(',')[0] if '->' in df_lifecycle else ''
+                if df_msg_material and df_msg_material != material:
+                    issues.append({
+                        'type': 'material_mismatch',
+                        'cycle_index': c['index'],
+                        'time': str(start_time),
+                        'detail': f'DF生命周期材质"{df_msg_material}"与G7材质"{material}"不一致'
+                    })
+        return issues
+
+    # ── Dimension 5: Root Cause Traceback ──
+    def traceback(self, target_time, expected_values=None):
+        ts_target = self._to_ts(target_time)
+        ts_target = pd.Timestamp(ts_target) if not isinstance(ts_target, pd.Timestamp) else ts_target
+
+        completed_cycles = [c for c in self.cycles if c['end'] == 'complete']
+        active_cycle = None
+        prev_completed = None
+
+        for c in completed_cycles:
+            g12_time = c['end_event'].get('Date', '')
+            if isinstance(g12_time, str):
+                try:
+                    g12_time = pd.Timestamp(g12_time)
+                except Exception:
+                    continue
+            if g12_time <= ts_target:
+                prev_completed = c
+
+        if prev_completed:
+            active_cycle = prev_completed
+
+        cancelled_cycles = [c for c in self.cycles if c['end'] == 'cancelled_pre_write']
+        cancel_interference = None
+        for c in cancelled_cycles:
+            g15_time = self._to_ts(c['end_event'].get('Date', ''))
+            g15_ts = pd.Timestamp(g15_time) if not isinstance(g15_time, pd.Timestamp) else g15_time
+            g7_time = self._to_ts(c['start'].get('Date', ''))
+            g7_ts = pd.Timestamp(g7_time) if not isinstance(g7_time, pd.Timestamp) else g7_time
+            if prev_completed is None:
+                interference = g15_ts > ts_target
+            else:
+                prev_end = prev_completed['end_event'].get('Date', ts_target)
+                prev_end_ts = self._to_ts(prev_end)
+                prev_end_ts = pd.Timestamp(prev_end_ts) if not isinstance(prev_end_ts, pd.Timestamp) else prev_end_ts
+                interference = g15_ts > prev_end_ts
+            if g7_ts <= ts_target and interference:
+                cancel_interference = c
+
+        result = {
+            'target_time': str(ts_target),
+            'has_active_g12': active_cycle is not None,
+            'cancel_interference_nearby': cancel_interference is not None,
+        }
+
+        if active_cycle:
+            sfe = active_cycle.get('set_func_event')
+            result['active_cycle'] = {
+                'start_time': str(active_cycle['start'].get('Date', '')),
+                'g12_time': str(active_cycle['end_event'].get('Date', '')),
+                'start_type': active_cycle['start'].get('EventId', ''),
+                'material': sfe.get('material', 'N/A') if sfe else 'N/A',
+                'flute_type': sfe.get('flute_type', 'N/A') if sfe else 'N/A',
+                'set_values': sfe.get('set_values', {}) if sfe else {},
+                'lifecycle': sfe.get('lifecycle', {}) if sfe else {},
+            }
+            if expected_values:
+                mismatches = []
+                for layer, expected in expected_values.items():
+                    layer_data = sfe.get('set_values', {}).get(layer, {}) if sfe else {}
+                    data_rows = layer_data.get('data', [])
+                    actual_values = []
+                    for r in data_rows:
+                        try:
+                            actual_values.append(float(r[-1]))
+                        except (ValueError, TypeError):
+                            continue
+                    if actual_values:
+                        actual_str = f'{min(actual_values):.2f}~{max(actual_values):.2f}'
+                        match = 'acceptable' if min(actual_values) <= expected <= max(actual_values) else 'mismatch'
+                        mismatches.append({
+                            'layer': layer,
+                            'expected': expected,
+                            'actual_range': actual_str,
+                            'match': match
+                        })
+                    else:
+                        mismatches.append({
+                            'layer': layer,
+                            'expected': expected,
+                            'actual_range': 'N/A',
+                            'match': 'no_data'
+                        })
+                result['expected_value_check'] = mismatches
+        else:
+            result['active_cycle'] = None
+            result['message'] = 'No complete write cycle found before target_time'
+
+        if cancel_interference:
+            result['cancel_info'] = {
+                'cancel_time': str(cancel_interference['end_event'].get('Date', '')),
+                'cancel_type': cancel_interference['end'],
+                'cancel_cycle_start': str(cancel_interference['start'].get('Date', '')),
+                'detail': '写值前被取消 —— 该周期的计算值最终未写入设备'
+            }
+
+        anomalies = self.check_cycle_completeness()
+        result['cycle_anomalies'] = [a for a in anomalies
+                                     if active_cycle and a['cycle_index'] == active_cycle['index']]
+
+        return result
+
+    # ── Generate Report ──
+    def generate_report(self, target_time=None, expected_values=None):
+        lines = []
+
+        if target_time:
+            tb = self.traceback(target_time, expected_values)
+            lines.append('# 糊间隙赋值根因追溯报告')
+            lines.append('')
+            lines.append(f'**目标时间点**: `{tb["target_time"]}`')
+            lines.append('')
+            lines.append('## 根因追溯')
+            lines.append('')
+            lines.append('| 字段 | 值 |')
+            lines.append('|------|-----|')
+            lines.append(f'| 是否存在有效G12 | `{tb["has_active_g12"]}` |')
+            lines.append(f'| 是否存在取消干扰 | `{tb["cancel_interference_nearby"]}` |')
+            lines.append('')
+
+            ac = tb.get('active_cycle')
+            if ac:
+                lines.append('### 生效周期')
+                lines.append('')
+                lines.append('| 字段 | 值 |')
+                lines.append('|------|-----|')
+                lines.append(f'| 周期开始时间 | `{ac["start_time"]}` |')
+                lines.append(f'| G12写值完成时间 | `{ac["g12_time"]}` |')
+                lines.append(f'| 触发类型 | `{ac["start_type"]}` |')
+                lines.append(f'| 材质 | `{ac["material"]}` |')
+                lines.append(f'| 楞型 | `{ac["flute_type"]}` |')
+                lines.append('')
+
+                lifecycle = ac.get('lifecycle', {})
+                if lifecycle:
+                    lines.append('### 材质变更生命周期')
+                    lines.append('')
+                    lines.append('| 部位 | 变更内容 | 时间 |')
+                    lines.append('|------|----------|------|')
+                    for part in ['ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df']:
+                        info = lifecycle.get(part, {})
+                        msg = info.get('msg', '') if isinstance(info, dict) else ''
+                        tm = info.get('time', '') if isinstance(info, dict) else ''
+                        if msg:
+                            lines.append(f'| {part.upper()} | `{msg}` | {tm} |')
+                    lines.append('')
+
+                sv = ac.get('set_values', {})
+                if sv:
+                    lines.append('### 糊间隙计算值 (G14)')
+                    lines.append('')
+                    for layer, ld in sv.items():
+                        lines.append(f'#### {layer}')
+                        lines.append('')
+                        cols = ld.get('columns', [])
+                        data = ld.get('data', [])
+                        if cols and data:
+                            header = '| ' + ' | '.join(col.replace('_', ' ').title() for col in cols) + ' |'
+                            sep = '|' + '|'.join(['---'] * len(cols)) + '|'
+                            lines.append(header)
+                            lines.append(sep)
+                            for row in data:
+                                lines.append('| ' + ' | '.join(str(v) for v in row) + ' |')
+                            lines.append('')
+
+                evc = tb.get('expected_value_check')
+                if evc:
+                    lines.append('### 期望值对比')
+                    lines.append('')
+                    lines.append('| 部位 | 期望值 | 实际范围 | 匹配结果 |')
+                    lines.append('|------|--------|---------|---------|')
+                    for m in evc:
+                        match_label = '一致' if m['match'] == 'acceptable' else ('不匹配' if m['match'] == 'mismatch' else '无数据')
+                        lines.append(f'| {m["layer"]} | {m["expected"]} | {m["actual_range"]} | {match_label} |')
+                    lines.append('')
+
+            ci = tb.get('cancel_info')
+            if ci:
+                lines.append('### ⚠ 检测到赋值取消')
+                lines.append('')
+                lines.append('| 字段 | 值 |')
+                lines.append('|------|-----|')
+                cancel_type_label = '写值前取消' if ci['cancel_type'] == 'cancelled_pre_write' else ci['cancel_type']
+                lines.append(f'| 取消类型 | `{cancel_type_label}` |')
+                lines.append(f'| 取消时间 | `{ci["cancel_time"]}` |')
+                lines.append(f'| 详情 | {ci["detail"]} |')
+                lines.append('')
+
+            anom = tb.get('cycle_anomalies', [])
+            if anom:
+                lines.append('### 周期异常')
+                lines.append('')
+                for a in anom:
+                    lines.append(f'- **{a["type"]}**: {a["detail"]}')
+                lines.append('')
+
+        lines.append('---')
+        lines.append('')
+        lines.append('# 总体周期统计')
+        lines.append('')
+
+        cr = self.calc_cancellation_rate()
+        lines.append('| 指标 | 值 |')
+        lines.append('|------|-----|')
+        lines.append(f'| 总周期数 | {cr["total_cycles"]} |')
+        lines.append(f'| 正常触发 (G7) | {cr["g7_starts"]} |')
+        lines.append(f'| 立即换材 (G11) | {cr["g11_starts"]} |')
+        lines.append(f'| 完成赋值 | {cr["completed"]} |')
+        lines.append(f'| 写值前取消 (G15) | {cr["cancelled_pre_write"]} |')
+        lines.append(f'| 延迟中取消 (G8) | {cr["cancelled_delay"]} |')
+        lines.append(f'| 中断 | {cr["interrupted"]} |')
+        lines.append(f'| 取消率 | {cr["cancellation_rate"]}% |')
+        if cr.get('alert'):
+            lines.append(f'| ⚠ 警告 | 取消率超过30% |')
+        lines.append('')
+
+        anom_all = self.check_cycle_completeness()
+        if anom_all:
+            lines.append('## 完整性异常列表')
+            lines.append('')
+            for a in anom_all:
+                type_labels = {
+                    'no_termination': '无终止事件',
+                    'fallback_used': '降级匹配 (G10)',
+                    'g12_no_g14': 'G12无G14',
+                    'pre_write_cancel_no_calc': '写值取消无计算',
+                    'excessive_calculation': '过多计算',
+                    'value_jump': '值跳变',
+                    'speed_not_monotonic': '车速不单调',
+                    'negative_value': '负值',
+                    'exceeds_hard_limit': '超硬限制',
+                    'immediate_change': '立即换材',
+                    'material_mismatch': '材质不匹配',
+                }
+                label = type_labels.get(a['type'], a['type'])
+                lines.append(f'- 周期 #{a["cycle_index"]} | `{label}` | {a["detail"]}')
+            lines.append('')
+
+        return '\n'.join(lines)
+
+    def print_cycle_summary(self):
+        lines = []
+        lines.append(f"{'序号':<5} {'触发':<8} {'结束状态':<22} {'计算部位':<10} {'G8':<4} {'G10':<4} {'G15':<4}")
+        lines.append('-' * 60)
+        for c in self.cycles:
+            g14_layers = set()
+            for e in c['events']:
+                if e.get('EventId') == 'G14':
+                    pv = e.get('ParsedValues', {})
+                    gl = pv.get('glue_part', '?')
+                    g14_layers.add(gl)
+            has_g8 = any(e.get('EventId') == 'G8' for e in c['events'])
+            has_g10 = any(e.get('EventId') == 'G10' for e in c['events'])
+            has_g15 = c['end'] == 'cancelled_pre_write'
+            trigger = c['start'].get('EventId', '?')
+            end_labels = {
+                'complete': '完成赋值',
+                'cancelled_pre_write': '写值前取消',
+                'interrupted': '中断',
+                None: '?'
+            }
+            end_type = end_labels.get(c['end'], c['end'] or '?')
+            layers = ','.join(sorted(g14_layers)) if g14_layers else '-'
+            lines.append(f"{c['index']:<5} {trigger:<8} {end_type:<22} {layers:<10} {str(has_g8):<4} {str(has_g10):<4} {str(has_g15):<4}")
+        return '\n'.join(lines)
