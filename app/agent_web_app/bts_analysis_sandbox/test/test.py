@@ -262,12 +262,24 @@ def run_diagnostic_from_db():
             print()
 
     # ── 确认错误汇总 ──
-    if mc_issues:
+    mc_issues = diagnostic.check_material_consistency()
+    cs_issues = diagnostic.check_cross_source_consistency()
+    mm_real = [m for m in mc_issues if m.get("type") == "material_mismatch"]
+    confirm_list = mm_real + cs_issues
+    if confirm_list:
         print("--- 确认错误 ---")
         print()
-        mm_real = [m for m in mc_issues if m.get("type") == "material_mismatch"]
-        for mi in mm_real:
-            print(f"  [#{mi['cycle_index']:<4}] 材质不匹配: {mi['detail']}")
+        type_labels_confirm = {
+            "material_mismatch": "材质不匹配",
+            "weight_mismatch": "克重不匹配",
+            "qdm_mismatch": "QDM系数不匹配",
+            "qdm_no_data": "QDM无配置",
+            "base_setting_mismatch": "基础设置不匹配",
+        }
+        for item in confirm_list:
+            label = type_labels_confirm.get(item.get("type", ""), item.get("type", ""))
+            layer = f" / {item['layer']}" if "layer" in item else ""
+            print(f"  [#{item['cycle_index']:<4}{layer}] {label}: {item['detail']}")
         print()
 
     # ── 跨来源一致性检查 ──
@@ -279,7 +291,11 @@ def run_diagnostic_from_db():
             type_label = (
                 "克重不匹配"
                 if cs["type"] == "weight_mismatch"
-                else "QDM系数不匹配" if cs["type"] == "qdm_mismatch" else "QDM无配置"
+                else "QDM系数不匹配"
+                if cs["type"] == "qdm_mismatch"
+                else "QDM无配置"
+                if cs["type"] == "qdm_no_data"
+                else "基础设置不匹配"
             )
             print(
                 f"  [#{cs['cycle_index']} / {cs['layer']}] {type_label}: {cs['detail']}"

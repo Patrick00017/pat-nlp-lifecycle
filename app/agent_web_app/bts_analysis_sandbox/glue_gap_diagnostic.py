@@ -439,6 +439,52 @@ class GlueGapDiagnostic:
                             'detail': f'G14使用QDM系数={actual_qdm}, 数据库(QDM配方)={expected_qdm}, 差异={actual_qdm - expected_qdm:.2f}'
                         })
 
+                # Base setting check (min_glue, max_glue, min_weight, max_weight)
+                try:
+                    min_g_i = cols.index('min_glue')
+                    max_g_i = cols.index('max_glue')
+                    min_w_i = cols.index('min_weight')
+                    max_w_i = cols.index('max_weight')
+                except ValueError:
+                    continue
+
+                actual_min_g = float(first[min_g_i]) if first[min_g_i] else 0
+                actual_max_g = float(first[max_g_i]) if first[max_g_i] else 0
+                actual_min_w = float(first[min_w_i]) if first[min_w_i] else 0
+                actual_max_w = float(first[max_w_i]) if first[max_w_i] else 0
+
+                if layer.startswith('GU'):
+                    pos = {'GU1': '1', 'GU2': '2', 'GU3': '3'}.get(layer, '')
+                    rows = self._query_ips(
+                        'SELECT "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" FROM "TB_IPS_GlueGu" WHERE "F_Flute" = %s AND "F_Position" = %s',
+                        (flute, pos)
+                    )
+                elif layer.startswith('SF'):
+                    rows = self._query_ips(
+                        'SELECT "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" FROM "TB_IPS_GlueSF" WHERE "F_Flute" = %s',
+                        (flute,)
+                    )
+                else:
+                    rows = None
+
+                if rows:
+                    db_min_g, db_max_g, db_min_w, db_max_w = [float(v) if v else 0 for v in rows[0]]
+                    field_map = [
+                        ('min_glue', actual_min_g, db_min_g),
+                        ('max_glue', actual_max_g, db_max_g),
+                        ('min_weight', actual_min_w, db_min_w),
+                        ('max_weight', actual_max_w, db_max_w),
+                    ]
+                    for field_name, actual, expected in field_map:
+                        if abs(actual - expected) > 0:
+                            issues.append({
+                                'type': 'base_setting_mismatch',
+                                'cycle_index': c['index'],
+                                'layer': layer,
+                                'start_time': str(c['start'].get('Date', '')),
+                                'detail': f'G14使用{field_name}={actual}, 数据库基础设置={expected}, 差异={actual - expected:.0f}'
+                            })
+
         return issues
 
     # ── Dimension 6: Root Cause Traceback ──
@@ -921,16 +967,28 @@ class GlueGapDiagnostic:
                 lines.append(f'- 周期 #{a["cycle_index"]} | `{label}` | {a["detail"]}')
             lines.append('')
 
-        # ── ❌ 确认错误汇总（仅材质不匹配） ──
+        # ── ❌ 确认错误汇总（含材质不匹配 + 跨来源问题） ──
         mm_issues = self.check_material_consistency()
         mm_real = [m for m in mm_issues if m.get('type') == 'material_mismatch']
-        if mm_real:
+        cs_all = self.check_cross_source_consistency()
+        confirm_list = mm_real + cs_all
+        if confirm_list:
             lines.append('## ❌ 确认错误汇总')
             lines.append('')
             lines.append('| 周期 | 类型 | 说明 |')
             lines.append('|------|------|------|')
-            for m in mm_real:
-                lines.append(f'| #{m["cycle_index"]} | 材质不匹配 | {m["detail"]} |')
+            type_labels_confirm = {
+                'material_mismatch': '材质不匹配',
+                'weight_mismatch': '克重不匹配',
+                'qdm_mismatch': 'QDM系数不匹配',
+                'qdm_no_data': 'QDM无配置',
+                'base_setting_mismatch': '基础设置不匹配',
+            }
+            for item in confirm_list:
+                label = type_labels_confirm.get(item.get('type', ''), item.get('type', ''))
+                detail = item.get('detail', '')
+                layer = f" / {item['layer']}" if 'layer' in item else ''
+                lines.append(f'| #{item["cycle_index"]}{layer} | {label} | {detail} |')
             lines.append('')
 
         if target_time:
@@ -940,7 +998,7 @@ class GlueGapDiagnostic:
                 lines.append('')
                 lines.append('| 周期 | 部位 | 类型 | 说明 |')
                 lines.append('|------|------|------|------|')
-                type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置'}
+                type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
                 for cs in cs_issues:
                     label = type_labels_cs.get(cs['type'], cs['type'])
                     lines.append(f'| #{cs["cycle_index"]} | {cs["layer"]} | {label} | {cs["detail"]} |')

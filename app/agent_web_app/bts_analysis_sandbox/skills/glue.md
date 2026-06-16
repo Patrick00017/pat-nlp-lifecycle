@@ -167,6 +167,7 @@ setValue += brandOffset     ← 品牌偏移
 - **克重一致性**：提取 `material` 中所有非 `-` 部分，逐段查询 `S_PaperCodes.SPC_GlueWeight` 累加，比对总和与 G14 的 `current_glue_weight`。与 PLC 代码 `GetSumWeight(info.Code)` 逻辑一致。
 - **QDM 系数一致性**：使用**压缩码**（去掉 `-` 后的材质码，如 `Q.-.-.0.Q` → `Q.0.Q`）匹配 `TB_IPS_QdmCoefDF`，精确匹配失败时回退 `LIKE` 模糊匹配。比对 `F_Glue1/2/3` 与 G14 的 `qdm_factor`。
 - **品牌偏移一致性**（规划中）：当前未实现，需通过 `S_PaperCodeBrands` + `TB_IPS_GlueGuBrand` 联合查询。
+- **基础设置一致性**：查询 `TB_IPS_GlueGu`（GU 层）或 `TB_IPS_GlueSF`（SF 层），比对 `F_MinGlue`/`F_MaxGlue`/`F_MinWeight`/`F_MaxWeight` 与 G14 的 `min_glue`/`max_glue`/`min_weight`/`max_weight`。差异超过 0.5 时报告 `base_setting_mismatch`。
 
 结果在控制台输出 `--- 跨来源一致性检查 ---` 段，在 report.md 中以 `## 跨来源一致性检查` 表格展示。
 
