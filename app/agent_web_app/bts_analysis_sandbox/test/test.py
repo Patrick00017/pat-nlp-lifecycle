@@ -136,74 +136,84 @@ def run_diagnostic_from_db():
         print()
         idx += 1
 
-    # ── 周期概览 ──
-    print("--- 周期概览 ---")
+    # ── 周期详细报告（合并周期概览 + 计算值 + 错误 + 警告） ──
+    print("--- 周期详细报告 ---")
     print()
-    print(
-        f"{'周期':<6} {'触发时间':<23} {'触发原因':<18} {'最终状态':<12} {'问题标签'}"
-    )
-    print("-" * 78)
-    end_labels = {
-        "complete": "已完成",
-        "cancelled_pre_write": "写值取消",
-        "interrupted": "未完成",
-    }
-    trig_labels = {"G7": "换材触发", "G11": "立即换材"}
-    for c in diagnostic.cycles:
-        cl = end_labels.get(c["end"], str(c["end"]))
-        eid = c["start"].get("EventId", "?")
-        trig = f"{eid}（{trig_labels.get(eid, '其他触发')}）"
-        tags = []
-        for a in anomalies:
-            if a["cycle_index"] == c["index"]:
-                tag_map = {
-                    "no_termination": "被抢断",
-                    "fallback_used": "降级匹配",
-                    "g12_no_g14": "缺计算",
-                    "pre_write_cancel_no_calc": "取消无计算",
-                    "excessive_calculation": "重复计算",
-                }
-                tags.append(tag_map.get(a["type"], a["type"]))
-        for wp in wp_issues:
-            if wp["cycle_index"] == c["index"]:
-                tags.append("弯翘影响")
-        tag_str = ", ".join(tags) if tags else "-"
-        t = (
-            str(c["start"].get("Date", "")).split(".")[0]
-            if "." in str(c["start"].get("Date", ""))
-            else str(c["start"].get("Date", ""))
-        )
-        print(f"#{c['index']:<4} {t:<23} {trig:<18} {cl:<12} {tag_str}")
+    cs_all = diagnostic.check_cross_source_consistency()
+    error_types = ('material_mismatch', 'weight_mismatch', 'qdm_mismatch', 'qdm_no_data', 'base_setting_mismatch')
+    warn_types = ('fallback_used', 'warp_influence', 'excessive_calculation', 'value_jump', 'negative_value', 'exceeds_hard_limit', 'speed_not_monotonic')
+    info_types = ('no_termination', 'g12_no_g14', 'pre_write_cancel_no_calc')
+    trig_labels = {'G7': '换材触发', 'G11': '立即换材'}
 
-    # ── 显示最终写入值 ──
-    print("--- 糊间隙计算值 ---")
-    print()
     for c in diagnostic.cycles:
-        if c["end"] != "complete":
-            continue
-        sfe = c.get("set_func_event")
-        if not sfe:
-            continue
-        sv = sfe.get("set_values", {})
-        if not sv:
-            continue
-        for layer, ld in sv.items():
-            data = ld.get("data", [])
-            if not data:
-                continue
-            cols = ld.get("columns", [])
-            try:
-                speed_idx = cols.index("speed")
-                val_idx = cols.index("value")
-                segments = []
-                for row in data:
-                    s = row[speed_idx] if speed_idx < len(row) else "?"
-                    v = row[val_idx] if val_idx < len(row) else "?"
-                    segments.append(f"@{s}={v}")
-                print(f"周期 #{c['index']} ({layer}) → {' / '.join(segments)}")
-            except ValueError:
-                continue
-    print()
+        sfe = c.get('set_func_event')
+        material = sfe.get('material', '-') if sfe else '-'
+        eid = c['start'].get('EventId', '?')
+        trig = f"{eid}（{trig_labels.get(eid, '其他触发')}）"
+        end_labels = {'complete': '完成', 'cancelled_pre_write': '写值取消', 'interrupted': '中断'}
+        cl = end_labels.get(c['end'], str(c['end']))
+        t = str(c['start'].get('Date', ''))[:19]
+        print(f"周期 #{c['index']} ({cl})  {trig}  {t}  材质={material}")
+
+        # Computed values
+        if c['end'] == 'complete' and sfe:
+            sv = sfe.get('set_values', {})
+            for layer, ld in sv.items():
+                data = ld.get('data', [])
+                cols = ld.get('columns', [])
+                if not data:
+                    continue
+                try:
+                    si = cols.index('speed')
+                    vi = cols.index('value')
+                    segs = [f"@{r[si]}={r[vi]}" for r in data if si < len(r) and vi < len(r)]
+                    if segs:
+                        print(f"  计算值: {layer}: {' / '.join(segs)}")
+                except ValueError:
+                    continue
+
+        # Errors (确认错误)
+        errs = []
+        for a in anomalies:
+            if a['cycle_index'] == c['index'] and a['type'] in error_types:
+                tag_map = {'material_mismatch': '材质不匹配', 'fallback_used': '降级匹配',
+                           'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
+                           'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                errs.append(f"{tag_map.get(a['type'], a['type'])}（{a['detail']}）")
+        for cs in cs_all:
+            if cs['cycle_index'] == c['index'] and cs['type'] in error_types:
+                tag_map = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
+                           'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                errs.append(f"{tag_map.get(cs['type'], cs['type'])}（{cs['detail']}）")
+        if errs:
+            print(f"  错误: {'; '.join(errs)}")
+
+        # Warnings
+        warns = []
+        for a in anomalies:
+            if a['cycle_index'] == c['index'] and a['type'] in warn_types:
+                tag_map = {'fallback_used': '降级匹配', 'warp_influence': '弯翘影响',
+                           'excessive_calculation': '重复计算', 'value_jump': '值跳变',
+                           'negative_value': '负值', 'exceeds_hard_limit': '超硬限制',
+                           'speed_not_monotonic': '车速不单调'}
+                warns.append(tag_map.get(a['type'], a['type']))
+        for wp in wp_issues:
+            if wp['cycle_index'] == c['index']:
+                warns.append('弯翘影响')
+        if warns:
+            print(f"  警告: {'; '.join(set(warns))}")
+
+        # Info
+        infos = []
+        for a in anomalies:
+            if a['cycle_index'] == c['index'] and a['type'] in info_types:
+                tag_map = {'no_termination': '被抢断', 'g12_no_g14': '缺计算',
+                           'pre_write_cancel_no_calc': '取消无计算'}
+                infos.append(tag_map.get(a['type'], a['type']))
+        if infos:
+            print(f"  信息: {'; '.join(infos)}")
+
+        print()
 
     # -- Root Cause Traceback: Recent Assignment Events --
     completed_indices = [
@@ -260,47 +270,6 @@ def run_diagnostic_from_db():
                 if e.get("error_detail"):
                     print(f"              错误: {e['error_detail']}")
             print()
-
-    # ── 确认错误汇总 ──
-    mc_issues = diagnostic.check_material_consistency()
-    cs_issues = diagnostic.check_cross_source_consistency()
-    mm_real = [m for m in mc_issues if m.get("type") == "material_mismatch"]
-    confirm_list = mm_real + cs_issues
-    if confirm_list:
-        print("--- 确认错误 ---")
-        print()
-        type_labels_confirm = {
-            "material_mismatch": "材质不匹配",
-            "weight_mismatch": "克重不匹配",
-            "qdm_mismatch": "QDM系数不匹配",
-            "qdm_no_data": "QDM无配置",
-            "base_setting_mismatch": "基础设置不匹配",
-        }
-        for item in confirm_list:
-            label = type_labels_confirm.get(item.get("type", ""), item.get("type", ""))
-            layer = f" / {item['layer']}" if "layer" in item else ""
-            print(f"  [#{item['cycle_index']:<4}{layer}] {label}: {item['detail']}")
-        print()
-
-    # ── 跨来源一致性检查 ──
-    cs_issues = diagnostic.check_cross_source_consistency()
-    if cs_issues:
-        print("--- 跨来源一致性检查 ---")
-        print()
-        for cs in cs_issues:
-            type_label = (
-                "克重不匹配"
-                if cs["type"] == "weight_mismatch"
-                else "QDM系数不匹配"
-                if cs["type"] == "qdm_mismatch"
-                else "QDM无配置"
-                if cs["type"] == "qdm_no_data"
-                else "基础设置不匹配"
-            )
-            print(
-                f"  [#{cs['cycle_index']} / {cs['layer']}] {type_label}: {cs['detail']}"
-            )
-        print()
 
     print("--- 排除建议 ---")
     print()
