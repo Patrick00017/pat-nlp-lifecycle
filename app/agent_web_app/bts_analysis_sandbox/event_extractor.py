@@ -280,12 +280,11 @@ class GlueEventExtractor(KeyEventExtractor):
 
             # convert to simple format
             data = {
-                'columns': ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'value'],
+                'columns': ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'warp_offset', 'value'],
                 'data': []
             }
             for i in range(1, 9, 1):
-                temp = [filtered_data[f'speed{i}'], filtered_data[f'min_glue{i}'], filtered_data[f'max_glue{i}'], filtered_data[f'min_weight{i}'], filtered_data[f'max_weight{i}'], filtered_data[f'current_glue_weight{i}'], filtered_data[f'speed_factor{i}'], filtered_data[f'min_speed{i}'], filtered_data[f'qdm_factor{i}'], filtered_data[f'ui_factor{i}'], filtered_data[f'value{i}']]
-                data['data'].append(temp)
+                temp = [filtered_data[f'speed{i}'], filtered_data[f'min_glue{i}'], filtered_data[f'max_glue{i}'], filtered_data[f'min_weight{i}'], filtered_data[f'max_weight{i}'], filtered_data[f'current_glue_weight{i}'], filtered_data[f'speed_factor{i}'], filtered_data[f'min_speed{i}'], filtered_data[f'qdm_factor{i}'], filtered_data[f'ui_factor{i}'], filtered_data.get(f'warp_offset{i}', '0'), filtered_data[f'value{i}']]
 
             # add gu values to data
             self.gu_value_state[glue_part] = data
@@ -1003,95 +1002,112 @@ class PressrollMPEventExtractor(KeyEventExtractor):
         # return material_lifecycle
 
     def convert_pressroll_mp_func_to_markdown(self, result):
-        """
-        将数据转换为Markdown格式
-        """
-        markdown = []
-        
-        # 1. 标题和基本信息
-        markdown.append("# 📊 函数调用记录\n")
-        
-        # 基本信息表格
-        markdown.append("## 📋 基本信息\n")
-        markdown.append("| 字段 | 值 |")
-        markdown.append("|------|-----|")
-        markdown.append(f"| **函数** | `{result.get('func', 'N/A')}` |")
-        markdown.append(f"| **部件** | `{result.get('part', 'N/A')}` |")
-        markdown.append(f"| **基础值 x 门幅系数** | `{result.get('part', 'N/A')}` |")
-        markdown.append(f"| **芯纸材质** | `{result.get('ms_material', 'N/A')}` |")
-        markdown.append(f"| **里纸材质** | `{result.get('ls_material', 'N/A')}` |")
-        markdown.append(f"| **瓦楞类型** | `{result.get('flute_type', 'N/A')}` |")
-        markdown.append(f"| **时间** | `{result.get('time', 'N/A')}` |\n")
-        
-        # 2. 生命周期信息
-        if 'lifecycle' in result:
-            markdown.append("## 🔄 生命周期\n")
-            markdown.append("| 阶段 | 信息 | 时间 |")
-            markdown.append("|------|------|------|")
-            
-            lifecycle = result['lifecycle']
-            if 'ls0' in lifecycle:
-                markdown.append(f"| **LS0** | `{lifecycle['ls0'].get('msg', 'N/A')}` | {lifecycle['ls0'].get('time', 'N/A')} |")
-            if 'ms1' in lifecycle:
-                markdown.append(f"| **MS1** | `{lifecycle['ms1'].get('msg', 'N/A')}` | {lifecycle['ms1'].get('time', 'N/A')} |")
-            if 'ls1' in lifecycle:
-                markdown.append(f"| **LS1** | `{lifecycle['ls1'].get('msg', 'N/A')}` | {lifecycle['ls1'].get('time', 'N/A')} |")
-            if 'ms2' in lifecycle:
-                markdown.append(f"| **MS2** | `{lifecycle['ms2'].get('msg', 'N/A')}` | {lifecycle['ms2'].get('time', 'N/A')} |")
-            if 'ls2' in lifecycle:
-                markdown.append(f"| **LS2** | `{lifecycle['ls2'].get('msg', 'N/A')}` | {lifecycle['ls2'].get('time', 'N/A')} |")
-            if 'df' in lifecycle:
-                markdown.append(f"| **DF** | `{lifecycle['df'].get('msg', 'N/A')}` | {lifecycle['df'].get('time', 'N/A')} |")
-            if 'set_func' in lifecycle:
-                markdown.append(f"| **Set Function** | `{lifecycle['set_func'].get('name', 'N/A')}` | {lifecycle['set_func'].get('time', 'N/A')} |")
-            markdown.append("")
-        
-        # 3. 设置值表格
-        if 'set_values' in result:
-            markdown.append("## ⚙️ 设置值\n")
-            
-            set_values = result['set_values']
-            for key, value in set_values.items():
-                markdown.append(f"### 部位: {key}")
-                columns = value.get('columns', [])
-                data_rows = value.get('data', [])
-                
-                if columns and data_rows:
-                    # 创建表格头
-                    header = "| " + " | ".join([col.replace('_', ' ').title() for col in columns]) + " |"
-                    separator = "|" + "|".join(["---" for _ in columns]) + "|"
-                    
-                    markdown.append(header)
-                    markdown.append(separator)
-                    
-                    # 添加数据行
-                    for row in data_rows:
-                        markdown.append("| " + " | ".join(row) + " |")
-                    
-                    markdown.append("")
-        
-        # # 4. 数据统计
-        # if 'set_values' in data and 'data' in data['set_values']:
-        #     markdown.append("## 📈 数据统计\n")
-            
-        #     data_rows = data['set_values']['data']
-        #     speeds = [int(row[0]) for row in data_rows]
-        #     values = [str(row[-1]) for row in data_rows]
-            
-        #     markdown.append("| 统计项 | 数值 |")
-        #     markdown.append("|--------|------|")
-        #     markdown.append(f"| **速度范围** | `{min(speeds)} - {max(speeds)}` |")
-        #     markdown.append(f"| **数值范围** | `{min(values):.2f} - {max(values):.2f}` |")
-        #     markdown.append(f"| **数据点数** | `{len(data_rows)}` |\n")
-        
-        # 5. 完整数据（可折叠）
-        # markdown.append("## 📦 完整数据\n")
-        # markdown.append("<details>")
-        # markdown.append("<summary><b>点击查看完整JSON</b></summary>\n")
-        # markdown.append("```json")
-        # markdown.append(json.dumps(data, indent=2, ensure_ascii=False))
-        # markdown.append("```")
-        # markdown.append("</details>")
-        markdown.append("\n\n --- \n")
+        return ""
 
-        return "\n".join(markdown)
+
+class WarpEventExtractor(KeyEventExtractor):
+    def __init__(self):
+        super().__init__()
+        self.cur_exec_status = ''
+        self.prev_exec_status = ''
+        self.detection_status = ''
+        self.detection_degree = 0.0
+        self.auto_adjust_events = []
+        self.reset_events = []
+        self.manual_adjust_events = []
+        self.paper_change_events = []
+        self.warp_raw_events = []
+
+    def process(self, row):
+        self.process_log_row(row)
+        if pd.isna(row.get('EventId')):
+            return
+        if not str(row['EventId']).startswith('WARP'):
+            return
+        self.warp_raw_events.append(row.to_dict())
+        eid = row['EventId']
+        pv = row.get('ParsedValues') or {}
+        if eid == 'WARP1':
+            self.prev_exec_status = self.cur_exec_status
+            self.cur_exec_status = ''
+            self.reset_events.append({
+                'type': 'auto' if pv.get('isAutoExeRest') else 'unknown',
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP2':
+            self.auto_adjust_events.append({
+                'mode': 'auto',
+                'action': 'exec',
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP3':
+            self.manual_adjust_events.append({
+                'mode': 'manual',
+                'action': 'exec',
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP4':
+            self.prev_exec_status = self.cur_exec_status
+            self.cur_exec_status = ''
+            self.reset_events.append({
+                'type': 'manual',
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP5':
+            self.prev_exec_status = self.cur_exec_status
+            self.cur_exec_status = pv.get('action', '')
+            self.auto_adjust_events.append({
+                'mode': 'auto',
+                'action': pv.get('action', ''),
+                'prev_status': pv.get('prev_status', ''),
+                'cur_status': pv.get('cur_status', ''),
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP6':
+            self.prev_exec_status = self.cur_exec_status
+            self.cur_exec_status = ''
+            self.auto_adjust_events.append({
+                'mode': 'auto',
+                'action': 'reset',
+                'prev_status': pv.get('prev_status', ''),
+                'cur_status': pv.get('cur_status', ''),
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP7':
+            self.paper_change_events.append({
+                'type': 'tracking',
+                'df_remain': pv.get('df_remain'),
+                'gu_range1': pv.get('gu_range1'),
+                'gu_range2': pv.get('gu_range2'),
+                'gu_range3': pv.get('gu_range3'),
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP8':
+            self.paper_change_events.append({
+                'type': 'entered_change',
+                'df_remain': pv.get('df_remain'),
+                'time': str(row['Date'])
+            })
+        elif eid == 'WARP10':
+            warp_data = pv.get('warp_data', '')
+            if warp_data:
+                try:
+                    import json
+                    cleaned = warp_data.replace('\\"', '"')
+                    data = json.loads(cleaned)
+                    self.detection_status = data.get('WarpState', '')
+                    self.detection_degree = float(data.get('WarpDegree', 0.0))
+                except Exception:
+                    pass
+
+    def get_summary(self):
+        return {
+            'total_warp_events': len(self.warp_raw_events),
+            'auto_adjust_count': len(self.auto_adjust_events),
+            'reset_count': len(self.reset_events),
+            'manual_adjust_count': len(self.manual_adjust_events),
+            'paper_change_count': len(self.paper_change_events),
+            'cur_exec_status': self.cur_exec_status,
+            'detection_status': self.detection_status,
+            'detection_degree': self.detection_degree,
+        }

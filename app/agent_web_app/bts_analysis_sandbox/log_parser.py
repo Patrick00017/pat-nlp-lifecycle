@@ -3,7 +3,7 @@ from database_utils import SQLServerHelper
 import pandas as pd
 from parse import parse
 from fsm import KeyEventExtractor
-from event_extractor import GlueEventExtractor, VacuumBlowerEventExtractor, SPTensionEventExtractor, PressrollMPEventExtractor
+from event_extractor import GlueEventExtractor, VacuumBlowerEventExtractor, SPTensionEventExtractor, PressrollMPEventExtractor, WarpEventExtractor
 
 class LogParser:
     def __init__(self, template_path):
@@ -639,15 +639,13 @@ def test_vacuum_blower_template(start_time, end_time):
         db_helper.close_connection()
 
 def test_wrap_template(start_time, end_time):
-    # 从 YAML 文件加载配置
     config = load_config("config.yaml")
     if 'basedatabase' not in config:
         print("no database info in the config file.")
         exit()
     database_config = config["basedatabase"]
-    log_parser = LogParser("log_data/wrap.csv")
-    extractor = GlueEventExtractor()
-    # 使用封装的类
+    log_parser = LogParser("log_data/warp_template.csv")
+    extractor = WarpEventExtractor()
     db_helper = SQLServerHelper(
         server=database_config["server"],
         port=database_config["port"],
@@ -659,32 +657,23 @@ def test_wrap_template(start_time, end_time):
         db_helper.connect()
         db_helper.get_current_database()
         db_helper.list_tables_and_views()
-        ips_df = db_helper.get_dataframe_filter_by_module(table_name='dbo.T_Log', module_name='BTS.Server.Start.IPSBizs.NewCtrl.IPSMainCtrl', start_time=start_time, end_time=end_time, limit=1000)
-        ips_df = ips_df[~ips_df['Message'].str.contains('弯翘判定模块', na=False)]
-        ips_df = ips_df[~ips_df['Message'].str.contains('服务端', na=False)]
-        ips_df = ips_df[~ips_df['Message'].str.contains('WrapInfo', na=False)]
-        glue_df = db_helper.get_dataframe_filter_by_module(table_name='dbo.T_Log', module_name='BTS.Server.Start.IPSBizs.NewCtrl.WrapCtrl', start_time=start_time, end_time=end_time, limit=1000)
-        df = pd.concat([ips_df, glue_df], ignore_index=True)
-
-        # sort by time
-        # 按time列排序（假设time是Date列的别名，或数据中有时time列）
-        if 'Date' in df.columns:
-            df = df.sort_values('Date').reset_index(drop=True)
-
-        parsed_message_df = log_parser.match_messages(df)
+        db_helper.get_dataframe_filter_by_module(table_name='dbo.T_Log', module_name='BTS.Server.Start.IPSBizs.NewCtrl.IPSMainCtrl', start_time=start_time, end_time=end_time, limit=1000)
+        warp_df = db_helper.get_dataframe_filter_by_module(
+            table_name='dbo.T_Log', module_name='BTS.Server.Start.PMSDataService',
+            start_time=start_time, end_time=end_time, limit=5000
+        )
+        warp_df = warp_df[warp_df['Message'].str.contains('弯翘判定模块', na=False)].copy()
+        if 'Date' in warp_df.columns:
+            warp_df = warp_df.sort_values('Date').reset_index(drop=True)
+        print(f"shape: {warp_df.shape}")
+        parsed_message_df = log_parser.match_messages(warp_df)
         print(parsed_message_df.head())
         none_rows = parsed_message_df[parsed_message_df["EventId"].isna()]
-        none_rows.to_csv("./none.csv")
+        if len(none_rows) > 0:
+            none_rows.to_csv("./none.csv")
         for index, row in parsed_message_df.iterrows():
             extractor.process(row)
         return extractor
-        print(len(extractor.current_material_events))
-        for event in extractor.current_material_events:
-            # if event['part'] == 'ls0':
-            #     print(event)
-            print(event)
-        # print(extractor.current_material_events)
-
     finally:
         db_helper.close_connection()
 
@@ -755,17 +744,14 @@ if __name__ == "__main__":
     # test_riding_roll_template(start_time="2026-01-08 14:03:50.690", end_time="2026-01-09 15:03:50.690") # 存在问题，上中下层无法匹配
 
     # 胶水测试
-    extractor: GlueEventExtractor = test_ips_and_glue_template(start_time="2026-01-08 14:03:50.690", end_time="2026-01-08 15:03:50.690")
-    # print(extractor.set_func_call_events)
-    results = extractor.get_glue_set_function_full_event()
-    print(results)
-    # markdown_results = ''
-    # for result in results:
-    #     md = convert_glue_func_to_markdown(result)
-    #     markdown_results += md
-    #     # markdown_results += "\n---\n"
-    # with open('setglue_sf2_report.md', 'w', encoding='utf-8') as f:
-    #     f.write(markdown_results)
+    # extractor: GlueEventExtractor = test_ips_and_glue_template(start_time="2026-01-08 14:03:50.690", end_time="2026-01-08 15:03:50.690")
+    # results = extractor.get_glue_set_function_full_event()
+    # print(results)
+
+    # 弯翘测试
+    extractor: WarpEventExtractor = test_wrap_template(start_time="2026-01-08 14:00:00.000", end_time="2026-01-08 15:00:00.000")
+    print("\n=== 弯翘事件统计 ===")
+    print(extractor.get_summary())
 
     # 真空泵测试
     # extractor: VacuumBlowerEventExtractor = test_vacuum_blower_template(start_time="2026-01-08 14:03:50.690", end_time="2026-01-09 15:03:50.690")

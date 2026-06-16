@@ -4,8 +4,9 @@ from collections import defaultdict
 
 
 class GlueGapDiagnostic:
-    def __init__(self, extractor):
+    def __init__(self, extractor, warp_extractor=None):
         self.extractor = extractor
+        self.warp_extractor = warp_extractor
         self.raw_events = extractor.raw_parsed_rows
         self.raw_events.sort(key=lambda x: str(x.get('Date', '')))
         self.set_func_events = extractor.get_glue_set_function_full_event()
@@ -193,6 +194,34 @@ class GlueGapDiagnostic:
                         'layer': layer,
                         'detail': f'糊间隙值{vmax}超过硬限制60'
                     })
+
+            # ── Warp Offset Check ──
+            # find offset column index (G4 uses 'offset', G14 uses 'warp_offset')
+            cols = layer_data.get('columns', [])
+            offset_idx = None
+            for col_name in ('warp_offset', 'offset'):
+                if col_name in cols:
+                    offset_idx = cols.index(col_name)
+                    break
+            if offset_idx is not None:
+                warp_active = False
+                max_warp_offset = 0.0
+                for r in rows:
+                    try:
+                        off_val = float(r[offset_idx]) if r[offset_idx] else 0.0
+                        if off_val != 0.0:
+                            warp_active = True
+                            max_warp_offset = max(max_warp_offset, abs(off_val))
+                    except (ValueError, TypeError):
+                        continue
+                if warp_active:
+                    issues.append({
+                        'type': 'warp_influence',
+                        'cycle_index': c['index'],
+                        'time': str(start_time),
+                        'layer': layer,
+                        'detail': f'弯翘偏移量非零（最大={max_warp_offset}）—— 该值受弯翘调平影响'
+                    })
         return issues
 
     # ── Dimension 4: Material Consistency ──
@@ -327,6 +356,28 @@ class GlueGapDiagnostic:
                 'detail': '写值前被取消 —— 该周期的计算值最终未写入设备'
             }
 
+        # ── Warp Event Correlation ──
+        result['warp_active'] = False
+        result['warp_events_nearby'] = []
+        if self.warp_extractor and active_cycle:
+            warp_events = (self.warp_extractor.auto_adjust_events +
+                           self.warp_extractor.manual_adjust_events +
+                           self.warp_extractor.reset_events +
+                           self.warp_extractor.paper_change_events)
+            g12_ts = self._to_ts(active_cycle['end_event'].get('Date', ''))
+            g12_ts = pd.Timestamp(g12_ts) if not isinstance(g12_ts, pd.Timestamp) else g12_ts
+            window_start = g12_ts - pd.Timedelta(minutes=5)
+            window_end = g12_ts + pd.Timedelta(minutes=1)
+            nearby = []
+            for we in warp_events:
+                wt = self._to_ts(we.get('time', ''))
+                wt_ts = pd.Timestamp(wt) if not isinstance(wt, pd.Timestamp) else wt
+                if window_start <= wt_ts <= window_end:
+                    nearby.append(we)
+            nearby.sort(key=lambda x: str(x.get('time', '')))
+            result['warp_active'] = len(nearby) > 0
+            result['warp_events_nearby'] = nearby[:10]
+
         anomalies = self.check_cycle_completeness()
         result['cycle_anomalies'] = [a for a in anomalies
                                      if active_cycle and a['cycle_index'] == active_cycle['index']]
@@ -396,6 +447,73 @@ class GlueGapDiagnostic:
                                 lines.append('| ' + ' | '.join(str(v) for v in row) + ' |')
                             lines.append('')
 
+                            # ── 计算说明（用第一段数据演示） ──
+                            first = data[0] if data else None
+                            if first and len(first) >= len(cols):
+                                try:
+                                    speed_i = cols.index('speed')
+                                    min_g_i = cols.index('min_glue')
+                                    max_g_i = cols.index('max_glue')
+                                    min_w_i = cols.index('min_weight')
+                                    max_w_i = cols.index('max_weight')
+                                    cur_w_i = cols.index('current_glue_weight')
+                                    qdm_i = cols.index('qdm_factor')
+                                    ui_i = cols.index('ui_factor')
+                                    spd_i = cols.index('speed_factor')
+                                    val_i = cols.index('value')
+                                    off_col = 'warp_offset' if 'warp_offset' in cols else ('offset' if 'offset' in cols else None)
+                                    off_i = cols.index(off_col) if off_col else None
+
+                                    min_g = float(first[min_g_i])
+                                    max_g = float(first[max_g_i])
+                                    min_w = float(first[min_w_i])
+                                    max_w = float(first[max_w_i])
+                                    cur_w = float(first[cur_w_i])
+                                    qdm = float(first[qdm_i])
+                                    ui = float(first[ui_i])
+                                    spd = float(first[spd_i])
+                                    off_v = float(first[off_i]) if off_i is not None else 0.0
+                                    off_tag = '偏移量' if off_col == 'offset' else ('弯翘偏移' if off_col == 'warp_offset' else '偏移量')
+
+                                    base_gap = min_g + (cur_w - min_w) / (max_w - min_w) * (max_g - min_g) if max_w != min_w else min_g
+
+                                    lines.append('**计算说明**')
+                                    lines.append('')
+                                    lines.append('```')
+                                    lines.append(f'公式：result = base_gap × qdm × ui × speed_coef + {off_tag}')
+                                    lines.append(f'       base_gap = min_gap + (cur_weight - min_weight) / (max_weight - min_weight) × (max_gap - min_gap)')
+                                    lines.append('')
+                                    lines.append(f'base_gap（所有段共用）：')
+                                    lines.append(f'  base_gap = {min_g} + ({cur_w:.0f} - {min_w:.0f}) / ({max_w:.0f} - {min_w:.0f}) × ({max_g} - {min_g})')
+                                    base_step = (cur_w - min_w) / (max_w - min_w) if max_w != min_w else 0
+                                    lines.append(f'           = {min_g} + {base_step:.2f} × {max_g - min_g}')
+                                    lines.append(f'           = {base_gap:.2f}')
+                                    lines.append('')
+                                    lines.append('各段验证：')
+                                    all_pass = True
+                                    for ri, row in enumerate(data):
+                                        try:
+                                            rs = float(row[speed_i])
+                                            rq = float(row[qdm_i])
+                                            ru = float(row[ui_i])
+                                            rsp = float(row[spd_i])
+                                            rv = float(row[val_i])
+                                            roff = float(row[off_i]) if off_i is not None else 0.0
+                                            rc = base_gap * rq * ru * rsp + roff
+                                            rd = abs(rc - rv)
+                                            ok = '✓' if rd < 0.01 else '✗'
+                                            if rd >= 0.01:
+                                                all_pass = False
+                                            lines.append(f'  段{ri+1} (车速={rs:.0f}): {base_gap:.2f} × {rq} × {ru} × {rsp} + {roff} = {rc:.2f}  {ok}')
+                                        except (ValueError, IndexError, TypeError):
+                                            lines.append(f'  段{ri+1}: 数据异常，跳过')
+                                    lines.append('')
+                                    lines.append(f'验证：{"全部通过 ✓" if all_pass else "存在偏差 ✗"}')
+                                    lines.append('```')
+                                    lines.append('')
+                                except (ValueError, IndexError, ZeroDivisionError):
+                                    pass
+
                 evc = tb.get('expected_value_check')
                 if evc:
                     lines.append('### 期望值对比')
@@ -425,6 +543,27 @@ class GlueGapDiagnostic:
                 lines.append('')
                 for a in anom:
                     lines.append(f'- **{a["type"]}**: {a["detail"]}')
+                lines.append('')
+
+            # ── Warp Influence Section ──
+            if tb.get('warp_active'):
+                lines.append('### 弯翘调平影响')
+                lines.append('')
+                lines.append(f'| 字段 | 值 |')
+                lines.append(f'|------|-----|')
+                lines.append(f'| 目标时间附近存在弯翘事件 | `是` |')
+                lines.append(f'| 弯翘事件数 | `{len(tb["warp_events_nearby"])}` |')
+                lines.append('')
+                lines.append('#### 附近的弯翘事件')
+                lines.append('')
+                lines.append('| 时间 | 类型 | 详情 |')
+                lines.append('|------|------|------|')
+                for we in tb['warp_events_nearby']:
+                    wt = we.get('time', '')
+                    wtype = we.get('mode', we.get('type', 'unknown'))
+                    action = we.get('action', '')
+                    detail = f'{wtype}/{action}' if action else wtype
+                    lines.append(f'| {wt} | `{detail}` | {we} |')
                 lines.append('')
 
         lines.append('---')
@@ -464,6 +603,7 @@ class GlueGapDiagnostic:
                     'exceeds_hard_limit': '超硬限制',
                     'immediate_change': '立即换材',
                     'material_mismatch': '材质不匹配',
+                    'warp_influence': '弯翘调平影响',
                 }
                 label = type_labels.get(a['type'], a['type'])
                 lines.append(f'- 周期 #{a["cycle_index"]} | `{label}` | {a["detail"]}')

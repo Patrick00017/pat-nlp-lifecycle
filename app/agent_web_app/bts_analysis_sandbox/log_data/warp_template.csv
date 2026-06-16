@@ -1,12 +1,11 @@
 EventId->EventTemplate
-WARP1->{"Module":"弯翘判定模块","Content":"进入重置调平方法RestCurvedWarp"}
-WARP2->{"Module":"弯翘判定模块","Content":"执行自动弯翘，调用弯翘调平方法ExecCurvedWarp"}
-WARP3->{"Module":"弯翘判定模块","Content":"执行手动弯翘,调用执行方法ExecCurvedWarp"}
-WARP4->{"Module":"弯翘判定模块","Content":"执行手动重置弯翘,调用重置方法RestCurvedWarp"}
-WARP5->{"Module":"弯翘判定模块","Content":"当前执行的是{prev_status}，现在设备检测出来是{cur_status},执行{action}"}
-WARP6->{"Module":"弯翘判定模块","Content":"当前执行的是{prev_status}，现在设备检测出来是{cur_status},执行重置调平"}
-WARP7->{"Module":"弯翘判定模块","Content":"DFFaceBottomChangePaper--dfRemain={df_remain},GuRange1={gu_range1},GuRange2={gu_range2},GuRange3={gu_range3}"}
-WARP8->{"Module":"弯翘判定模块","Content":"DFFaceBottomChangePaper--已进入换材处理:糊机同材剩余-横切到糊机的距离={df_remain}"}
-WARP9->{"Module":"弯翘判定模块","Content":"DFFaceBottomChangePaper--监听糊机面底换材过程中发生异常：*"}
-WARP10->{"Module":"弯翘判定模块","Content":"*"}  // 通用日志（Exception 或未知消息）
-WARP11->{"Module":"弯翘判定模块","Content":"收到弯翘检测设备传入信息*"}
+WARP1->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"进入重置调平方法RestCurvedWarp","ExceptionInfo":null}}
+WARP2->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"执行自动弯翘，调用弯翘调平方法ExecCurvedWarp","ExceptionInfo":null}}
+WARP3->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"执行手动弯翘,调用执行方法ExecCurvedWarp","ExceptionInfo":null}}
+WARP4->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"执行手动重置弯翘,调用重置方法RestCurvedWarp","ExceptionInfo":null}}
+WARP5->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"当前执行的是{prev_status}，现在设备检测出来是{cur_status},执行{action}","ExceptionInfo":null}}
+WARP6->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"当前执行的是{prev_status}，现在设备检测出来是{cur_status},执行重置调平","ExceptionInfo":null}}
+WARP7->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"DFFaceBottomChangePaper--dfRemain={df_remain},GuRange1={gu_range1},GuRange2={gu_range2},GuRange3={gu_range3}","ExceptionInfo":null}}
+WARP8->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"DFFaceBottomChangePaper--已进入换材处理:糊机同材剩余-横切到糊机的距离={df_remain}","ExceptionInfo":null}}
+WARP9->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"DFFaceBottomChangePaper--监听糊机面底换材过程中发生异常：{error_msg}","ExceptionInfo":{exception}}}
+WARP10->{{"Module":"弯翘判定模块","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"收到弯翘检测设备传入信息{warp_data}","ExceptionInfo":null}}

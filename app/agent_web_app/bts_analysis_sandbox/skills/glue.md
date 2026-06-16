@@ -26,6 +26,80 @@ G11  HandleChangeNow (manual immediate change, skips delay)
   ↓  (same SetGlueGu flow with isChangeNow=true)
 ```
 
+## Warp Leveling → Glue Assignment Interaction
+
+### Communication Mechanism
+
+弯翘模块与胶水模块通过 `GlobalControl.execWarpSetDatail.warpPositionValue` 共享字典通信：
+
+```
+WarpCtrl (WARP5/WARP6 写入)
+  └→ warpPositionValue.AddOrUpdate(GlueGU1/2/3, offset)
+  └→ warpPositionValue.AddOrUpdate(GlueSF1/2/3, offset)
+        │
+        ▼   (读取发生在下一次换材触发时)
+GlueCtrl (G4/G14 计算时读取)
+  └→ warpPositionValue.TryGetValue(key) → offSet
+  └→ setValue += offSet    ← 8段车速统一添加
+```
+
+### 弯翘触发场景
+
+| WARP 事件 | 触发原因 | 对胶水的影响 |
+|-----------|---------|-------------|
+| WARP5 | 弯翘自动调平 | 写入 GlueSF1/2/3 / GlueGU1/2/3 偏移量 |
+| WARP6 | 弯翘手动调平 | 同上 |
+| WarpPaperChange | 底纸换材 | 清空所有弯翘偏移至 0 |
+| RestCurvedWarp | 弯翘复位 | 清空所有偏移并推送通知 |
+
+### 胶水计算中的弯翘偏移位置
+
+```
+setValue = baseFormula × qdmCoef × formCoef × speedCoef
+setValue += warpOffset      ← 弯翘偏移（G4的offset字段 / G14的warp_offset字段）
+setValue += brandOffset     ← 品牌偏移
+```
+
+**注意**：
+- SF1/SF2 日志输出 `弯翘偏移量={offSet}`（G4 模板已解析为 `offset` 字段）
+- GU1/GU2/GU3 在代码中应用了弯翘偏移，但日志**不输出**（G14 的 warp_offset 默认为 0）
+- SF3 同样应用弯翘偏移但日志**不输出**
+
+### 时序关键点
+
+```
+弯翘调平 (异步 1s 循环)             胶水换材 (同步触发)
+         │                                │
+         ▼                                ▼
+    WARP5/WARP6                      G1/G7 触发
+    warpPositionValue                 (等待延迟)
+    .AddOrUpdate(key, offset)              │
+         │                                 ▼
+         │                            G4/G14 计算
+         │                            TryGetValue(key) → offSet
+         │                            setValue += offSet
+         │                                 ▼
+         │                            G12/G5 写值到 PLC
+         │
+         └── 弯翘偏移量修改不立即生效 ──┘
+             仅在下次换材触发胶水计算时生效
+```
+
+### 诊断要点
+
+- G4 的 `offset` 字段 ≠ 0 → 该 SF 胶水值受弯翘调平影响
+- G14 的 `warp_offset` 字段 ≠ 0 → 该 GU 胶水值受弯翘调平影响（当前默认 0，需模板支持）
+- 弯翘调平独立于换材循环，偏移量会持续存在直到被清空或覆盖
+- 如果弯翘调平发生在换材延迟期间，则本次换材计算会用到旧的偏移值（不受新调平影响）
+
+### 异常场景
+
+| 场景 | 问题 |
+|------|------|
+| WarpPaperChange（底纸换材）清空偏移，但 Glue 尚未计算 | 弯翘偏移重置值可能在胶水计算后被覆盖 → 需确认时序 |
+| RestCurvedWarp 清空所有偏移 | 下次换材时胶水值会跳变（偏移归零） |
+| 弯翘频繁调平（偏移频繁变化） | 偏移值不稳定的中间状态可能被胶水计算捕捉 |
+
 ## Diagnostic Dimensions
 
 ### 1. Timing Completeness
@@ -167,3 +241,61 @@ Find nearest G12 (write complete)
 └─ No G12, exception in logs → communication/compute fault
     └─ Check PLC communication or QDM coefficient DB
 ```
+
+## Glue Gap Calculation Formula
+
+### 完整公式
+
+```
+result = base_gap × qdm_coef × ui_coef × speed_coef + offset
+```
+
+其中 `base_gap` 由纸克重线性插值得出：
+
+```
+base_gap = min_gap + (cur_weight - min_weight) / (max_weight - min_weight) × (max_gap - min_gap)
+```
+
+- `min_gap` / `max_gap` — 该材质的最小/最大糊间隙设定值
+- `min_weight` / `max_weight` — 该材质的最小/最大克重范围
+- `cur_weight` — 当前纸卷克重（在最小/最大克重范围内插值）
+- `qdm_coef` — QDM系数（纸板/楞型决定）
+- `ui_coef` — 界面系数（HMI 手动调整）
+- `speed_coef` — 车速系数（8段速度曲线，车速越高系数越低）
+- `offset` — 弯翘偏移量（G4为`offset`，G14为`warp_offset`，GU 日志中不输出，默认0）
+
+### 验证示例
+
+从 G4/G14 日志数据中，取第一段车速结果验证：
+
+```
+段1：车速=30
+base_gap = 10 + (280 - 200) / (400 - 200) × (35 - 10)
+         = 10 + 0.40 × 25
+         = 20.00
+result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
+         = 31.68
+验证：✓ 与日志记录值一致
+```
+
+### 控制台报告输出格式
+
+`test.py` 的 DB 模式输出三段式报告：
+
+1. **发现的异常** — 按严重程度列出问题：
+   - `⚠️` — 需处理（取消率过高、降级匹配、弯翘影响）
+   - `ℹ️` — 仅供参考（被抢断、无弯翘影响）
+2. **周期概览** — 每行一个赋值周期，含时间、状态、问题标签
+3. **糊间隙计算值** — 仅显示完成的周期中 8 段车速的最终结果：
+
+   ```
+   周期 #1 (SF2) → 31.68 / 28.16 / 24.64 / 21.12 / 19.36 / 17.60 / 15.84 / 14.96
+   ```
+
+### 完整技术报告（diagnostic_report.md）
+
+`generate_report()` 生成包含：
+- 根因追溯 + 生效周期详情
+- 完整 8 段车速曲线表 + **计算说明**（公式验证）
+- 弯翘调平影响（有弯翘事件时）
+- 总体周期统计 + 完整性异常列表

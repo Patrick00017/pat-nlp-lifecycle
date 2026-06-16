@@ -5,7 +5,7 @@ Usage: conda run -n pat-nlp-lifecycle python test.py
 import os, sys, traceback
 sys.path.insert(0, os.getcwd())
 import pandas as pd
-from log_parser import LogParser, test_ips_and_glue_template
+from log_parser import LogParser, test_ips_and_glue_template, test_wrap_template
 from glue_gap_diagnostic import GlueGapDiagnostic
 
 
@@ -15,84 +15,161 @@ def run_diagnostic_from_db():
     print("正在连接数据库并解析日志...")
     print("=" * 60)
 
+    start_time = "2026-01-08 14:03:50.690"
+    end_time = "2026-01-08 15:03:50.690"
+
     extractor = test_ips_and_glue_template(
-        start_time="2026-01-08 14:03:50.690",
-        end_time="2026-01-08 15:03:50.690"
+        start_time=start_time, end_time=end_time
     )
 
     print(f"\n匹配到 {len(extractor.raw_parsed_rows)} 个G事件")
     print(f"材质变更事件: {len(extractor.material_events)}")
     print(f"赋值函数调用: {len(extractor.set_func_call_events)}")
 
-    diagnostic = GlueGapDiagnostic(extractor)
+    print("\n正在查询弯翘数据...")
+    warp_extractor = test_wrap_template(
+        start_time=start_time, end_time=end_time
+    )
+    ws = warp_extractor.get_summary()
+    print(f"弯翘事件总数: {ws['total_warp_events']}")
+    print(f"自动调平: {ws['auto_adjust_count']}, 手动调平: {ws['manual_adjust_count']}")
+    print(f"复位: {ws['reset_count']}, 换材跟踪: {ws['paper_change_count']}")
 
-    print("\n" + "=" * 60)
-    print("周期汇总")
-    print("=" * 60)
-    print(diagnostic.print_cycle_summary())
+    diagnostic = GlueGapDiagnostic(extractor, warp_extractor=warp_extractor)
 
-    print("\n" + "=" * 60)
-    print("取消率统计")
-    print("=" * 60)
-    cr = diagnostic.calc_cancellation_rate()
-    labels_cr = {
-        'total_cycles': '总周期数', 'g7_starts': 'G7触发', 'g11_starts': 'G11触发',
-        'completed': '完成', 'cancelled_pre_write': '写值前取消', 'cancelled_delay': '延迟取消',
-        'interrupted': '中断', 'cancellation_rate': '取消率', 'alert': '警告'
-    }
-    for k, v in cr.items():
-        label = labels_cr.get(k, k)
-        print(f"  {label}: {v}")
-
-    print("\n" + "=" * 60)
-    print("完整性异常")
-    print("=" * 60)
-    type_labels_anom = {
-        'no_termination': '无终止事件', 'fallback_used': '降级匹配',
-        'g12_no_g14': 'G12无G14', 'pre_write_cancel_no_calc': '写值取消无计算',
-        'excessive_calculation': '过多计算',
-    }
+    # ── 收集所有异常 ──
     anomalies = diagnostic.check_cycle_completeness()
-    if anomalies:
-        for a in anomalies:
-            anom_label = type_labels_anom.get(a['type'], a['type'])
-            print(f"  [{anom_label}] 周期#{a['cycle_index']}: {a['detail']}")
-    else:
-        print("  (无)")
-
-    print("\n" + "=" * 60)
-    print("值合理性检查 (GU1)")
-    print("=" * 60)
-    issues = diagnostic.check_value_plausibility('GU1')
-    if issues:
-        for iss in issues:
-            print(f"  [{iss['type']}] 周期#{iss['cycle_index']}: {iss['detail']}")
-    else:
-        print("  (无)")
-
-    print("\n" + "=" * 60)
-    print("材质一致性检查")
-    print("=" * 60)
+    cr = diagnostic.calc_cancellation_rate()
     mc_issues = diagnostic.check_material_consistency()
-    if mc_issues:
-        for iss in mc_issues:
-            print(f"  [{iss['type']}] 周期#{iss['cycle_index']}: {iss['detail']}")
+    wp_issues = []
+    for layer in ('GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3'):
+        for iss in diagnostic.check_value_plausibility(layer):
+            if iss['type'] == 'warp_influence':
+                wp_issues.append(iss)
+
+    # ── 输出报告 ──
+    print()
+    print("=" * 60)
+    print("糊间隙赋值异常分析报告")
+    print("=" * 60)
+    print(f"分析时段: {start_time.split('.')[0]} ~ {end_time.split('.')[0]}")
+    print(f"共匹配 {len(extractor.raw_parsed_rows)} 条事件")
+
+    print()
+    print("--- 发现的异常 ---")
+    print()
+
+    idx = 1
+
+    # 1) 取消率过高
+    if cr['alert']:
+        print(f"{idx}. ⚠️ 取消率过高（{cr['cancellation_rate']}%）")
+        print(f"   {cr['total_cycles']}次赋值请求中{cr['cancelled_delay'] + cr['cancelled_pre_write']}次被新任务打断")
+        print(f"   ({cr['cancelled_delay']}次延迟中取消，{cr['cancelled_pre_write']}次写值前取消)")
+        print(f"   说明换材请求过于密集，系统来不及处理")
+        print(f"   → 建议：检查生产排程，避免短时间内频繁换材")
+        print()
+        idx += 1
+
+    # 2) G10 降级匹配
+    g10_cycles = [a for a in anomalies if a['type'] == 'fallback_used']
+    if g10_cycles:
+        print(f"{idx}. ⚠️ 材质与设备部位不匹配（{len(g10_cycles)}次降级匹配）")
+        print(f"   系统无法将材质层数与用户勾选的部位对应，使用了默认匹配规则")
+        print(f"   此时胶水曲线可能不准确，影响糊间隙质量")
+        print(f"   → 建议：检查 HMI 上糊机糊间隙使用部位的勾选是否与实际纸层一致")
+        print()
+        idx += 1
+
+    # 3) 无终止事件
+    no_term = [a for a in anomalies if a['type'] == 'no_termination']
+    if no_term:
+        print(f"{idx}. ℹ️ 有 {len(no_term)} 个赋值请求被新任务抢断（未完成）")
+        for nt in no_term:
+            t = str(nt.get('start_time', '')).split('.')[0] if '.' in str(nt.get('start_time', '')) else str(nt.get('start_time', ''))
+            print(f"   · {t} 触发的请求被后续请求取代")
+        print()
+        idx += 1
+
+    # 4) 弯翘影响
+    if wp_issues:
+        max_off = max(abs(float(i['detail'].split('最大=')[-1].split(')')[0])) for i in wp_issues if '最大=' in i['detail'])
+        print(f"{idx}. ⚠️ 弯翘调平正在影响胶水赋值")
+        print(f"   弯翘偏移量最大为 {max_off}，涉及 {len(wp_issues)} 个部位")
+        print(f"   → 建议：检查弯翘模块的调平记录（WARP事件），确认偏移量是否合理")
+        print()
+        idx += 1
     else:
-        print("  (无)")
+        print(f"{idx}. ℹ️ 本次分析未发现弯翘调平的影响")
+        print(f"   所有胶水计算中的弯翘偏移量均为0")
+        print()
+        idx += 1
 
-    if extractor.raw_parsed_rows:
-        mid_time = extractor.raw_parsed_rows[len(extractor.raw_parsed_rows) // 2].get('Date', '')
-        if isinstance(mid_time, pd.Timestamp):
-            mid_time = str(mid_time)
+    # 5) 材质一致性
+    if mc_issues:
+        print(f"{idx}. ℹ️ 材质变更记录不一致")
+        for mi in mc_issues:
+            print(f"   · {mi['detail']}")
+        print()
+        idx += 1
 
-        print(f"\n" + "=" * 60)
-        print(f"时间点追溯: {mid_time}")
-        print("=" * 60)
-        tb = diagnostic.traceback(str(mid_time))
-        print(f"  存在有效G12: {tb['has_active_g12']}")
-        print(f"  存在取消干扰: {tb['cancel_interference_nearby']}")
-        if tb.get('cancel_info'):
-            print(f"  取消详情: {tb['cancel_info']['detail']}")
+    # ── 周期概览 ──
+    print("--- 周期概览 ---")
+    print()
+    print(f"{'周期':<6} {'触发时间':<23} {'触发原因':<10} {'最终状态':<12} {'问题标签'}")
+    print("-" * 70)
+    end_labels = {'complete': '已完成', 'cancelled_pre_write': '写值取消', 'interrupted': '未完成'}
+    for c in diagnostic.cycles:
+        cl = end_labels.get(c['end'], str(c['end']))
+        trig = '换材触发' if c['start'].get('EventId') == 'G7' else ('立即换材' if c['start'].get('EventId') == 'G11' else c['start'].get('EventId', '?'))
+        tags = []
+        for a in anomalies:
+            if a['cycle_index'] == c['index']:
+                tag_map = {'no_termination': '被抢断', 'fallback_used': '降级匹配', 'g12_no_g14': '缺计算', 'pre_write_cancel_no_calc': '取消无计算', 'excessive_calculation': '重复计算'}
+                tags.append(tag_map.get(a['type'], a['type']))
+        for wp in wp_issues:
+            if wp['cycle_index'] == c['index']:
+                tags.append('弯翘影响')
+        tag_str = ', '.join(tags) if tags else '-'
+        t = str(c['start'].get('Date', '')).split('.')[0] if '.' in str(c['start'].get('Date', '')) else str(c['start'].get('Date', ''))
+        print(f"#{c['index']:<4} {t:<23} {trig:<10} {cl:<12} {tag_str}")
+
+    # ── 显示最终写入值 ──
+    print("--- 糊间隙计算值 ---")
+    print()
+    for c in diagnostic.cycles:
+        if c['end'] != 'complete':
+            continue
+        sfe = c.get('set_func_event')
+        if not sfe:
+            continue
+        sv = sfe.get('set_values', {})
+        if not sv:
+            continue
+        for layer, ld in sv.items():
+            data = ld.get('data', [])
+            if not data:
+                continue
+            cols = ld.get('columns', [])
+            try:
+                speed_idx = cols.index('speed')
+                val_idx = cols.index('value')
+                segments = []
+                for row in data:
+                    s = row[speed_idx] if speed_idx < len(row) else '?'
+                    v = row[val_idx] if val_idx < len(row) else '?'
+                    segments.append(f"@{s}={v}")
+                print(f"周期 #{c['index']} ({layer}) → {' / '.join(segments)}")
+            except ValueError:
+                continue
+    print()
+
+    print("--- 排除建议 ---")
+    print()
+    print("如要忽略上述问题重新排查其他方向：")
+    print("  1. 修改 start_time / end_time，选择不同时段再次分析")
+    print(f"  2. 如需关注面纸糊机(GU)，需确认该时段有 GU 赋值活动")
+    print("  3. 分析结果已保存到 diagnostic_report.md（含完整技术细节）")
 
     return diagnostic
 
@@ -100,10 +177,10 @@ def run_diagnostic_from_db():
 def run_diagnostic_synthetic():
     """Run diagnostic with synthetic test data (no DB needed)."""
     print("=" * 60)
-    print("使用模拟数据进行诊断")
+    print("使用模拟数据进行诊断（含弯翘影响）")
     print("=" * 60)
 
-    from event_extractor import GlueEventExtractor
+    from event_extractor import GlueEventExtractor, WarpEventExtractor
     ext = GlueEventExtractor()
     ext.raw_parsed_rows = [
         {'EventId': 'G1', 'ParsedValues': {'handle_func_name': 'HandleGuGlueMsg', 'meterial': 'P.-.-.8.J', 'flute_type': '3B'}, 'Date': '2026-01-08 14:00:00'},
@@ -123,7 +200,21 @@ def run_diagnostic_synthetic():
         {'EventId': 'G14', 'ParsedValues': {'glue_part': 'GU1'}, 'Date': '2026-01-08 14:02:08'},
         {'EventId': 'G15', 'ParsedValues': {}, 'Date': '2026-01-08 14:02:09'},
     ]
-    d = GlueGapDiagnostic(ext)
+
+    # 模拟弯翘数据
+    warp_ext = WarpEventExtractor()
+    warp_ext.auto_adjust_events = [
+        {'mode': 'auto', 'action': 'UP1', 'time': '2026-01-08 14:00:08'},
+        {'mode': 'auto', 'action': 'DOWN2', 'time': '2026-01-08 14:01:03'},
+    ]
+    warp_ext.reset_events = [
+        {'type': 'auto', 'time': '2026-01-08 14:00:12'},
+    ]
+    warp_ext.paper_change_events = [
+        {'type': 'tracking', 'df_remain': '50', 'time': '2026-01-08 14:00:30'},
+    ]
+
+    d = GlueGapDiagnostic(ext, warp_extractor=warp_ext)
 
     print("\n--- 周期汇总 ---")
     print(d.print_cycle_summary())
@@ -155,15 +246,15 @@ def run_diagnostic_synthetic():
     else:
         print("  (无)")
 
-    print("\n--- 糊间隙值合理性检查 (GU1) ---")
+    print("\n--- 糊间隙值合理性检查 + 弯翘偏移检查 (GU1) ---")
     d.cycles[0]['set_func_event'] = {
         'set_values': {
             'GU1': {
-                'columns': ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'value'],
+                'columns': ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'warp_offset', 'value'],
                 'data': [
-                    ['50', '1', '5', '100', '200', '150', '0.9', '1.0', '1.0', '1.0', '2.0'],
-                    ['100', '1', '5', '100', '200', '150', '0.9', '1.0', '1.0', '1.0', '3.5'],
-                    ['150', '1', '5', '100', '200', '150', '1.2', '1.0', '1.0', '1.0', '8.0'],
+                    ['50', '1', '5', '100', '200', '150', '0.9', '1.0', '1.0', '1.0', '1.5', '2.0'],
+                    ['100', '1', '5', '100', '200', '150', '0.9', '1.0', '1.0', '1.0', '1.5', '3.5'],
+                    ['150', '1', '5', '100', '200', '150', '1.2', '1.0', '1.0', '1.0', '1.5', '8.0'],
                 ]
             }
         }
@@ -181,6 +272,10 @@ def run_diagnostic_synthetic():
     print(f"  存在取消干扰: {tb['cancel_interference_nearby']}")
     if tb.get('cancel_info'):
         print(f"  取消详情: {tb['cancel_info']['detail']}")
+    print(f"  附近弯翘事件: {'是' if tb.get('warp_active') else '否'}")
+    if tb.get('warp_events_nearby'):
+        for we in tb['warp_events_nearby'][:3]:
+            print(f"     {we.get('time', '')} [{we.get('mode', we.get('type', '?'))}] {we.get('action', '')}")
 
     print("\n--- 材质一致性检查 ---")
     d.cycles[0]['set_func_event']['lifecycle'] = {
