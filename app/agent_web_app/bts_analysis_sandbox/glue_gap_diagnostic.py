@@ -6,9 +6,10 @@ from collections import defaultdict
 class GlueGapDiagnostic:
     TRIG_LABELS = {'G7': '换材触发', 'G11': '立即换材'}
 
-    def __init__(self, extractor, warp_extractor=None):
+    def __init__(self, extractor, warp_extractor=None, dev_ips=None):
         self.extractor = extractor
         self.warp_extractor = warp_extractor
+        self.dev_ips = dev_ips
         self.raw_events = extractor.raw_parsed_rows
         self.raw_events.sort(key=lambda x: str(x.get('Date', '')))
         self.set_func_events = extractor.get_glue_set_function_full_event()
@@ -34,20 +35,15 @@ class GlueGapDiagnostic:
                     if current.get('end') is None:
                         current['end'] = 'interrupted'
                     cycles.append(current)
-                current = {'start': evt, 'events': [], 'end': None, 'end_event': None}
+                current = {'start': evt, 'events': [], 'end': None, 'end_event': None, 'set_func_event': None}
                 current['events'].append(evt)
             elif current is None:
                 continue
             else:
                 current['events'].append(evt)
-                if eid == 'G12':
+                if eid in ('G12', 'G5'):
                     current['end'] = 'complete'
                     current['end_event'] = evt
-                    g12_time = str(evt.get('Date', ''))
-                    for sfe in self.set_func_events:
-                        if str(sfe.get('time', '')) == g12_time:
-                            current['set_func_event'] = sfe
-                            break
                     cycles.append(current)
                     current = None
                 elif eid == 'G15':
@@ -59,6 +55,25 @@ class GlueGapDiagnostic:
             if current.get('end') is None:
                 current['end'] = 'interrupted'
             cycles.append(current)
+
+        # Merge set_values from all G12/G5 events within each cycle
+        for c in cycles:
+            merged_sv = {}
+            merged_sfe = None
+            for evt in c['events']:
+                if evt.get('EventId') in ('G12', 'G5'):
+                    ts = str(evt.get('Date', ''))
+                    for sfe in self.set_func_events:
+                        if str(sfe.get('time', '')) == ts:
+                            sv = sfe.get('set_values', {})
+                            merged_sv.update(sv)
+                            if merged_sfe is None:
+                                merged_sfe = dict(sfe)
+                            break
+            if merged_sfe:
+                merged_sfe['set_values'] = merged_sv
+                c['set_func_event'] = merged_sfe
+
         for i, c in enumerate(cycles):
             c['index'] = i
         return cycles
@@ -231,6 +246,7 @@ class GlueGapDiagnostic:
     # ── Dimension 4: Material Consistency ──
     def check_material_consistency(self):
         issues = []
+        mismatch_indices = set()
         for c in self.cycles:
             if c['end'] != 'complete':
                 continue
@@ -240,28 +256,35 @@ class GlueGapDiagnostic:
             material = sfe.get('material', '')
             lifecycle = sfe.get('lifecycle', {})
             start_time = c['start'].get('Date', '')
-            has_g11 = c['start'].get('EventId') == 'G11'
-            if has_g11:
-                g11_pv = c['start'].get('ParsedValues', {})
-                offset = g11_pv.get('OffSetValue', 'N/A')
-                issues.append({
-                    'type': 'immediate_change',
-                    'cycle_index': c['index'],
-                    'time': str(start_time),
-                    'detail': f'周期#{c["index"]}: 触发G11立即换材 —— 偏移量={offset}, 材质={material}'
-                })
             df_lifecycle = lifecycle.get('df', {}).get('msg', '')
             if df_lifecycle and material:
                 parts = material.split('.')
                 material_codes = [p for p in parts if p != '-']
                 df_msg_material = df_lifecycle.split('->')[-1].strip().strip('()').split(',')[0] if '->' in df_lifecycle else ''
                 if df_msg_material and df_msg_material != material:
+                    mismatch_indices.add(c['index'])
                     issues.append({
                         'type': 'material_mismatch',
                         'cycle_index': c['index'],
                         'time': str(start_time),
                         'detail': f'周期#{c["index"]}: DF生命周期材质"{df_msg_material}"与G7材质"{material}"不一致'
                     })
+
+        # G11 立即换材：仅当该周期同时存在材质错位时才记录
+        for c in self.cycles:
+            if c['end'] != 'complete' or c['index'] not in mismatch_indices:
+                continue
+            if c['start'].get('EventId') == 'G11':
+                sfe = c.get('set_func_event')
+                material = sfe.get('material', '') if sfe else ''
+                g11_pv = c['start'].get('ParsedValues', {})
+                offset = g11_pv.get('OffSetValue', 'N/A')
+                issues.append({
+                    'type': 'immediate_change',
+                    'cycle_index': c['index'],
+                    'time': str(c['start'].get('Date', '')),
+                    'detail': f'周期#{c["index"]}: 触发G11立即换材 —— 偏移量={offset}, 材质={material}'
+                })
         return issues
 
     @staticmethod
@@ -286,7 +309,139 @@ class GlueGapDiagnostic:
             layers.append({'name': layer, 'segments': segs})
         return layers
 
-    # ── Dimension 5: Root Cause Traceback ──
+    # ── Dimension 5: Cross-Source Consistency (requires dev_ips) ──
+    def _query_ips(self, sql, params=None):
+        if not self.dev_ips:
+            return None
+        try:
+            cur = self.dev_ips.conn.cursor()
+            cur.execute(sql, params or ())
+            return cur.fetchall()
+        except Exception:
+            self.dev_ips.conn.rollback()
+            return None
+
+    @staticmethod
+    def _compact_material(material):
+        if not material:
+            return ''
+        parts = material.split('.')
+        compact = [p for p in parts if p != '-']
+        return '.'.join(compact)
+
+    def check_cross_source_consistency(self):
+        issues = []
+        if self.dev_ips is None:
+            return issues
+
+        for c in self.cycles:
+            if c['end'] != 'complete':
+                continue
+            sfe = c.get('set_func_event')
+            if not sfe:
+                continue
+
+            material = sfe.get('material', '')
+            flute = sfe.get('flute_type', '')
+            sv = sfe.get('set_values', {})
+            paper_codes = [p for p in material.split('.') if p != '-'] if material else []
+
+            # Get weight from devIPS S_PaperCodes (sum of all non-dash parts' SPC_GlueWeight)
+            expected_weight = None
+            if paper_codes:
+                total = 0.0
+                all_found = True
+                for pc in paper_codes:
+                    rows = self._query_ips(
+                        'SELECT "SPC_GlueWeight" FROM "S_PaperCodes" WHERE "SPC_Code" = %s',
+                        (pc,)
+                    )
+                    if rows and rows[0][0]:
+                        total += float(rows[0][0])
+                    else:
+                        all_found = False
+                        break
+                if all_found:
+                    expected_weight = total
+
+            # Get QDM coefficients from devIPS (uses compacted code, no dashes)
+            qdm_map = {}
+            compact_code = self._compact_material(material)
+            col_map = {'GU1': 'F_Glue1', 'GU2': 'F_Glue2', 'GU3': 'F_Glue3'}
+            gu_cols = ', '.join(f'"{c}"' for c in col_map.values())
+
+            qdm_rows = self._query_ips(
+                f'SELECT "F_Paper", {gu_cols} FROM "TB_IPS_QdmCoefDF" WHERE "F_Paper" = %s AND "F_Flute" = %s',
+                (compact_code, flute)
+            )
+            if not qdm_rows and compact_code != material:
+                like_pat = compact_code.replace('-', '_')
+                qdm_rows = self._query_ips(
+                    f'SELECT "F_Paper", {gu_cols} FROM "TB_IPS_QdmCoefDF" WHERE "F_Paper" LIKE %s AND "F_Flute" = %s LIMIT 5',
+                    (like_pat, flute)
+                )
+            if not qdm_rows and '-' in compact_code:
+                like_pat2 = compact_code.replace('-', '%')
+                qdm_rows = self._query_ips(
+                    f'SELECT "F_Paper", {gu_cols} FROM "TB_IPS_QdmCoefDF" WHERE "F_Paper" LIKE %s AND "F_Flute" = %s LIMIT 5',
+                    (like_pat2, flute)
+                )
+            if qdm_rows:
+                for layer_key, col_name in col_map.items():
+                    ci = list(col_map.values()).index(col_name)
+                    qdm_map[layer_key] = float(qdm_rows[0][ci + 1]) if len(qdm_rows[0]) > ci + 1 and qdm_rows[0][ci + 1] else None
+
+            if not qdm_rows:
+                issues.append({
+                    'type': 'qdm_no_data',
+                    'cycle_index': c['index'],
+                    'layer': ','.join(sv.keys()),
+                    'start_time': str(c['start'].get('Date', '')),
+                    'detail': f'材质"{compact_code}"+楞型"{flute}"在QDM配置表中无对应条目，无法验证QDM系数'
+                })
+
+            for layer, ld in sv.items():
+                data = ld.get('data', [])
+                if not data:
+                    continue
+                cols = ld.get('columns', [])
+                try:
+                    wi = cols.index('current_glue_weight')
+                    qi = cols.index('qdm_factor')
+                except ValueError:
+                    continue
+
+                first = data[0]
+                actual_weight = float(first[wi]) if first[wi] else 0
+                actual_qdm = float(first[qi]) if first[qi] else 0
+
+                # Weight check
+                if expected_weight is not None:
+                    diff = abs(actual_weight - expected_weight)
+                    if diff > 1:
+                        issues.append({
+                            'type': 'weight_mismatch',
+                            'cycle_index': c['index'],
+                            'layer': layer,
+                            'start_time': str(c['start'].get('Date', '')),
+                            'detail': f'G14使用克重={actual_weight:.0f}g, 数据库(纸板档案)={expected_weight:.0f}g, 差异={actual_weight - expected_weight:.0f}g'
+                        })
+
+                # QDM check
+                expected_qdm = qdm_map.get(layer)
+                if expected_qdm is not None:
+                    if abs(actual_qdm - expected_qdm) > 0.01:
+                        issues.append({
+                            'type': 'qdm_mismatch',
+                            'cycle_index': c['index'],
+                            'layer': layer,
+                            'start_time': str(c['start'].get('Date', '')),
+                            'detail': f'G14使用QDM系数={actual_qdm}, 数据库(QDM配方)={expected_qdm}, 差异={actual_qdm - expected_qdm:.2f}'
+                        })
+
+        return issues
+
+    # ── Dimension 6: Root Cause Traceback ──
     def traceback(self, target_time, expected_values=None, recent_count=5):
         ts_target = self._to_ts(target_time)
         ts_target = pd.Timestamp(ts_target) if not isinstance(ts_target, pd.Timestamp) else ts_target
@@ -492,6 +647,9 @@ class GlueGapDiagnostic:
             if len(recent) >= recent_count:
                 break
         result['recent_assignments'] = recent
+
+        # ── Cross-Source Consistency ──
+        result['cross_source_issues'] = self.check_cross_source_consistency()
 
         return result
 
@@ -774,6 +932,19 @@ class GlueGapDiagnostic:
             for m in mm_real:
                 lines.append(f'| #{m["cycle_index"]} | 材质不匹配 | {m["detail"]} |')
             lines.append('')
+
+        if target_time:
+            cs_issues = tb.get('cross_source_issues', [])
+            if cs_issues:
+                lines.append('## 跨来源一致性检查')
+                lines.append('')
+                lines.append('| 周期 | 部位 | 类型 | 说明 |')
+                lines.append('|------|------|------|------|')
+                type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置'}
+                for cs in cs_issues:
+                    label = type_labels_cs.get(cs['type'], cs['type'])
+                    lines.append(f'| #{cs["cycle_index"]} | {cs["layer"]} | {label} | {cs["detail"]} |')
+                lines.append('')
 
         return '\n'.join(lines)
 

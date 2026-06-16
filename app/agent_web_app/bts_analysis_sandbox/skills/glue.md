@@ -11,17 +11,23 @@ G10 降级为默认匹配
   ↓  [可选：延迟等待中被新任务抢断]
 G8  延迟中取消
   ↓
-G14 各部位计算结果（GU1/GU2/GU3/SF1/SF2/SF3，每部位 8 段车速曲线）
+G14 GU 各部位计算结果（GU1/GU2/GU3，每部位 8 段车速曲线）
   ↓  [可选：写值前被新任务抢占]
 G15 写值前取消
   ↓
     WriteVar × 约 48 个 PLC 点（成功无日志）
   ↓
-G12 SetGlueGu 写值完成
+G12 SetGlueGu 写值完成（GU 周期结束）
+
+--- SF 赋值路径 ---
+
+G4 SF 各部位计算结果（SF1/SF2/SF3，每部位 8 段车速曲线）
+  ↓
+G5  SetGlueSF 写值完成（SF 周期结束）
 
 --- 替代路径 ---
 G11 HandleChangeNow（手动立即换材，跳过延迟）
-  ↓  （same SetGlueGu flow，isChangeNow=true）
+  ↓  （same SetGlueGu/SetGlueSF flow，isChangeNow=true）
 ```
 
 代码中以 `EventId` 标识事件，控制台和报告里触发原因统一显示为 `代号（描述）` 格式：
@@ -146,19 +152,23 @@ setValue += brandOffset     ← 品牌偏移
 
 ### 4. 材质一致性（已实现）
 
-- 检测 G11 立即换材事件。
-- 比较 `SetGlueGu` 中的 `material` 与生命周期 `lifecycle.df.msg` 中的材质。
+- 比较 `SetGlueGu`/`SetGlueSF` 中的 `material` 与生命周期 `lifecycle.df.msg` 中的材质。
 - 不一致时产生 `material_mismatch`，这是当前唯一被归类为 **确认错误** 的异常。
+- 若该周期同时为 G11 立即换材，则额外记录 `immediate_change`。
+
+> 注：G11（立即换材）本身不是异常，仅当同周期存在 `material_mismatch` 时作为上下文附带输出。
 
 代码实现：`GlueGapDiagnostic.check_material_consistency()`。
 
-### 5. 跨来源一致性（规划中）
+### 5. 跨来源一致性（已实现）
 
-- G7 material+brand vs G14 计算 weight → 品牌偏移查找正确性。
-- G11 offset value vs SetGlueGu warp offset → 一致性检查。
-- G1/G7 flute type vs G14 QDM coefficient → QDM 查找正确性。
+通过 `GlueGapDiagnostic.check_cross_source_consistency()` 实现，需传入 `dev_ips`（`PostgreSQLHelper` 实例）。
 
-> 当前代码未实现。
+- **克重一致性**：提取 `material` 中所有非 `-` 部分，逐段查询 `S_PaperCodes.SPC_GlueWeight` 累加，比对总和与 G14 的 `current_glue_weight`。与 PLC 代码 `GetSumWeight(info.Code)` 逻辑一致。
+- **QDM 系数一致性**：使用**压缩码**（去掉 `-` 后的材质码，如 `Q.-.-.0.Q` → `Q.0.Q`）匹配 `TB_IPS_QdmCoefDF`，精确匹配失败时回退 `LIKE` 模糊匹配。比对 `F_Glue1/2/3` 与 G14 的 `qdm_factor`。
+- **品牌偏移一致性**（规划中）：当前未实现，需通过 `S_PaperCodeBrands` + `TB_IPS_GlueGuBrand` 联合查询。
+
+结果在控制台输出 `--- 跨来源一致性检查 ---` 段，在 report.md 中以 `## 跨来源一致性检查` 表格展示。
 
 ### 6. 全生命周期关联（规划中）
 
@@ -182,11 +192,13 @@ setValue += brandOffset     ← 品牌偏移
 
 | 事件模式 | 含义 | 追溯方向 |
 |---------|------|---------|
-| G7 → ... → G12 | 正常换材赋值 | 以该周期为生效周期 |
-| G11 → ... → G12 | 手动立即换材 | 跳过延迟逻辑 |
+| G7 → ... → G12 | 正常 GU 换材赋值 | 以该周期为生效周期 |
+| G7 → ... → G5 | 正常 SF 换材赋值 | 以该周期为生效周期 |
+| G11 → ... → G12 | 手动立即换材（GU） | 跳过延迟逻辑 |
+| G11 → ... → G5 | 手动立即换材（SF） | 跳过延迟逻辑 |
 | G7/11 → G15 | 写值前取消 | 当前值来自上一周期 |
 | G7/11 → G8 → interrupted | 延迟中被抢断 | 当前值仍来自上一完成周期，下一完成周期才会生效 |
-| 无 G12 | 赋值未完成/失败 | 检查错误日志 |
+| 无 G12/G5 | 赋值未完成/失败 | 检查错误日志 |
 
 代码实现：`GlueGapDiagnostic.traceback(target_time, expected_values)`。
 
@@ -243,11 +255,11 @@ G7（入口）
   ↓ 延迟等待
   G8? → 新任务到达 → 当前值仍来自上一周期，下一周期才会生效
   ↓ 计算完成
-  G14×N
+  G14×N（GU）/ G4×N（SF）
   ↓
   G15? → 写值前取消 → 当前值来自上一周期
   ↓
-  G12（写值完成）
+  G12（GU 写值完成）/ G5（SF 写值完成）
 ```
 
 关键判断：
@@ -274,22 +286,22 @@ G7（入口）
 ```
 用户："某时刻糊间隙值与预期不符"
   ↓
-找到最近的 G12（写值完成）
+找到最近的 G12（GU 写值完成）/ G5（SF 写值完成）
   ↓
-├─ G12 存在 → 该周期为生效周期
-│   ├─ 检查 G14：逐段公式验证
+├─ G12/G5 存在 → 该周期为生效周期
+│   ├─ 检查 G14/G4：逐段公式验证
 │   ├─ 检查 G7：触发材质/楞型
 │   ├─ 检查 G10：是否降级匹配
 │   ├─ 检查 G11：是否立即换材
 │   └─ 检查 material_mismatch：是否确认错误
 │
-├─ 无 G12，存在 G15 → 值来自上一周期
-│   └─ 找上一个 G12
+├─ 无 G12/G5，存在 G15 → 值来自上一周期
+│   └─ 找上一个 G12/G5
 │
-├─ 无 G12，存在 G8 → 值来自下一完成周期
-│   └─ 找下一个 G12
+├─ 无 G12/G5，存在 G8 → 值来自下一完成周期
+│   └─ 找下一个 G12/G5
 │
-└─ 无 G12，日志中有异常关键词 → 通信/计算故障
+└─ 无 G12/G5，日志中有异常关键词 → 通信/计算故障
     └─ 检查 PLC 通信或 QDM 系数数据库
 ```
 
@@ -393,13 +405,14 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
 
 | 方法 | 作用 |
 |------|------|
-| `__init__(extractor, warp_extractor=None)` | 初始化，分组周期，可选关联弯翘提取器。 |
-| `_group_cycles()` | 把事件流按 G7/G11 起点、G12/G15 终点切分为周期。 |
+| `__init__(extractor, warp_extractor=None, dev_ips=None)` | 初始化，分组周期，可选关联弯翘提取器 + devIPS 连接。 |
+| `_group_cycles()` | 把事件流按 G7/G11 起点、G12/G5/G15 终点切分为周期，合并 GU（G12）和 SF（G5）的 `set_values`。 |
 | `check_cycle_completeness()` | 检查周期完整性异常。 |
 | `calc_cancellation_rate()` | 计算取消率并给出警告。 |
 | `check_value_plausibility(layer)` | 检查指定部位的 G14 值合理性。 |
 | `check_material_consistency()` | 检查材质一致性，返回 `material_mismatch`。 |
-| `traceback(target_time, expected_values, recent_count=5)` | 根因追溯，返回生效周期、取消干扰、弯翘事件、最近赋值序列。 |
+| `check_cross_source_consistency()` | 跨来源一致性检查（需 `dev_ips` 连接），返回克重/QDM系数不匹配项。 |
+| `traceback(target_time, expected_values, recent_count=5)` | 根因追溯，返回生效周期、取消干扰、弯翘事件、最近赋值序列、跨来源问题。 |
 | `generate_report(target_time, expected_values)` | 生成完整 Markdown 报告。 |
 | `print_cycle_summary()` | 打印周期汇总表。 |
 | `_extract_layer_values(set_values)` | 从 `set_values` 中提取每层的 speed→value 列表。 |

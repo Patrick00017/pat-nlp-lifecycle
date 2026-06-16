@@ -5,10 +5,11 @@ Usage: conda run -n pat-nlp-lifecycle python test\test.py
 
 import sys, os, traceback
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pandas as pd
 from log_parser import LogParser, test_ips_and_glue_template, test_wrap_template
 from glue_gap_diagnostic import GlueGapDiagnostic
+from database_utils import PostgreSQLHelper
 
 
 def run_diagnostic_from_db():
@@ -17,8 +18,8 @@ def run_diagnostic_from_db():
     print("正在连接数据库并解析日志...")
     print("=" * 60)
 
-    start_time = "2026-01-08 17:03:50.690"
-    end_time = "2026-01-08 18:03:50.690"
+    start_time = "2026-01-08 12:03:50.690"
+    end_time = "2026-01-08 16:03:50.690"
 
     extractor = test_ips_and_glue_template(start_time=start_time, end_time=end_time)
 
@@ -33,7 +34,19 @@ def run_diagnostic_from_db():
     print(f"自动调平: {ws['auto_adjust_count']}, 手动调平: {ws['manual_adjust_count']}")
     print(f"复位: {ws['reset_count']}, 换材跟踪: {ws['paper_change_count']}")
 
-    diagnostic = GlueGapDiagnostic(extractor, warp_extractor=warp_extractor)
+    print("\n正在连接 devIPS 数据库...")
+    dev_ips = PostgreSQLHelper.from_connection_string(
+        "PORT=5432;DATABASE=devIPS;HOST=192.168.110.82;PASSWORD=123456;USER ID=postgres"
+    )
+    try:
+        dev_ips.connect()
+    except Exception as e:
+        print(f"devIPS 连接失败: {e}，跨来源一致性检查将跳过")
+        dev_ips = None
+
+    diagnostic = GlueGapDiagnostic(
+        extractor, warp_extractor=warp_extractor, dev_ips=dev_ips
+    )
 
     # ── 收集所有异常 ──
     anomalies = diagnostic.check_cycle_completeness()
@@ -197,11 +210,11 @@ def run_diagnostic_from_db():
         c["index"] for c in diagnostic.cycles if c["end"] == "complete"
     ]
     if completed_indices:
-        # last_completed = diagnostic.cycles[completed_indices[-1]]
-        # g12_raw = last_completed.get("end_event", {}).get("Date", "")
-        # g12_ts = str(g12_raw).split(".")[0] if "." in str(g12_raw) else str(g12_raw)
-        # target = str(pd.Timestamp(g12_ts) + pd.Timedelta(seconds=30))
-        target = "2026-01-08 17:50:10"
+        last_completed = diagnostic.cycles[completed_indices[-1]]
+        g12_raw = last_completed.get("end_event", {}).get("Date", "")
+        g12_ts = str(g12_raw).split(".")[0] if "." in str(g12_raw) else str(g12_raw)
+        target = str(pd.Timestamp(g12_ts) + pd.Timedelta(seconds=30))
+        # target = "2026-01-08 17:50:10"
         tb = diagnostic.traceback(target, recent_count=5)
         ra = tb.get("recent_assignments", [])
         if ra:
@@ -255,6 +268,22 @@ def run_diagnostic_from_db():
         mm_real = [m for m in mc_issues if m.get("type") == "material_mismatch"]
         for mi in mm_real:
             print(f"  [#{mi['cycle_index']:<4}] 材质不匹配: {mi['detail']}")
+        print()
+
+    # ── 跨来源一致性检查 ──
+    cs_issues = diagnostic.check_cross_source_consistency()
+    if cs_issues:
+        print("--- 跨来源一致性检查 ---")
+        print()
+        for cs in cs_issues:
+            type_label = (
+                "克重不匹配"
+                if cs["type"] == "weight_mismatch"
+                else "QDM系数不匹配" if cs["type"] == "qdm_mismatch" else "QDM无配置"
+            )
+            print(
+                f"  [#{cs['cycle_index']} / {cs['layer']}] {type_label}: {cs['detail']}"
+            )
         print()
 
     print("--- 排除建议 ---")
