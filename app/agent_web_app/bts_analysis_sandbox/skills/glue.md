@@ -168,6 +168,7 @@ setValue += brandOffset     ← 品牌偏移
 - **QDM 系数一致性**：使用**压缩码**（去掉 `-` 后的材质码，如 `Q.-.-.0.Q` → `Q.0.Q`）匹配 `TB_IPS_QdmCoefDF`，精确匹配失败时回退 `LIKE` 模糊匹配。比对 `F_Glue1/2/3` 与 G14 的 `qdm_factor`。
 - **品牌偏移一致性**（规划中）：当前未实现，需通过 `S_PaperCodeBrands` + `TB_IPS_GlueGuBrand` 联合查询。
 - **基础设置一致性**：查询 `TB_IPS_GlueGu`（GU 层）或 `TB_IPS_GlueSF`（SF 层），比对 `F_MinGlue`/`F_MaxGlue`/`F_MinWeight`/`F_MaxWeight` 与 G14 的 `min_glue`/`max_glue`/`min_weight`/`max_weight`。有差异即报告 `base_setting_mismatch`。
+- **车速系数一致性**：查询 `TB_IPS_GlueSpeedCoef`（`F_Position` 按 GU1=1, GU2=2, GU3=3, SF1=4, SF2=5 映射），逐段比对 `F_Coef` 与 G14 的 `speed_factor`。差异超过 0.01 时报告 `speed_coef_mismatch`。
 
 结果在控制台输出 `--- 跨来源一致性检查 ---` 段，在 report.md 中以 `## 跨来源一致性检查` 表格展示。
 
@@ -412,6 +413,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
 | `check_cross_source_consistency()` | 跨来源一致性检查（需 `dev_ips` 连接），返回克重/QDM系数不匹配项。 |
 | `traceback(target_time, expected_values, recent_count=5)` | 根因追溯，返回生效周期、取消干扰、弯翘事件、最近赋值序列、跨来源问题。 |
 | `generate_report(target_time, expected_values)` | 生成完整 Markdown 报告。 |
+| `generate_json(target_time, expected_values)` | 生成完整诊断数据的 JSON 字典（供 Web 前端使用）。 |
 | `print_cycle_summary()` | 打印周期汇总表。 |
 | `_extract_layer_values(set_values)` | 从 `set_values` 中提取每层的 speed→value 列表。 |
 

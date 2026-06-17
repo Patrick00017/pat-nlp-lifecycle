@@ -498,6 +498,36 @@ class GlueGapDiagnostic:
                                 'detail': f'G14使用{field_name}={actual}, 数据库基础设置={expected}, 差异={actual - expected:.0f}'
                             })
 
+                # Speed coefficient check (TB_IPS_GlueSpeedCoef)
+                pos_map = {'GU1': 1, 'GU2': 2, 'GU3': 3, 'SF1': 4, 'SF2': 5, 'SF3': 6}
+                pos = pos_map.get(layer)
+                if pos is not None:
+                    spd_rows = self._query_ips(
+                        'SELECT "F_Speed", "F_Coef", "F_MinValue" FROM "TB_IPS_GlueSpeedCoef" WHERE "F_Position" = %s ORDER BY "F_Speed"',
+                        (pos,)
+                    )
+                    if spd_rows:
+                        try:
+                            spd_i = cols.index('speed')
+                            sf_i = cols.index('speed_factor')
+                        except ValueError:
+                            spd_i = sf_i = None
+                        if spd_i is not None:
+                            db_speed_map = {int(r[0]): float(r[1]) for r in spd_rows}
+                            for ri, row in enumerate(data):
+                                actual_spd = float(row[spd_i]) if row[spd_i] else 0
+                                actual_sf = float(row[sf_i]) if sf_i is not None and row[sf_i] else 0
+                                expected_sf = db_speed_map.get(int(actual_spd))
+                                if expected_sf is not None and abs(actual_sf - expected_sf) > 0:
+                                    issues.append({
+                                        'type': 'speed_coef_mismatch',
+                                        'cycle_index': c['index'],
+                                        'layer': layer,
+                                        'start_time': str(c['start'].get('Date', '')),
+                                        'detail': f'段{ri+1}(speed={actual_spd:.0f}): G14使用speed_factor={actual_sf}, 数据库(GlueSpeedCoef)={expected_sf}, 差异={actual_sf - expected_sf:+.2f}'
+                                    })
+                                    break  # 每层只报第一个不匹配段
+
         return issues
 
     # ── Dimension 6: Root Cause Traceback ──
@@ -705,7 +735,7 @@ class GlueGapDiagnostic:
                     tags.append('材质不匹配')
                     break
             cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
-                         'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                         'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配', 'speed_coef_mismatch': '车速系数不匹配'}
             for cs in cs_all:
                 if cs['cycle_index'] == c['index'] and cs['type'] not in error_seen:
                     error_seen.add(cs['type'])
@@ -948,7 +978,7 @@ class GlueGapDiagnostic:
             for cs in cs_all:
                 if cs['cycle_index'] == c['index']:
                     cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
-                                 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                                 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配', 'speed_coef_mismatch': '车速系数不匹配'}
                     errs.append(f"{cs_labels.get(cs['type'], cs['type'])}（{cs['detail']}）")
             for wp in [x for x in self.check_value_plausibility('GU1') + self.check_value_plausibility('GU2')
                        + self.check_value_plausibility('GU3') + self.check_value_plausibility('SF1')
@@ -1022,14 +1052,14 @@ class GlueGapDiagnostic:
                     idx = ra_item['index']
                     labels = []
                     seen = set()
-                    if ra_item.get('error_detail'):
+                    if '材质不匹配' in ra_item.get('anomalies', []):
                         labels.append('材质和系统记录对不上')
                         seen.add('material_mismatch')
                     for cs in cs_all:
                         if cs['cycle_index'] == idx and cs['type'] not in seen:
                             seen.add(cs['type'])
                             cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
-                                        'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
+                                        'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上', 'speed_coef_mismatch': '车速系数和数据库对不上'}
                             labels.append(cs_plain.get(cs['type'], cs['type']))
                     if labels:
                         error_cycles.append((idx, labels))
@@ -1091,7 +1121,7 @@ class GlueGapDiagnostic:
             lines.append('')
             lines.append('| 周期 | 部位 | 类型 | 说明 |')
             lines.append('|------|------|------|------|')
-            type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+            type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配', 'speed_coef_mismatch': '车速系数不匹配'}
             for cs in cs_all:
                 label = type_labels_cs.get(cs['type'], cs['type'])
                 lines.append(f'| #{cs["cycle_index"]} | {cs["layer"]} | {label} | {cs["detail"]} |')
@@ -1183,7 +1213,7 @@ class GlueGapDiagnostic:
             for cs in cs_issues:
                 if cs['cycle_index'] == c['index']:
                     cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
-                                 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                                 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配', 'speed_coef_mismatch': '车速系数不匹配'}
                     cycle['errors'].append({'type': cs['type'], 'label': cs_labels.get(cs['type'], cs['type']), 'detail': cs['detail']})
             for wp in wp_issues:
                 if wp['cycle_index'] == c['index']:
@@ -1233,7 +1263,7 @@ class GlueGapDiagnostic:
                     if cs['cycle_index'] == idx and cs['type'] not in seen:
                         seen.add(cs['type'])
                         cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
-                                    'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
+                                    'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上', 'speed_coef_mismatch': '车速系数和数据库对不上'}
                         labels.append(cs_plain.get(cs['type'], cs['type']))
                 if labels:
                     error_cycles.append({'index': idx, 'labels': labels})

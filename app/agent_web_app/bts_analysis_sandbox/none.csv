@@ -1,3 +1,7 @@
 ,Message,Date,EventId,MatchedTemplate,ParsedValues
-200,"{""Module"":""换材判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""横切换单或者强换，触发判定是否横切换材\r\nLS0横切换材了。上笔材质=T，门幅=2100；本批材质=D，门幅=2100\r\nLS0有实际材质，不需要校准\r\nLS2横切换材了。上笔材质=N，门幅=2100；本批材质=A，门幅=2100\r\nLS2有实际材质，不需要校准\r\n"",""ExceptionInfo"":null}",2026-01-08 17:21:12.883,,,
-454,"{""Module"":""换材判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""横切换单或者强换，触发判定是否横切换材\r\nLS0横切换材了。上笔材质=A，门幅=2050；本批材质=Q，门幅=2050\r\nLS0有实际材质，不需要校准\r\nLS2横切换材了。上笔材质=A，门幅=2050；本批材质=Q，门幅=2050\r\nLS2有实际材质，不需要校准\r\n"",""ExceptionInfo"":null}",2026-01-08 17:47:04.333,,,
+397,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:39:27.330,,,
+434,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:48:39.703,,,
+436,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:49:01.817,,,
+438,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:49:23.887,,,
+440,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:49:45.977,,,
+442,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:50:08.087,,,

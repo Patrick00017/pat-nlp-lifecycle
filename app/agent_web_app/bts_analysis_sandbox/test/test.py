@@ -278,14 +278,14 @@ def run_diagnostic_from_db():
                     idx = ra_item['index']
                     labels = []
                     seen = set()
-                    if ra_item.get('error_detail'):
+                    if '材质不匹配' in ra_item.get('anomalies', []):
                         labels.append('材质和系统记录对不上')
                         seen.add('material_mismatch')
                     for cs in cs_all_console:
                         if cs['cycle_index'] == idx and cs['type'] not in seen:
                             seen.add(cs['type'])
                             cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
-                                        'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
+                                         'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上', 'speed_coef_mismatch': '车速系数和数据库对不上'}
                             labels.append(cs_plain.get(cs['type'], cs['type']))
                     if labels:
                         error_cycles.append((idx, labels))
