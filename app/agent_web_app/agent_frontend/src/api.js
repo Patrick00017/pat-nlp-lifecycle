@@ -92,11 +92,13 @@ export async function analysisInit(toolName, toolArgs, toolResult = null) {
   return res.json()
 }
 
-export async function analysisStep(stateId, nodeId) {
+export async function analysisStep(stateId, nodeId, args = {}) {
+  const body = { state_id: stateId, node_id: nodeId };
+  if (Object.keys(args).length > 0) body.args = args;
   const res = await fetch(`${BASE}/analysis/step`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ state_id: stateId, node_id: nodeId }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`Analysis step failed: ${res.status}`)
   return res.json()

@@ -8,6 +8,7 @@ const ANALYSIS_TOOLS = {
   get_glue_set_func_call_in_log:    { label: '胶量设定分析', entryNode: 'glue_list' },
   track_material_in_log:            { label: '生命周期跟踪', entryNode: 'track_lifecycle' },
   get_pressroll_mp_set_func_call_in_log: { label: 'MP压力辊分析', entryNode: 'press_list' },
+  glue_gap_diagnostic:              { label: '糊间隙诊断', entryNode: 'glue_diagnose' },
 }
 
 export default function DataAnalysis() {
@@ -112,8 +113,16 @@ export default function DataAnalysis() {
   async function handleStep(entryIndex, nodeId) {
     setIsStepping(true)
     const entry = chatLog[entryIndex]
+    let args = {}
+
+    if (nodeId === 'glue_assignments') {
+      const input = prompt('请输入目标时间点（格式: 2026-01-08 15:55:09）')
+      if (!input) { setIsStepping(false); return }
+      args = { target_time: input.trim() }
+    }
+
     try {
-      const resp = await analysisStep(entry.stateId, nodeId)
+      const resp = await analysisStep(entry.stateId, nodeId, args)
       updateEntry(entryIndex, {
         analysisResult: resp.result,
         executionPath: resp.execution_path,
