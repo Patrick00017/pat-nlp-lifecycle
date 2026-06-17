@@ -270,26 +270,63 @@ def _glue_report(state: AnalysisState) -> str:
     return "请先运行 glue_diagnose"
 
 
+def _glue_assignments(state: AnalysisState) -> str:
+    data = state.diagnostic_result
+    if not data:
+        return "请先运行 glue_diagnose"
+    ra = data.get("recent_assignments", {})
+    events = ra.get("events", [])
+    if not events:
+        return "无最近赋值事件数据（需指定 target_time）"
+
+    parts = []
+    parts.append(f"### 最近赋值事件序列")
+    parts.append(f"目标时间: {ra.get('target_time', '')}")
+    parts.append("")
+    for e in events:
+        active = " *生效" if e.get("is_active") else ""
+        label = f"{e['t_label']} (#{e['cycle_index']}){active}"
+        layers = ", ".join(e.get("layers", [])) if e.get("layers") else "-"
+        vals = " / ".join(e.get("values", [])) if e.get("values") else "-"
+        parts.append(f"- **{label}** {e.get('end_time', '')}  {layers}  {e['material']}  `{vals}`")
+        if e.get("anomalies"):
+            parts.append(f"  - 异常: {', '.join(e['anomalies'])}")
+        if e.get("error_detail") and e["error_detail"] != "-":
+            parts.append(f"  - 错误: {e['error_detail']}")
+        parts.append("")
+
+    conclusion = ra.get("conclusion", {})
+    if conclusion.get("has_errors"):
+        parts.append("**结论：发现了问题**")
+        parts.append("")
+        for ec in conclusion.get("cycles_with_errors", []):
+            sep = "；"
+            parts.append(f"- 周期 #{ec['index']} 存在以下错误：{sep.join(ec['labels'])}")
+    else:
+        parts.append("**结论：** 这几次赋值都没有发现任何问题，数据正常")
+
+    return "\n".join(parts)
+
+
 def register_glue_nodes(engine_instance: AnalysisEngine):
     engine_instance.register_nodes(
         AnalysisNode(
-            "glue_diagnose",
-            "糊间隙诊断",
-            "运行全部诊断检查并生成结构化结果",
+            "glue_diagnose", "糊间隙诊断", "运行全部诊断检查并生成结构化结果",
             _glue_diagnose,
-            next_nodes=["glue_detail", "glue_report"],
+            next_nodes=["glue_detail", "glue_assignments", "glue_report"],
         ),
         AnalysisNode(
-            "glue_detail",
-            "周期详情",
-            "每个周期的计算值、错误、警告、跨来源一致性",
+            "glue_detail", "周期详情", "每个周期的计算值、错误、警告、跨来源一致性",
             _glue_detail,
             next_nodes=["glue_report"],
         ),
         AnalysisNode(
-            "glue_report",
-            "诊断报告",
-            "生成完整诊断报告",
+            "glue_assignments", "最近赋值事件", "目标时间前最近的赋值事件序列及结论",
+            _glue_assignments,
+            next_nodes=["glue_report"],
+        ),
+        AnalysisNode(
+            "glue_report", "诊断报告", "生成完整诊断报告",
             _glue_report,
         ),
         is_entry=True,
@@ -310,10 +347,11 @@ router = APIRouter(prefix="/analysis")
 async def init_analysis(body: dict):
     tool_name = body.get("tool_name")
     tool_args = body.get("tool_args", {})
+    args = body.get("args", {})
     start_time = body.get("start_time")
     end_time = body.get("end_time")
-    target_time = body.get("target_time")
-    material = body.get("material")
+    target_time = body.get("target_time") or args.get("target_time")
+    material = body.get("material") or args.get("material")
 
     # 兼容旧格式：从 tool_args 中提取 start_time/end_time
     if not start_time and tool_args.get("time"):
@@ -352,8 +390,20 @@ async def init_analysis(body: dict):
 async def step_analysis(body: dict):
     state_id = body.get("state_id")
     node_id = body.get("node_id")
+    args = body.get("args", {})
     if not state_id or not node_id:
         raise HTTPException(status_code=400, detail="state_id and node_id are required")
+
+    state = engine.get_state(state_id)
+
+    if args.get("target_time"):
+        state.target_time = args["target_time"]
+
+    if node_id == "glue_assignments" and state.target_time:
+        diagnostic = _build_diagnostic(state.start_time, state.end_time)
+        result = diagnostic.generate_json(target_time=state.target_time)
+        state.diagnostic_result = result
+
     return engine.step(state_id, node_id)
 
 
