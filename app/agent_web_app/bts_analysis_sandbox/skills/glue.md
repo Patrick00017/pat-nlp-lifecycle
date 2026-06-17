@@ -153,7 +153,7 @@ setValue += brandOffset     ← 品牌偏移
 ### 4. 材质一致性（已实现）
 
 - 比较 `SetGlueGu`/`SetGlueSF` 中的 `material` 与生命周期 `lifecycle.df.msg` 中的材质。
-- 不一致时产生 `material_mismatch`，这是当前唯一被归类为 **确认错误** 的异常。
+- 不一致时产生 `material_mismatch`，与跨来源一致性问题（克重不匹配、QDM 系数不匹配、QDM 无配置、基础设置不匹配）共同列为 **确认错误**。
 - 若该周期同时为 G11 立即换材，则额外记录 `immediate_change`。
 
 > 注：G11（立即换材）本身不是异常，仅当同周期存在 `material_mismatch` 时作为上下文附带输出。
@@ -167,7 +167,7 @@ setValue += brandOffset     ← 品牌偏移
 - **克重一致性**：提取 `material` 中所有非 `-` 部分，逐段查询 `S_PaperCodes.SPC_GlueWeight` 累加，比对总和与 G14 的 `current_glue_weight`。与 PLC 代码 `GetSumWeight(info.Code)` 逻辑一致。
 - **QDM 系数一致性**：使用**压缩码**（去掉 `-` 后的材质码，如 `Q.-.-.0.Q` → `Q.0.Q`）匹配 `TB_IPS_QdmCoefDF`，精确匹配失败时回退 `LIKE` 模糊匹配。比对 `F_Glue1/2/3` 与 G14 的 `qdm_factor`。
 - **品牌偏移一致性**（规划中）：当前未实现，需通过 `S_PaperCodeBrands` + `TB_IPS_GlueGuBrand` 联合查询。
-- **基础设置一致性**：查询 `TB_IPS_GlueGu`（GU 层）或 `TB_IPS_GlueSF`（SF 层），比对 `F_MinGlue`/`F_MaxGlue`/`F_MinWeight`/`F_MaxWeight` 与 G14 的 `min_glue`/`max_glue`/`min_weight`/`max_weight`。差异超过 0.5 时报告 `base_setting_mismatch`。
+- **基础设置一致性**：查询 `TB_IPS_GlueGu`（GU 层）或 `TB_IPS_GlueSF`（SF 层），比对 `F_MinGlue`/`F_MaxGlue`/`F_MinWeight`/`F_MaxWeight` 与 G14 的 `min_glue`/`max_glue`/`min_weight`/`max_weight`。有差异即报告 `base_setting_mismatch`。
 
 结果在控制台输出 `--- 跨来源一致性检查 ---` 段，在 report.md 中以 `## 跨来源一致性检查` 表格展示。
 
@@ -366,7 +366,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
      ```
    - `错误` — 材质不匹配、克重不匹配、QDM系数不匹配、QDM无配置、基础设置不匹配。
    - `警告` — 降级匹配、弯翘影响、重复计算、值跳变等。
-   - `信息` — 被抢断、缺计算、取消无计算。
+   - `信息` — 被抢断、写值完成但缺少计算过程、写值取消且没有记录计算。
 
 3. **最近赋值事件序列**
    - 以目标时间为锚点，逆序展示最近 N 个事件：
@@ -392,7 +392,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
   - **克重计算说明**（按材质码各段解析 `SPC_GlueWeight` 并累加，与 G14 实际使用值比对）
   - **每层 G14 计算值完整表格** + 公式逐段验证（base_gap 计算 + 8 段车速验证）
   - 错误 / 警告 / 信息标签
-- **最近赋值事件序列表格** — T-N 序列 + 结论。
+- **最近赋值事件序列表格** — T-N 序列 + 结论。结论按周期汇总确认错误，去重后用自然语言表述（如"周期 #22 存在以下错误：材质和系统记录对不上；QDM配方没找到对应配置"）。无错误时输出"这几次赋值都没有发现任何问题，数据正常"。
 - 总体周期统计。
 - 完整性异常列表。
 - **跨来源一致性检查** — 克重 / QDM系数 / 基础设置比对。
@@ -408,7 +408,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
 | `check_cycle_completeness()` | 检查周期完整性异常。 |
 | `calc_cancellation_rate()` | 计算取消率并给出警告。 |
 | `check_value_plausibility(layer)` | 检查指定部位的 G14 值合理性。 |
-| `check_material_consistency()` | 检查材质一致性，返回 `material_mismatch`。 |
+| `check_material_consistency()` | 检查材质一致性，返回 `material_mismatch`。G11（立即换材）仅在同周期存在材质错位时附带输出。 |
 | `check_cross_source_consistency()` | 跨来源一致性检查（需 `dev_ips` 连接），返回克重/QDM系数不匹配项。 |
 | `traceback(target_time, expected_values, recent_count=5)` | 根因追溯，返回生效周期、取消干扰、弯翘事件、最近赋值序列、跨来源问题。 |
 | `generate_report(target_time, expected_values)` | 生成完整 Markdown 报告。 |

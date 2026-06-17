@@ -657,7 +657,7 @@ class GlueGapDiagnostic:
             for a in all_anomalies:
                 if a['cycle_index'] == c['index']:
                     tag_map = {'no_termination': '被抢断', 'fallback_used': '降级匹配',
-                               'g12_no_g14': '缺计算', 'pre_write_cancel_no_calc': '取消无计算',
+                                'g12_no_g14': '写值完成但缺少计算过程', 'pre_write_cancel_no_calc': '写值取消且没有计算记录',
                                'excessive_calculation': '重复计算'}
                     tags.append(tag_map.get(a['type'], a['type']))
 
@@ -682,19 +682,23 @@ class GlueGapDiagnostic:
                 if has_warp:
                     tags.append('弯翘影响')
 
-            # ── 材质不匹配错误 ──
+            # ── 错误汇总（材质不匹配 + 跨来源，按 type 去重） ──
+            error_details = []
+            error_seen = set()
             for mm in mc_all:
                 if mm.get('type') == 'material_mismatch' and mm['cycle_index'] == c['index']:
-                    entry['error_detail'] = mm['detail']
+                    error_details.append(mm['detail'])
+                    error_seen.add('material_mismatch')
                     tags.append('材质不匹配')
                     break
-
-            # ── 跨来源错误 ──
             cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
                          'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
             for cs in cs_all:
-                if cs['cycle_index'] == c['index']:
+                if cs['cycle_index'] == c['index'] and cs['type'] not in error_seen:
+                    error_seen.add(cs['type'])
+                    error_details.append(cs['detail'])
                     tags.append(cs_labels.get(cs['type'], cs['type']))
+            entry['error_detail'] = '；'.join(error_details) if error_details else '-'
 
             entry['anomalies'] = tags
             recent.append(entry)
@@ -917,8 +921,8 @@ class GlueGapDiagnostic:
                             'excessive_calculation': '重复计算', 'value_jump': '值跳变',
                             'negative_value': '负值', 'exceeds_hard_limit': '超硬限制',
                             'speed_not_monotonic': '车速不单调'}
-            info_tag_map = {'no_termination': '被抢断', 'g12_no_g14': '缺计算',
-                            'pre_write_cancel_no_calc': '取消无计算'}
+            info_tag_map = {'no_termination': '被抢断', 'g12_no_g14': '写值完成但缺少计算过程',
+                            'pre_write_cancel_no_calc': '写值取消且没有计算记录'}
             for a in anom_all:
                 if a['cycle_index'] == c['index']:
                     t = a['type']
@@ -983,9 +987,7 @@ class GlueGapDiagnostic:
                         for lyr in ra['layers']:
                             segs = lyr.get('segments', [])
                             if segs:
-                                val_str = ' / '.join(f"@{s['speed']}={s['value']}" for s in segs[:4])
-                                if len(segs) > 4:
-                                    val_str += ' / ...'
+                                val_str = ' / '.join(f"@{s['speed']}={s['value']}" for s in segs)
                                 layer_parts.append(f"{lyr['name']}: {val_str}")
                             else:
                                 layer_parts.append(f"{lyr['name']}: (无数据)")
@@ -1006,10 +1008,13 @@ class GlueGapDiagnostic:
                 for ra_item in recent:
                     idx = ra_item['index']
                     labels = []
+                    seen = set()
                     if ra_item.get('error_detail'):
                         labels.append('材质和系统记录对不上')
+                        seen.add('material_mismatch')
                     for cs in cs_all:
-                        if cs['cycle_index'] == idx:
+                        if cs['cycle_index'] == idx and cs['type'] not in seen:
+                            seen.add(cs['type'])
                             cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
                                         'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
                             labels.append(cs_plain.get(cs['type'], cs['type']))
@@ -1018,8 +1023,9 @@ class GlueGapDiagnostic:
                 if error_cycles:
                     lines.append('**结论：发现了问题**')
                     lines.append('')
+                    sep = '；'
                     for idx, labels in error_cycles:
-                        lines.append(f'- 周期 #{idx} — {" + ".join(labels)}')
+                        lines.append(f'- 周期 #{idx} 存在以下错误：{sep.join(labels)}')
                 else:
                     lines.append('**结论：这几次赋值都没有发现任何问题，数据正常**')
                 lines.append('')
@@ -1079,6 +1085,164 @@ class GlueGapDiagnostic:
             lines.append('')
 
         return '\n'.join(lines)
+
+    def generate_json(self, target_time=None, expected_values=None):
+        result = {}
+        anomalies = self.check_cycle_completeness()
+        mc_issues = self.check_material_consistency()
+        cs_issues = self.check_cross_source_consistency()
+        cr = self.calc_cancellation_rate()
+        wp_issues = []
+        for layer in ('GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3'):
+            for iss in self.check_value_plausibility(layer):
+                if iss['type'] == 'warp_influence':
+                    wp_issues.append(iss)
+
+        trig_labels = {'G7': '换材触发', 'G11': '立即换材'}
+        end_labels = {'complete': '完成', 'cancelled_pre_write': '写值取消', 'interrupted': '中断'}
+
+        result['analysis_period'] = {}
+        result['anomaly_summary'] = {}
+        cycles_data = []
+        seen_cs_types_per_cycle = {}
+
+        for c in self.cycles:
+            sfe = c.get('set_func_event')
+            eid = c['start'].get('EventId', '?')
+            material = sfe.get('material', '-') if sfe else '-'
+            flute = sfe.get('flute_type', '-') if sfe else '-'
+            start_t = str(c['start'].get('Date', ''))[:19]
+
+            cycle = {
+                'index': c['index'],
+                'status': {'id': c['end'], 'label': end_labels.get(c['end'], str(c['end']))},
+                'trigger_time': start_t,
+                'trigger': {'id': eid, 'label': f'{eid}（{trig_labels.get(eid, "其他触发")}）'},
+                'material': material,
+                'flute': flute,
+                'computed_values': {},
+                'errors': [],
+                'warnings': [],
+                'infos': [],
+            }
+
+            # Computed values
+            if c['end'] == 'complete' and sfe:
+                sv = sfe.get('set_values', {})
+                for layer, ld in sv.items():
+                    data = ld.get('data', [])
+                    cols = ld.get('columns', [])
+                    if not data:
+                        continue
+                    try:
+                        si = cols.index('speed')
+                        vi = cols.index('value')
+                        segments = []
+                        for row in data:
+                            segments.append({
+                                'speed': row[si] if si < len(row) else None,
+                                'value': row[vi] if vi < len(row) else None,
+                            })
+                        if segments:
+                            cycle['computed_values'][layer] = segments
+                    except ValueError:
+                        continue
+
+            # Errors / Warnings / Infos
+            for a in anomalies:
+                if a['cycle_index'] == c['index']:
+                    err_tag_map = {'material_mismatch': '材质不匹配', 'weight_mismatch': '克重不匹配',
+                                   'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置',
+                                   'base_setting_mismatch': '基础设置不匹配'}
+                    warn_tag_map = {'fallback_used': '降级匹配', 'warp_influence': '弯翘影响',
+                                    'excessive_calculation': '重复计算', 'value_jump': '值跳变',
+                                    'negative_value': '负值', 'exceeds_hard_limit': '超硬限制',
+                                    'speed_not_monotonic': '车速不单调'}
+                    info_tag_map = {'no_termination': '被抢断', 'g12_no_g14': '写值完成但缺少计算过程',
+                                    'pre_write_cancel_no_calc': '写值取消且没有记录计算'}
+                    t = a['type']
+                    if t in err_tag_map:
+                        cycle['errors'].append({'type': t, 'label': err_tag_map[t], 'detail': a['detail']})
+                    elif t in warn_tag_map:
+                        cycle['warnings'].append(warn_tag_map[t])
+                    elif t in info_tag_map:
+                        cycle['infos'].append(info_tag_map[t])
+            for cs in cs_issues:
+                if cs['cycle_index'] == c['index']:
+                    cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
+                                 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                    cycle['errors'].append({'type': cs['type'], 'label': cs_labels.get(cs['type'], cs['type']), 'detail': cs['detail']})
+            for wp in wp_issues:
+                if wp['cycle_index'] == c['index']:
+                    cycle['warnings'].append('弯翘影响')
+
+            cycle['warnings'] = list(set(cycle['warnings']))
+            cycles_data.append(cycle)
+
+        result['cycles'] = cycles_data
+
+        # Recent assignments
+        if target_time:
+            tb = self.traceback(target_time, expected_values)
+            ra_list = tb.get('recent_assignments', [])
+            ra_json = []
+            for pos, e in enumerate(ra_list):
+                rev_idx = len(ra_list) - pos
+                layers_list = [l['name'] for l in e.get('layers', [])]
+                vals = []
+                for lyr in e.get('layers', []):
+                    segs = lyr.get('segments', [])
+                    if segs:
+                        vals.extend(f"@{s['speed']}={s['value']}" for s in segs)
+                ra_json.append({
+                    't_label': f'T-{rev_idx}',
+                    'cycle_index': e['index'],
+                    'is_active': e.get('is_active', False),
+                    'end_time': str(e['end_time'])[:19],
+                    'end_status': {'id': e['end'], 'label': end_labels.get(e['end'], e['end'])},
+                    'material': e['material'],
+                    'layers': layers_list,
+                    'values': vals,
+                    'anomalies': e.get('anomalies', []),
+                    'error_detail': e.get('error_detail', '-'),
+                })
+
+            # Conclusion
+            seen = set()
+            error_cycles = []
+            for ra_item in ra_list:
+                idx = ra_item['index']
+                labels = []
+                if ra_item.get('error_detail'):
+                    labels.append('材质和系统记录对不上')
+                    seen.add('material_mismatch')
+                for cs in cs_issues:
+                    if cs['cycle_index'] == idx and cs['type'] not in seen:
+                        seen.add(cs['type'])
+                        cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
+                                    'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
+                        labels.append(cs_plain.get(cs['type'], cs['type']))
+                if labels:
+                    error_cycles.append({'index': idx, 'labels': labels})
+
+            sep = '；'
+            if error_cycles:
+                plain_lines = [f'周期 #{ec["index"]} 存在以下错误：{sep.join(ec["labels"])}' for ec in error_cycles]
+                plain_text = '；'.join(plain_lines)
+            else:
+                plain_text = '这几次赋值都没有发现任何问题，数据正常'
+
+            result['recent_assignments'] = {
+                'target_time': str(tb['target_time'])[:19],
+                'events': ra_json,
+                'conclusion': {
+                    'has_errors': len(error_cycles) > 0,
+                    'cycles_with_errors': error_cycles,
+                    'plain_text': plain_text,
+                },
+            }
+
+        return result
 
     def print_cycle_summary(self):
         lines = []

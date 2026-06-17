@@ -207,8 +207,8 @@ def run_diagnostic_from_db():
         infos = []
         for a in anomalies:
             if a['cycle_index'] == c['index'] and a['type'] in info_types:
-                tag_map = {'no_termination': '被抢断', 'g12_no_g14': '缺计算',
-                           'pre_write_cancel_no_calc': '取消无计算'}
+                tag_map = {'no_termination': '被抢断', 'g12_no_g14': '写值完成但缺少计算过程',
+                           'pre_write_cancel_no_calc': '写值取消且没有计算记录'}
                 infos.append(tag_map.get(a['type'], a['type']))
         if infos:
             print(f"  信息: {'; '.join(infos)}")
@@ -257,7 +257,7 @@ def run_diagnostic_from_db():
                         if segs:
                             vals.append(
                                 " / ".join(
-                                    f"@{s['speed']}={s['value']}" for s in segs[:4]
+                                    f"@{s['speed']}={s['value']}" for s in segs
                                 )
                             )
                     val_s = "; ".join(vals)
@@ -277,10 +277,13 @@ def run_diagnostic_from_db():
                 for ra_item in ra:
                     idx = ra_item['index']
                     labels = []
+                    seen = set()
                     if ra_item.get('error_detail'):
                         labels.append('材质和系统记录对不上')
+                        seen.add('material_mismatch')
                     for cs in cs_all_console:
-                        if cs['cycle_index'] == idx:
+                        if cs['cycle_index'] == idx and cs['type'] not in seen:
+                            seen.add(cs['type'])
                             cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
                                         'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
                             labels.append(cs_plain.get(cs['type'], cs['type']))
@@ -288,8 +291,9 @@ def run_diagnostic_from_db():
                         error_cycles.append((idx, labels))
                 if error_cycles:
                     print("结论: 发现了问题")
+                    sep = "；"
                     for idx, labels in error_cycles:
-                        print(f"  周期 #{idx} — {' + '.join(labels)}")
+                        print(f"  周期 #{idx} 存在以下错误：{sep.join(labels)}")
                 else:
                     print("结论: 这几次赋值都没有发现任何问题，数据正常")
             print()
@@ -561,6 +565,7 @@ def run_diagnostic_synthetic():
 if __name__ == "__main__":
     from datetime import datetime
 
+    target_time = None
     try:
         diagnostic = run_diagnostic_from_db()
         completed = [c for c in diagnostic.cycles if c["end"] == "complete"]
@@ -580,5 +585,11 @@ if __name__ == "__main__":
         traceback.print_exc()
         print("\n" + "-" * 60 + "\n")
         diagnostic = run_diagnostic_synthetic()
+
+    import json
+    data = diagnostic.generate_json(target_time=target_time)
+    with open("diagnostic_data.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print("JSON 数据已保存到 diagnostic_data.json")
 
     print("\n诊断完成。")
