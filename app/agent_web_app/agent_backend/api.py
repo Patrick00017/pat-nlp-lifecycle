@@ -1,5 +1,11 @@
 import json
 import uuid
+import sys, os
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "bts_analysis_sandbox")
+))
+
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 from langchain_core.messages import (
     AIMessage,
@@ -19,7 +25,8 @@ from langgraph.errors import GraphInterrupt
 from ips_log_agent import graph as ips_log_agent
 from constant import LLAMA_SERVER_URL, FIXED_TOOLS
 from utils import parse_function_calls
-from analysis_engine import router as analysis_router
+
+from engine import router as analysis_router
 
 # from rag_agent import rag_tool_agent
 from fastapi.sse import EventSourceResponse, ServerSentEvent

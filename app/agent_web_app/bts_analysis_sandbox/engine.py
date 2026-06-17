@@ -1,0 +1,330 @@
+"""
+动态节点分析引擎
+核心：AnalysisNode + AnalysisEngine + FastAPI Router
+节点可动态注册，每个节点是一个分析步骤，支持 DAG 链式调用。
+"""
+
+import sys, os
+_sandbox = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+if _sandbox not in sys.path:
+    sys.path.insert(0, _sandbox)
+
+import uuid
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from cachetools import TTLCache
+
+
+# ── 状态模型 ──
+
+class AnalysisState(BaseModel):
+    state_id: str
+    start_time: str
+    end_time: str
+    target_time: Optional[str] = None
+    material: Optional[str] = None
+    tool_name: str
+    diagnostic_result: Optional[Dict[str, Any]] = None
+    analysis_results: Dict[str, Any] = {}
+    execution_path: List[str] = []
+
+
+# ── 节点定义 ──
+
+@dataclass
+class AnalysisNode:
+    id: str
+    name: str
+    description: str
+    fn: Callable  # (state: AnalysisState) -> str
+    next_nodes: List[str] = field(default_factory=list)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "next_nodes": self.next_nodes,
+        }
+
+
+# ── 引擎容器 ──
+
+class AnalysisEngine:
+    def __init__(self, ttl: int = 1800):
+        self._nodes: Dict[str, AnalysisNode] = {}
+        self._entry_nodes: Dict[str, str] = {}
+        self._states: TTLCache[str, AnalysisState] = TTLCache(maxsize=128, ttl=ttl)
+
+    # ── 注册 / 卸载 ──
+
+    def register_node(self, node: AnalysisNode, is_entry: bool = False, tool_name: str = ""):
+        if node.id in self._nodes:
+            raise ValueError(f"Node '{node.id}' already registered")
+        self._nodes[node.id] = node
+        if is_entry and tool_name:
+            self._entry_nodes[tool_name] = node.id
+
+    def register_nodes(self, *nodes: AnalysisNode, is_entry: bool = False, tool_name: str = ""):
+        for node in nodes:
+            self.register_node(node, is_entry=(is_entry and nodes[0] is node), tool_name=tool_name)
+
+    def unregister_node(self, node_id: str):
+        self._nodes.pop(node_id, None)
+        for tool, nid in list(self._entry_nodes.items()):
+            if nid == node_id:
+                del self._entry_nodes[tool]
+
+    # ── 查询 ──
+
+    def get_node(self, node_id: str) -> AnalysisNode:
+        node = self._nodes.get(node_id)
+        if not node:
+            raise HTTPException(status_code=404, detail=f"Node '{node_id}' not found")
+        return node
+
+    def get_entry_node(self, tool_name: str) -> AnalysisNode:
+        nid = self._entry_nodes.get(tool_name)
+        if not nid:
+            available = list(self._entry_nodes.keys())
+            raise HTTPException(status_code=400, detail=f"No entry for '{tool_name}', available: {available}")
+        return self.get_node(nid)
+
+    def list_nodes(self) -> List[dict]:
+        return [n.to_dict() for n in self._nodes.values()]
+
+    # ── 状态管理 ──
+
+    def create_state(self, tool_name: str, start_time: str, end_time: str,
+                     target_time: Optional[str] = None, material: Optional[str] = None) -> str:
+        state_id = str(uuid.uuid4())
+        self._states[state_id] = AnalysisState(
+            state_id=state_id,
+            start_time=start_time,
+            end_time=end_time,
+            target_time=target_time,
+            material=material,
+            tool_name=tool_name,
+        )
+        return state_id
+
+    def get_state(self, state_id: str) -> AnalysisState:
+        state = self._states.get(state_id)
+        if not state:
+            raise HTTPException(status_code=404, detail=f"State '{state_id}' not found or expired")
+        return state
+
+    # ── 步骤执行 ──
+
+    def step(self, state_id: str, node_id: str) -> dict:
+        state = self.get_state(state_id)
+        node = self.get_node(node_id)
+
+        result = node.fn(state)
+        state.analysis_results[node_id] = result
+        state.execution_path.append(node_id)
+
+        next_nodes = [
+            self.get_node(nid).to_dict() for nid in node.next_nodes
+        ]
+
+        return {
+            "result": result,
+            "available_nodes": next_nodes,
+            "execution_path": state.execution_path,
+            "is_terminal": len(node.next_nodes) == 0,
+        }
+
+    def stepback(self, state_id: str) -> dict:
+        state = self.get_state(state_id)
+        if not state.execution_path:
+            raise HTTPException(status_code=400, detail="No steps to step back from")
+
+        undone_id = state.execution_path.pop()
+        state.analysis_results.pop(undone_id, None)
+
+        if state.execution_path:
+            last_id = state.execution_path[-1]
+            last_node = self.get_node(last_id)
+            next_nodes = [self.get_node(nid).to_dict() for nid in last_node.next_nodes]
+        else:
+            entry = self.get_entry_node(state.tool_name)
+            next_nodes = [entry.to_dict()]
+
+        previous = state.analysis_results.get(state.execution_path[-1], "") if state.execution_path else ""
+
+        return {
+            "undone_node": undone_id,
+            "previous_result": previous,
+            "execution_path": state.execution_path,
+            "available_nodes": next_nodes,
+            "is_terminal": len(next_nodes) == 0,
+        }
+
+
+# ── 引擎实例（全局单例） ──
+
+engine = AnalysisEngine()
+
+# ── 内置节点注册 ──
+
+def _build_diagnostic(start_time, end_time, dev_ips=None):
+    from glue_gap_diagnostic import GlueGapDiagnostic
+    return GlueGapDiagnostic.from_params(start_time, end_time, dev_ips=dev_ips)
+
+
+def _glue_diagnose(state: AnalysisState) -> str:
+    from database_utils import PostgreSQLHelper
+
+    try:
+        dev_ips = PostgreSQLHelper.from_connection_string(
+            "PORT=5432;DATABASE=devIPS;HOST=192.168.110.82;PASSWORD=123456;USER ID=postgres"
+        )
+        dev_ips.connect()
+    except Exception:
+        dev_ips = None
+
+    diagnostic = _build_diagnostic(state.start_time, state.end_time, dev_ips=dev_ips)
+
+    anom = diagnostic.check_cycle_completeness()
+    cr = diagnostic.calc_cancellation_rate()
+    mc = diagnostic.check_material_consistency()
+    diagnostic_result = diagnostic.generate_json(target_time=state.target_time)
+
+    state.diagnostic_result = diagnostic_result
+    state.material = diagnostic_result.get("cycles", [{}])[0].get("material", "") if diagnostic_result.get("cycles") else ""
+
+    errors = sum(1 for c in diagnostic_result.get("cycles", []) if c.get("errors"))
+    warns = sum(1 for c in diagnostic_result.get("cycles", []) if c.get("warnings"))
+    return (
+        f"诊断完成：共 {cr['total_cycles']} 个周期，{cr['completed']} 个完成，"
+        f"{len(anom)} 项异常，{errors} 个周期有确认错误，{warns} 个周期有警告"
+    )
+
+
+def _glue_cycles(state: AnalysisState) -> str:
+    data = state.diagnostic_result
+    if not data:
+        return "请先运行 glue_diagnose"
+    parts = []
+    tr_labels = {"G7": "换材触发", "G11": "立即换材"}
+    for c in data.get("cycles", []):
+        line = f"周期 #{c['index']} ({c['status']['label']})  {c['trigger']['label']}  材质={c['material']}"
+        if c.get("computed_values"):
+            for layer, segs in c["computed_values"].items():
+                vals = " / ".join(f"@{s['speed']}={s['value']}" for s in segs)
+                line += f"\n  计算值: {layer}: {vals}"
+        if c.get("errors"):
+            line += "\n  " + "\n  ".join(f'错误: {e["label"]}（{e["detail"]}）' for e in c["errors"])
+        if c.get("warnings"):
+            line += f"\n  警告: {'; '.join(set(c['warnings']))}"
+        if c.get("infos"):
+            line += f"\n  信息: {'; '.join(c['infos'])}"
+        parts.append(line)
+    return "\n\n".join(parts) if parts else "无完成周期数据"
+
+
+def _glue_cross(state: AnalysisState) -> str:
+    data = state.diagnostic_result
+    if not data:
+        return "请先运行 glue_diagnose"
+    issues = []
+    for c in data.get("cycles", []):
+        for err in c.get("errors", []):
+            if err["type"] in ("weight_mismatch", "qdm_mismatch", "qdm_no_data", "base_setting_mismatch"):
+                issues.append(f"周期 #{c['index']} — {err['label']}：{err['detail']}")
+    return "\n".join(issues) if issues else "未发现跨来源一致性问题"
+
+
+def _glue_report(state: AnalysisState) -> str:
+    from glue_gap_diagnostic import GlueGapDiagnostic
+    if state.diagnostic_result:
+        start = state.start_time
+        end = state.end_time
+        diagnostic = _build_diagnostic(start, end)
+        return diagnostic.generate_report(target_time=state.target_time)
+    return "请先运行 glue_diagnose"
+
+
+def register_glue_nodes(engine_instance: AnalysisEngine):
+    engine_instance.register_nodes(
+        AnalysisNode(
+            "glue_diagnose", "糊间隙诊断", "运行全部诊断检查并生成结构化结果",
+            _glue_diagnose,
+            next_nodes=["glue_cycles", "glue_cross", "glue_report"],
+        ),
+        AnalysisNode(
+            "glue_cycles", "周期详情", "查看每个周期的计算值和问题",
+            _glue_cycles,
+            next_nodes=["glue_report"],
+        ),
+        AnalysisNode(
+            "glue_cross", "跨来源一致性", "检查克重/QDM/基础设置一致性",
+            _glue_cross,
+            next_nodes=["glue_report"],
+        ),
+        AnalysisNode(
+            "glue_report", "诊断报告", "生成完整诊断报告",
+            _glue_report,
+        ),
+        is_entry=True,
+        tool_name="glue_gap_diagnostic",
+    )
+
+
+register_glue_nodes(engine)
+
+
+# ── FastAPI Router ──
+
+router = APIRouter(prefix="/analysis")
+
+
+@router.post("/init")
+async def init_analysis(body: dict):
+    tool_name = body.get("tool_name")
+    start_time = body.get("start_time")
+    end_time = body.get("end_time")
+    target_time = body.get("target_time")
+    material = body.get("material")
+
+    if not tool_name or not start_time or not end_time:
+        raise HTTPException(status_code=400, detail="tool_name, start_time, end_time are required")
+
+    state_id = engine.create_state(tool_name, start_time, end_time, target_time, material)
+    entry = engine.get_entry_node(tool_name)
+
+    return {
+        "state_id": state_id,
+        "context": {"start_time": start_time, "end_time": end_time, "material": material},
+        "available_nodes": [entry.to_dict()],
+    }
+
+
+@router.post("/step")
+async def step_analysis(body: dict):
+    state_id = body.get("state_id")
+    node_id = body.get("node_id")
+    if not state_id or not node_id:
+        raise HTTPException(status_code=400, detail="state_id and node_id are required")
+    return engine.step(state_id, node_id)
+
+
+@router.post("/stepback")
+async def stepback_analysis(body: dict):
+    state_id = body.get("state_id")
+    if not state_id:
+        raise HTTPException(status_code=400, detail="state_id is required")
+    return engine.stepback(state_id)
+
+
+@router.get("/state/{state_id}")
+async def get_state(state_id: str):
+    return engine.get_state(state_id)
+
+
+@router.get("/nodes")
+async def list_nodes():
+    return {"nodes": engine.list_nodes()}
