@@ -269,6 +269,29 @@ def run_diagnostic_from_db():
                     print(f"              异常: {anom}")
                 if e.get("error_detail"):
                     print(f"              错误: {e['error_detail']}")
+
+            # ── 结论 ──
+            if ra:
+                cs_all_console = diagnostic.check_cross_source_consistency()
+                error_cycles = []
+                for ra_item in ra:
+                    idx = ra_item['index']
+                    labels = []
+                    if ra_item.get('error_detail'):
+                        labels.append('材质和系统记录对不上')
+                    for cs in cs_all_console:
+                        if cs['cycle_index'] == idx:
+                            cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
+                                        'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
+                            labels.append(cs_plain.get(cs['type'], cs['type']))
+                    if labels:
+                        error_cycles.append((idx, labels))
+                if error_cycles:
+                    print("结论: 发现了问题")
+                    for idx, labels in error_cycles:
+                        print(f"  周期 #{idx} — {' + '.join(labels)}")
+                else:
+                    print("结论: 这几次赋值都没有发现任何问题，数据正常")
             print()
 
     print("--- 排除建议 ---")

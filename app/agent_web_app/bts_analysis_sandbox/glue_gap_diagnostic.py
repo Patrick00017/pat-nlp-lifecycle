@@ -613,6 +613,7 @@ class GlueGapDiagnostic:
         ts_min = ts_target - pd.Timedelta(hours=1)
         recent = []
         mc_all = self.check_material_consistency()
+        cs_all = self.check_cross_source_consistency()
         for c in reversed(self.cycles):
             end_ts = None
             if c['end'] == 'complete' and c.get('end_event'):
@@ -688,6 +689,13 @@ class GlueGapDiagnostic:
                     tags.append('材质不匹配')
                     break
 
+            # ── 跨来源错误 ──
+            cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
+                         'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+            for cs in cs_all:
+                if cs['cycle_index'] == c['index']:
+                    tags.append(cs_labels.get(cs['type'], cs['type']))
+
             entry['anomalies'] = tags
             recent.append(entry)
             if len(recent) >= recent_count:
@@ -695,13 +703,16 @@ class GlueGapDiagnostic:
         result['recent_assignments'] = recent
 
         # ── Cross-Source Consistency ──
-        result['cross_source_issues'] = self.check_cross_source_consistency()
+        result['cross_source_issues'] = cs_all
 
         return result
 
     # ── Generate Report ──
     def generate_report(self, target_time=None, expected_values=None):
         lines = []
+        anom_all = self.check_cycle_completeness()
+        cs_all = self.check_cross_source_consistency()
+        mc_all = self.check_material_consistency()
 
         if target_time:
             tb = self.traceback(target_time, expected_values)
@@ -713,177 +724,243 @@ class GlueGapDiagnostic:
             lines.append('')
             lines.append('| 字段 | 值 |')
             lines.append('|------|-----|')
-            lines.append(f'| 是否存在有效G12 | `{tb["has_active_g12"]}` |')
+            lines.append(f'| 是否存在有效G12/G5 | `{tb["has_active_g12"]}` |')
             lines.append(f'| 是否存在取消干扰 | `{tb["cancel_interference_nearby"]}` |')
-            lines.append('')
-
             ac = tb.get('active_cycle')
             if ac:
-                lines.append('### 生效周期')
-                lines.append('')
-                lines.append('| 字段 | 值 |')
-                lines.append('|------|-----|')
-                lines.append(f'| 周期开始时间 | `{ac["start_time"]}` |')
-                lines.append(f'| G12写值完成时间 | `{ac["g12_time"]}` |')
                 st = ac["start_type"]
                 trig_desc = self.TRIG_LABELS.get(st, '其他触发')
-                lines.append(f'| 触发类型 | `{st}（{trig_desc}）` |')
-                lines.append(f'| 材质 | `{ac["material"]}` |')
-                lines.append(f'| 楞型 | `{ac["flute_type"]}` |')
-                lines.append('')
-
-                lifecycle = ac.get('lifecycle', {})
-                if lifecycle:
-                    lines.append('### 材质变更生命周期')
-                    lines.append('')
-                    lines.append('| 部位 | 变更内容 | 时间 |')
-                    lines.append('|------|----------|------|')
-                    for part in ['ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df']:
-                        info = lifecycle.get(part, {})
-                        msg = info.get('msg', '') if isinstance(info, dict) else ''
-                        tm = info.get('time', '') if isinstance(info, dict) else ''
-                        if msg:
-                            lines.append(f'| {part.upper()} | `{msg}` | {tm} |')
-                    lines.append('')
-
-                sv = ac.get('set_values', {})
-                if sv:
-                    lines.append('### 糊间隙计算值 (G14)')
-                    lines.append('')
-                    for layer, ld in sv.items():
-                        lines.append(f'#### {layer}')
-                        lines.append('')
-                        cols = ld.get('columns', [])
-                        data = ld.get('data', [])
-                        if cols and data:
-                            header = '| ' + ' | '.join(col.replace('_', ' ').title() for col in cols) + ' |'
-                            sep = '|' + '|'.join(['---'] * len(cols)) + '|'
-                            lines.append(header)
-                            lines.append(sep)
-                            for row in data:
-                                lines.append('| ' + ' | '.join(str(v) for v in row) + ' |')
-                            lines.append('')
-
-                            # ── 计算说明（用第一段数据演示） ──
-                            first = data[0] if data else None
-                            if first and len(first) >= len(cols):
-                                try:
-                                    speed_i = cols.index('speed')
-                                    min_g_i = cols.index('min_glue')
-                                    max_g_i = cols.index('max_glue')
-                                    min_w_i = cols.index('min_weight')
-                                    max_w_i = cols.index('max_weight')
-                                    cur_w_i = cols.index('current_glue_weight')
-                                    qdm_i = cols.index('qdm_factor')
-                                    ui_i = cols.index('ui_factor')
-                                    spd_i = cols.index('speed_factor')
-                                    val_i = cols.index('value')
-                                    off_col = 'warp_offset' if 'warp_offset' in cols else ('offset' if 'offset' in cols else None)
-                                    off_i = cols.index(off_col) if off_col else None
-
-                                    min_g = float(first[min_g_i])
-                                    max_g = float(first[max_g_i])
-                                    min_w = float(first[min_w_i])
-                                    max_w = float(first[max_w_i])
-                                    cur_w = float(first[cur_w_i])
-                                    qdm = float(first[qdm_i])
-                                    ui = float(first[ui_i])
-                                    spd = float(first[spd_i])
-                                    off_v = float(first[off_i]) if off_i is not None else 0.0
-                                    off_tag = '偏移量' if off_col == 'offset' else ('弯翘偏移' if off_col == 'warp_offset' else '偏移量')
-
-                                    base_gap = min_g + (cur_w - min_w) / (max_w - min_w) * (max_g - min_g) if max_w != min_w else min_g
-
-                                    lines.append('**计算说明**')
-                                    lines.append('')
-                                    lines.append('```')
-                                    lines.append(f'公式：result = base_gap × qdm × ui × speed_coef + {off_tag}')
-                                    lines.append(f'       base_gap = min_gap + (cur_weight - min_weight) / (max_weight - min_weight) × (max_gap - min_gap)')
-                                    lines.append('')
-                                    lines.append(f'base_gap（所有段共用）：')
-                                    lines.append(f'  base_gap = {min_g} + ({cur_w:.0f} - {min_w:.0f}) / ({max_w:.0f} - {min_w:.0f}) × ({max_g} - {min_g})')
-                                    base_step = (cur_w - min_w) / (max_w - min_w) if max_w != min_w else 0
-                                    lines.append(f'           = {min_g} + {base_step:.2f} × {max_g - min_g}')
-                                    lines.append(f'           = {base_gap:.2f}')
-                                    lines.append('')
-                                    lines.append('各段验证：')
-                                    all_pass = True
-                                    for ri, row in enumerate(data):
-                                        try:
-                                            rs = float(row[speed_i])
-                                            rq = float(row[qdm_i])
-                                            ru = float(row[ui_i])
-                                            rsp = float(row[spd_i])
-                                            rv = float(row[val_i])
-                                            roff = float(row[off_i]) if off_i is not None else 0.0
-                                            rc = base_gap * rq * ru * rsp + roff
-                                            rd = abs(rc - rv)
-                                            ok = '✓' if rd < 0.01 else '✗'
-                                            if rd >= 0.01:
-                                                all_pass = False
-                                            lines.append(f'  段{ri+1} (车速={rs:.0f}): {base_gap:.2f} × {rq} × {ru} × {rsp} + {roff} = {rc:.2f}  {ok}')
-                                        except (ValueError, IndexError, TypeError):
-                                            lines.append(f'  段{ri+1}: 数据异常，跳过')
-                                    lines.append('')
-                                    lines.append(f'验证：{"全部通过 ✓" if all_pass else "存在偏差 ✗"}')
-                                    lines.append('```')
-                                    lines.append('')
-                                except (ValueError, IndexError, ZeroDivisionError):
-                                    pass
-
-                evc = tb.get('expected_value_check')
-                if evc:
-                    lines.append('### 期望值对比')
-                    lines.append('')
-                    lines.append('| 部位 | 期望值 | 实际范围 | 匹配结果 |')
-                    lines.append('|------|--------|---------|---------|')
-                    for m in evc:
-                        match_label = '一致' if m['match'] == 'acceptable' else ('不匹配' if m['match'] == 'mismatch' else '无数据')
-                        lines.append(f'| {m["layer"]} | {m["expected"]} | {m["actual_range"]} | {match_label} |')
-                    lines.append('')
-
+                lines.append(f'| 生效周期 | #{ac.get("g12_time", "N/A")} — `{st}（{trig_desc}）` — 材质 `{ac["material"]}` |')
             ci = tb.get('cancel_info')
             if ci:
-                lines.append('### ⚠ 检测到赋值取消')
-                lines.append('')
-                lines.append('| 字段 | 值 |')
-                lines.append('|------|-----|')
                 cancel_type_label = '写值前取消' if ci['cancel_type'] == 'cancelled_pre_write' else ci['cancel_type']
-                lines.append(f'| 取消类型 | `{cancel_type_label}` |')
-                lines.append(f'| 取消时间 | `{ci["cancel_time"]}` |')
-                lines.append(f'| 详情 | {ci["detail"]} |')
+                lines.append(f'| 取消干扰 | `{cancel_type_label}` 于 `{ci["cancel_time"]}` |')
+            evc = tb.get('expected_value_check')
+            if evc:
+                lines.append('')
+                lines.append('| 部位 | 期望值 | 实际范围 | 匹配结果 |')
+                lines.append('|------|--------|---------|---------|')
+                for m in evc:
+                    match_label = '一致' if m['match'] == 'acceptable' else ('不匹配' if m['match'] == 'mismatch' else '无数据')
+                    lines.append(f'| {m["layer"]} | {m["expected"]} | {m["actual_range"]} | {match_label} |')
+            lines.append('')
+
+        # ── 周期详情（所有完成周期，每个周期独立小节） ──
+        lines.append('## 周期详情')
+        lines.append('')
+        for c in self.cycles:
+            sfe = c.get('set_func_event')
+            eid = c['start'].get('EventId', '?')
+            trig_desc = self.TRIG_LABELS.get(eid, '其他触发')
+            material = sfe.get('material', '-') if sfe else '-'
+            flute = sfe.get('flute_type', '-') if sfe else '-'
+            start_t = str(c['start'].get('Date', ''))[:19]
+            end_labels = {'complete': '完成', 'cancelled_pre_write': '写值取消', 'interrupted': '中断'}
+            cl = end_labels.get(c['end'], str(c['end']))
+
+            lines.append(f'### 周期 #{c["index"]} ({cl})')
+            lines.append('')
+            lines.append(f'- **触发时间**: {start_t}')
+            lines.append(f'- **触发原因**: {eid}（{trig_desc}）')
+            lines.append(f'- **材质**: {material}')
+            lines.append(f'- **楞型**: {flute}')
+            if c['end'] != 'complete':
+                if c['end'] == 'interrupted':
+                    lines.append(f'- **状态说明**: 被新任务抢断，未完成赋值')
+                elif c['end'] == 'cancelled_pre_write':
+                    lines.append(f'- **状态说明**: 写值前被取消，未写入 PLC')
+                lines.append('')
+                continue
+
+            lifecycle = sfe.get('lifecycle', {}) if sfe else {}
+            if lifecycle:
+                df_msg = lifecycle.get('df', {}).get('msg', '')
+                if df_msg:
+                    lines.append(f'- **材质变更**: {df_msg}')
+            lines.append('')
+
+            sv = sfe.get('set_values', {}) if sfe else {}
+
+            # ── 克重计算说明 ──
+            paper_parts = [p for p in material.split('.') if p != '-'] if material else []
+            if paper_parts and self.dev_ips:
+                weights = []
+                all_found = True
+                for pc in paper_parts:
+                    rows = self._query_ips(
+                        'SELECT "SPC_GlueWeight" FROM "S_PaperCodes" WHERE "SPC_Code" = %s',
+                        (pc,)
+                    )
+                    if rows and rows[0][0]:
+                        weights.append(float(rows[0][0]))
+                    else:
+                        weights.append(0)
+                        all_found = False
+                if all_found:
+                    total_db = sum(weights)
+                    part_names = ['纸种', 'SF1层', 'SF2层', 'GU层', '品牌']
+                    lines.append('**克重计算**')
+                    lines.append('')
+                    lines.append(f'材质 `{material}` 各段解析：')
+                    for i, (pc, w) in enumerate(zip(paper_parts, weights)):
+                        name = part_names[i] if i < len(part_names) else f'第{i+1}段'
+                        lines.append(f'  - {name}: {pc} → SPC_GlueWeight = **{w:.0f}**')
+                    lines.append('')
+                    sum_str = ' + '.join(f'{int(w)}' for w in weights)
+                    lines.append(f'总克重: {sum_str} = **{total_db:.0f} g**')
+                    g14_weight = None
+                    for layer, ld in sv.items():
+                        data = ld.get('data', [])
+                        if not data:
+                            continue
+                        try:
+                            wi = ld.get('columns', []).index('current_glue_weight')
+                            g14_weight = float(data[0][wi]) if data[0][wi] else None
+                        except (ValueError, IndexError):
+                            pass
+                        break
+                    if g14_weight is not None:
+                        diff = g14_weight - total_db
+                        lines.append(f'G14 实际使用克重: {g14_weight:.0f} g  → 差异: {diff:+.0f} g')
+                    lines.append('')
+
+            # ── 层计算值（每层独立表格 + 公式验证） ──
+            if sv:
+                for layer, ld in sv.items():
+                    cols = ld.get('columns', [])
+                    data = ld.get('data', [])
+                    if not cols or not data:
+                        continue
+                    lines.append(f'#### {layer} 糊间隙计算值')
+                    lines.append('')
+                    header = '| ' + ' | '.join(col.replace('_', ' ').title() for col in cols) + ' |'
+                    sep = '|' + '|'.join(['---'] * len(cols)) + '|'
+                    lines.append(header)
+                    lines.append(sep)
+                    for row in data:
+                        lines.append('| ' + ' | '.join(str(v) for v in row) + ' |')
+                    lines.append('')
+
+                    # 公式验证
+                    first = data[0]
+                    if first and len(first) >= len(cols):
+                        try:
+                            speed_i = cols.index('speed')
+                            min_g_i = cols.index('min_glue')
+                            max_g_i = cols.index('max_glue')
+                            min_w_i = cols.index('min_weight')
+                            max_w_i = cols.index('max_weight')
+                            cur_w_i = cols.index('current_glue_weight')
+                            qdm_i = cols.index('qdm_factor')
+                            ui_i = cols.index('ui_factor')
+                            spd_i = cols.index('speed_factor')
+                            val_i = cols.index('value')
+                            off_col = 'warp_offset' if 'warp_offset' in cols else ('offset' if 'offset' in cols else None)
+                            off_i = cols.index(off_col) if off_col else None
+
+                            min_g = float(first[min_g_i])
+                            max_g = float(first[max_g_i])
+                            min_w = float(first[min_w_i])
+                            max_w = float(first[max_w_i])
+                            cur_w = float(first[cur_w_i])
+                            qdm = float(first[qdm_i])
+                            ui = float(first[ui_i])
+                            spd = float(first[spd_i])
+                            off_v = float(first[off_i]) if off_i is not None else 0.0
+                            off_tag = '偏移量' if off_col == 'offset' else ('弯翘偏移' if off_col == 'warp_offset' else '偏移量')
+
+                            base_gap = min_g + (cur_w - min_w) / (max_w - min_w) * (max_g - min_g) if max_w != min_w else min_g
+
+                            lines.append('**计算说明**')
+                            lines.append('')
+                            lines.append('```')
+                            lines.append(f'公式：result = base_gap × qdm × ui × speed_coef + {off_tag}')
+                            lines.append(f'       base_gap = min_gap + (cur_weight - min_weight) / (max_weight - min_weight) × (max_gap - min_gap)')
+                            lines.append('')
+                            lines.append(f'base_gap（所有段共用）：')
+                            lines.append(f'  base_gap = {min_g} + ({cur_w:.0f} - {min_w:.0f}) / ({max_w:.0f} - {min_w:.0f}) × ({max_g} - {min_g})')
+                            base_step = (cur_w - min_w) / (max_w - min_w) if max_w != min_w else 0
+                            lines.append(f'           = {min_g} + {base_step:.2f} × {max_g - min_g}')
+                            lines.append(f'           = {base_gap:.2f}')
+                            lines.append('')
+                            lines.append('各段验证：')
+                            all_pass = True
+                            for ri, row in enumerate(data):
+                                try:
+                                    rs = float(row[speed_i])
+                                    rq = float(row[qdm_i])
+                                    ru = float(row[ui_i])
+                                    rsp = float(row[spd_i])
+                                    rv = float(row[val_i])
+                                    roff = float(row[off_i]) if off_i is not None else 0.0
+                                    rc = base_gap * rq * ru * rsp + roff
+                                    rd = abs(rc - rv)
+                                    ok = '✓' if rd < 0.01 else '✗'
+                                    if rd >= 0.01:
+                                        all_pass = False
+                                    lines.append(f'  段{ri+1} (车速={rs:.0f}): {base_gap:.2f} × {rq} × {ru} × {rsp} + {roff} = {rc:.2f}  {ok}')
+                                except (ValueError, IndexError, TypeError):
+                                    lines.append(f'  段{ri+1}: 数据异常，跳过')
+                            lines.append('')
+                            lines.append(f'验证：{"全部通过 ✓" if all_pass else "存在偏差 ✗"}')
+                            lines.append('```')
+                            lines.append('')
+                        except (ValueError, IndexError, ZeroDivisionError):
+                            pass
+
+            # ── 错误 / 警告 / 信息 ──
+            errs, warns, infos = [], [], []
+            err_tag_map = {'material_mismatch': '材质不匹配', 'weight_mismatch': '克重不匹配',
+                           'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置',
+                           'base_setting_mismatch': '基础设置不匹配'}
+            warn_tag_map = {'fallback_used': '降级匹配', 'warp_influence': '弯翘影响',
+                            'excessive_calculation': '重复计算', 'value_jump': '值跳变',
+                            'negative_value': '负值', 'exceeds_hard_limit': '超硬限制',
+                            'speed_not_monotonic': '车速不单调'}
+            info_tag_map = {'no_termination': '被抢断', 'g12_no_g14': '缺计算',
+                            'pre_write_cancel_no_calc': '取消无计算'}
+            for a in anom_all:
+                if a['cycle_index'] == c['index']:
+                    t = a['type']
+                    if t in err_tag_map:
+                        errs.append(f"{err_tag_map[t]}（{a['detail']}）")
+                    elif t in warn_tag_map:
+                        warns.append(warn_tag_map[t])
+                    elif t in info_tag_map:
+                        infos.append(info_tag_map[t])
+            for cs in cs_all:
+                if cs['cycle_index'] == c['index']:
+                    cs_labels = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
+                                 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+                    errs.append(f"{cs_labels.get(cs['type'], cs['type'])}（{cs['detail']}）")
+            for wp in [x for x in self.check_value_plausibility('GU1') + self.check_value_plausibility('GU2')
+                       + self.check_value_plausibility('GU3') + self.check_value_plausibility('SF1')
+                       + self.check_value_plausibility('SF2') + self.check_value_plausibility('SF3')
+                       if x.get('type') == 'warp_influence']:
+                if wp['cycle_index'] == c['index']:
+                    warns.append('弯翘影响')
+
+            if errs:
+                lines.append('**错误**')
+                lines.append('')
+                for e in errs:
+                    lines.append(f'- ❌ {e}')
+                lines.append('')
+            if warns:
+                lines.append('**警告**')
+                lines.append('')
+                for w in set(warns):
+                    lines.append(f'- ⚠ {w}')
+                lines.append('')
+            if infos:
+                lines.append('**信息**')
+                lines.append('')
+                for i in infos:
+                    lines.append(f'- ℹ {i}')
                 lines.append('')
 
-            anom = tb.get('cycle_anomalies', [])
-            if anom:
-                lines.append('### 周期异常')
-                lines.append('')
-                for a in anom:
-                    lines.append(f'- **{a["type"]}**: {a["detail"]}')
-                lines.append('')
-
-            # ── Warp Influence Section ──
-            if tb.get('warp_active'):
-                lines.append('### 弯翘调平影响')
-                lines.append('')
-                lines.append(f'| 字段 | 值 |')
-                lines.append(f'|------|-----|')
-                lines.append(f'| 目标时间附近存在弯翘事件 | `是` |')
-                lines.append(f'| 弯翘事件数 | `{len(tb["warp_events_nearby"])}` |')
-                lines.append('')
-                lines.append('#### 附近的弯翘事件')
-                lines.append('')
-                lines.append('| 时间 | 类型 | 详情 |')
-                lines.append('|------|------|------|')
-                for we in tb['warp_events_nearby']:
-                    wt = we.get('time', '')
-                    wtype = we.get('mode', we.get('type', 'unknown'))
-                    action = we.get('action', '')
-                    detail = f'{wtype}/{action}' if action else wtype
-                    lines.append(f'| {wt} | `{detail}` | {we} |')
-                lines.append('')
-
-            # ── Recent Assignment Events ──
+        # ── 最近赋值事件序列（保持原样） ──
+        if target_time and tb:
             recent = tb.get('recent_assignments', [])
             if recent:
                 lines.append('## 最近赋值事件序列')
@@ -924,6 +1001,29 @@ class GlueGapDiagnostic:
                     lines.append(f'| {idx_label} | {t_start} | {t_end} | {material} | {layer_names} | {values_str} | {anom_str} | {err_str} |')
                 lines.append('')
 
+                # 结论
+                error_cycles = []
+                for ra_item in recent:
+                    idx = ra_item['index']
+                    labels = []
+                    if ra_item.get('error_detail'):
+                        labels.append('材质和系统记录对不上')
+                    for cs in cs_all:
+                        if cs['cycle_index'] == idx:
+                            cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
+                                        'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上'}
+                            labels.append(cs_plain.get(cs['type'], cs['type']))
+                    if labels:
+                        error_cycles.append((idx, labels))
+                if error_cycles:
+                    lines.append('**结论：发现了问题**')
+                    lines.append('')
+                    for idx, labels in error_cycles:
+                        lines.append(f'- 周期 #{idx} — {" + ".join(labels)}')
+                else:
+                    lines.append('**结论：这几次赋值都没有发现任何问题，数据正常**')
+                lines.append('')
+
         lines.append('---')
         lines.append('')
         lines.append('# 总体周期统计')
@@ -944,7 +1044,6 @@ class GlueGapDiagnostic:
             lines.append(f'| ⚠ 警告 | 取消率超过30% |')
         lines.append('')
 
-        anom_all = self.check_cycle_completeness()
         if anom_all:
             lines.append('## 完整性异常列表')
             lines.append('')
@@ -967,42 +1066,17 @@ class GlueGapDiagnostic:
                 lines.append(f'- 周期 #{a["cycle_index"]} | `{label}` | {a["detail"]}')
             lines.append('')
 
-        # ── ❌ 确认错误汇总（含材质不匹配 + 跨来源问题） ──
-        mm_issues = self.check_material_consistency()
-        mm_real = [m for m in mm_issues if m.get('type') == 'material_mismatch']
-        cs_all = self.check_cross_source_consistency()
-        confirm_list = mm_real + cs_all
-        if confirm_list:
-            lines.append('## ❌ 确认错误汇总')
+        # ── 跨来源一致性检查 ──
+        if cs_all:
+            lines.append('## 跨来源一致性检查')
             lines.append('')
-            lines.append('| 周期 | 类型 | 说明 |')
-            lines.append('|------|------|------|')
-            type_labels_confirm = {
-                'material_mismatch': '材质不匹配',
-                'weight_mismatch': '克重不匹配',
-                'qdm_mismatch': 'QDM系数不匹配',
-                'qdm_no_data': 'QDM无配置',
-                'base_setting_mismatch': '基础设置不匹配',
-            }
-            for item in confirm_list:
-                label = type_labels_confirm.get(item.get('type', ''), item.get('type', ''))
-                detail = item.get('detail', '')
-                layer = f" / {item['layer']}" if 'layer' in item else ''
-                lines.append(f'| #{item["cycle_index"]}{layer} | {label} | {detail} |')
+            lines.append('| 周期 | 部位 | 类型 | 说明 |')
+            lines.append('|------|------|------|------|')
+            type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+            for cs in cs_all:
+                label = type_labels_cs.get(cs['type'], cs['type'])
+                lines.append(f'| #{cs["cycle_index"]} | {cs["layer"]} | {label} | {cs["detail"]} |')
             lines.append('')
-
-        if target_time:
-            cs_issues = tb.get('cross_source_issues', [])
-            if cs_issues:
-                lines.append('## 跨来源一致性检查')
-                lines.append('')
-                lines.append('| 周期 | 部位 | 类型 | 说明 |')
-                lines.append('|------|------|------|------|')
-                type_labels_cs = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配', 'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
-                for cs in cs_issues:
-                    label = type_labels_cs.get(cs['type'], cs['type'])
-                    lines.append(f'| #{cs["cycle_index"]} | {cs["layer"]} | {label} | {cs["detail"]} |')
-                lines.append('')
 
         return '\n'.join(lines)
 
