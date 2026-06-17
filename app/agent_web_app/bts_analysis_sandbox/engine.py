@@ -204,38 +204,31 @@ def _glue_diagnose(state: AnalysisState) -> str:
     )
 
 
-def _glue_cycles(state: AnalysisState) -> str:
+def _glue_detail(state: AnalysisState) -> str:
     data = state.diagnostic_result
     if not data:
         return "请先运行 glue_diagnose"
     parts = []
-    tr_labels = {"G7": "换材触发", "G11": "立即换材"}
     for c in data.get("cycles", []):
-        line = f"周期 #{c['index']} ({c['status']['label']})  {c['trigger']['label']}  材质={c['material']}"
+        idx = c['index']
+        status = c['status']['label']
+        trigger = c['trigger']['label']
+        material = c['material']
+        parts.append(f"### 周期 #{idx} ({status})")
+        parts.append(f"- **触发**: {trigger}")
+        parts.append(f"- **材质**: {material}")
         if c.get("computed_values"):
             for layer, segs in c["computed_values"].items():
                 vals = " / ".join(f"@{s['speed']}={s['value']}" for s in segs)
-                line += f"\n  计算值: {layer}: {vals}"
-        if c.get("errors"):
-            line += "\n  " + "\n  ".join(f'错误: {e["label"]}（{e["detail"]}）' for e in c["errors"])
-        if c.get("warnings"):
-            line += f"\n  警告: {'; '.join(set(c['warnings']))}"
-        if c.get("infos"):
-            line += f"\n  信息: {'; '.join(c['infos'])}"
-        parts.append(line)
-    return "\n\n".join(parts) if parts else "无完成周期数据"
-
-
-def _glue_cross(state: AnalysisState) -> str:
-    data = state.diagnostic_result
-    if not data:
-        return "请先运行 glue_diagnose"
-    issues = []
-    for c in data.get("cycles", []):
+                parts.append(f"- **计算值**: {layer}: {vals}")
         for err in c.get("errors", []):
-            if err["type"] in ("weight_mismatch", "qdm_mismatch", "qdm_no_data", "base_setting_mismatch"):
-                issues.append(f"周期 #{c['index']} — {err['label']}：{err['detail']}")
-    return "\n".join(issues) if issues else "未发现跨来源一致性问题"
+            parts.append(f"- ❌ **{err['label']}**：{err['detail']}")
+        for w in set(c.get("warnings", [])):
+            parts.append(f"- ⚠ **{w}**")
+        for info in c.get("infos", []):
+            parts.append(f"- ℹ {info}")
+        parts.append("")
+    return "\n".join(parts) if parts else "无周期数据"
 
 
 def _glue_report(state: AnalysisState) -> str:
@@ -253,16 +246,11 @@ def register_glue_nodes(engine_instance: AnalysisEngine):
         AnalysisNode(
             "glue_diagnose", "糊间隙诊断", "运行全部诊断检查并生成结构化结果",
             _glue_diagnose,
-            next_nodes=["glue_cycles", "glue_cross", "glue_report"],
+            next_nodes=["glue_detail", "glue_report"],
         ),
         AnalysisNode(
-            "glue_cycles", "周期详情", "查看每个周期的计算值和问题",
-            _glue_cycles,
-            next_nodes=["glue_report"],
-        ),
-        AnalysisNode(
-            "glue_cross", "跨来源一致性", "检查克重/QDM/基础设置一致性",
-            _glue_cross,
+            "glue_detail", "周期详情", "每个周期的计算值、错误、警告、跨来源一致性",
+            _glue_detail,
             next_nodes=["glue_report"],
         ),
         AnalysisNode(
