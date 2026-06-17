@@ -298,12 +298,13 @@ def run_diagnostic_from_db():
                     print("结论: 这几次赋值都没有发现任何问题，数据正常")
             print()
 
-    print("--- 排除建议 ---")
+    print("--- 后续操作建议 ---")
     print()
-    print("如要忽略上述问题重新排查其他方向：")
-    print("  1. 修改 start_time / end_time，选择不同时段再次分析")
-    print(f"  2. 如需关注面纸糊机(GU)，需确认该时段有 GU 赋值活动")
-    print("  3. 分析结果已保存到 diagnostic_report.md（含完整技术细节）")
+    print("  · 如果发现确认错误（材质不匹配、克重不一致等），建议核实对应周期的原材料信息和设备基础参数")
+    print("  · 如果取消率过高（>30%），建议检查生产排程是否过于密集")
+    print("  · 如果出现 QDM 无配置或基础设置不匹配，建议检查 IPS 档案配置")
+    print("  · 完整技术细节请查阅 diagnostic_report.md")
+    print("  · 结构化数据请使用 diagnostic_data.json（供前端展示）")
 
     return diagnostic
 
