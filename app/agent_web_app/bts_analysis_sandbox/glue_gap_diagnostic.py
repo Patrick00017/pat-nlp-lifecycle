@@ -258,44 +258,63 @@ class GlueGapDiagnostic:
 
     # ── Dimension 4: Material Consistency ──
     def check_material_consistency(self):
+        def _extract_new_material(msg):
+            if '->' not in msg:
+                return ''
+            return msg.split('->')[-1].strip().strip('()').split(',')[0]
+
         issues = []
-        mismatch_indices = set()
         for c in self.cycles:
             if c['end'] != 'complete':
                 continue
             sfe = c.get('set_func_event')
             if not sfe:
                 continue
+
             material = sfe.get('material', '')
             lifecycle = sfe.get('lifecycle', {})
+            part = sfe.get('part', 'DF')
             start_time = c['start'].get('Date', '')
-            df_lifecycle = lifecycle.get('df', {}).get('msg', '')
-            if df_lifecycle and material:
-                parts = material.split('.')
-                material_codes = [p for p in parts if p != '-']
-                df_msg_material = df_lifecycle.split('->')[-1].strip().strip('()').split(',')[0] if '->' in df_lifecycle else ''
-                if df_msg_material and df_msg_material != material:
-                    mismatch_indices.add(c['index'])
-                    issues.append({
-                        'type': 'material_mismatch',
-                        'cycle_index': c['index'],
-                        'time': str(start_time),
-                        'detail': f'周期#{c["index"]}: DF生命周期材质"{df_msg_material}"与G7材质"{material}"不一致'
-                    })
+            has_g11 = c['start'].get('EventId') == 'G11'
+            found_mismatch = False
 
-        # G11 立即换材：仅当该周期同时存在材质错位时才记录
-        for c in self.cycles:
-            if c['end'] != 'complete' or c['index'] not in mismatch_indices:
-                continue
-            if c['start'].get('EventId') == 'G11':
-                sfe = c.get('set_func_event')
-                material = sfe.get('material', '') if sfe else ''
+            if part == 'DF' and material:
+                df_msg = lifecycle.get('df', {}).get('msg', '')
+                if df_msg:
+                    actual = _extract_new_material(df_msg)
+                    if actual and actual != material:
+                        found_mismatch = True
+                        issues.append({
+                            'type': 'material_mismatch',
+                            'cycle_index': c['index'],
+                            'time': str(start_time),
+                            'detail': f'周期#{c["index"]}: DF生命周期材质"{actual}"与设定材质"{material}"不一致'
+                        })
+            elif part in ('SF1', 'SF2') and '/' in material:
+                ms_code, ls_code = material.split('/')
+                sf_num = part[-1]
+                ms_key = f'ms{sf_num}'
+                ls_key = f'ls{sf_num}'
+                for layer_key, exp_code in [(ms_key, ms_code), (ls_key, ls_code)]:
+                    msg = lifecycle.get(layer_key, {}).get('msg', '')
+                    if msg:
+                        actual = _extract_new_material(msg)
+                        if actual and actual != exp_code:
+                            found_mismatch = True
+                            issues.append({
+                                'type': 'material_mismatch',
+                                'cycle_index': c['index'],
+                                'time': str(start_time),
+                                'detail': f'周期#{c["index"]}: {layer_key.upper()}生命周期材质"{actual}"与设定材质"{exp_code}"不一致'
+                            })
+
+            if has_g11 and found_mismatch:
                 g11_pv = c['start'].get('ParsedValues', {})
                 offset = g11_pv.get('OffSetValue', 'N/A')
                 issues.append({
                     'type': 'immediate_change',
                     'cycle_index': c['index'],
-                    'time': str(c['start'].get('Date', '')),
+                    'time': str(start_time),
                     'detail': f'周期#{c["index"]}: 触发G11立即换材 —— 偏移量={offset}, 材质={material}'
                 })
         return issues

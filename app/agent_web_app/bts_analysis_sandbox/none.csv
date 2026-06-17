@@ -1,7 +1,1 @@
 ,Message,Date,EventId,MatchedTemplate,ParsedValues
-397,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:39:27.330,,,
-434,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:48:39.703,,,
-436,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:49:01.817,,,
-438,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:49:23.887,,,
-440,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:49:45.977,,,
-442,"{""Module"":""弯翘判定模块"",""Ip"":""172.32.64.10"",""Host"":""BTS-SHLY-SVR"",""UserName"":null,""Content"":""上弯三层根据弯翘度数未找到对应的弯翘状态,请检测弯翘调平设置"",""ExceptionInfo"":null}",2026-01-08 15:50:08.087,,,
