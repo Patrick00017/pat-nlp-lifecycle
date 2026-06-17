@@ -168,7 +168,7 @@ setValue += brandOffset     ← 品牌偏移
 - **QDM 系数一致性**：使用**压缩码**（去掉 `-` 后的材质码，如 `Q.-.-.0.Q` → `Q.0.Q`）匹配 `TB_IPS_QdmCoefDF`，精确匹配失败时回退 `LIKE` 模糊匹配。比对 `F_Glue1/2/3` 与 G14 的 `qdm_factor`。
 - **品牌偏移一致性**（规划中）：当前未实现，需通过 `S_PaperCodeBrands` + `TB_IPS_GlueGuBrand` 联合查询。
 - **基础设置一致性**：查询 `TB_IPS_GlueGu`（GU 层）或 `TB_IPS_GlueSF`（SF 层），比对 `F_MinGlue`/`F_MaxGlue`/`F_MinWeight`/`F_MaxWeight` 与 G14 的 `min_glue`/`max_glue`/`min_weight`/`max_weight`。有差异即报告 `base_setting_mismatch`。
-- **车速系数一致性**：查询 `TB_IPS_GlueSpeedCoef`（`F_Position` 按 GU1=1, GU2=2, GU3=3, SF1=4, SF2=5 映射），逐段比对 `F_Coef` 与 G14 的 `speed_factor`。差异超过 0.01 时报告 `speed_coef_mismatch`。
+- **车速系数一致性**：查询 `TB_IPS_GlueSpeedCoef`（`F_Position` 按 GU1=1, GU2=2, GU3=3, SF1=4, SF2=5 映射），逐段比对 `F_Coef` 与 G14 的 `speed_factor`。有差异即报告 `speed_coef_mismatch`。
 
 结果在控制台输出 `--- 跨来源一致性检查 ---` 段，在 report.md 中以 `## 跨来源一致性检查` 表格展示。
 
@@ -365,7 +365,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
        警告: 降级匹配; 基础设置不匹配
        信息: 被抢断
      ```
-   - `错误` — 材质不匹配、克重不匹配、QDM系数不匹配、QDM无配置、基础设置不匹配。
+   - `错误` — 材质不匹配、克重不匹配、QDM系数不匹配、QDM无配置、基础设置不匹配、车速系数不匹配。
    - `警告` — 降级匹配、弯翘影响、重复计算、值跳变等。
    - `信息` — 被抢断、写值完成但缺少计算过程、写值取消且没有记录计算。
 
@@ -396,7 +396,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
 - **最近赋值事件序列表格** — T-N 序列 + 结论。结论按周期汇总确认错误，去重后用自然语言表述（如"周期 #22 存在以下错误：材质和系统记录对不上；QDM配方没找到对应配置"）。无错误时输出"这几次赋值都没有发现任何问题，数据正常"。
 - 总体周期统计。
 - 完整性异常列表。
-- **跨来源一致性检查** — 克重 / QDM系数 / 基础设置比对。
+- **跨来源一致性检查** — 克重 / QDM系数 / 基础设置 / 车速系数比对。
 
 ## 关键类与方法
 
@@ -405,6 +405,7 @@ result   = 20.00 × 0.80 × 1.10 × 1.80 + 0
 | 方法 | 作用 |
 |------|------|
 | `__init__(extractor, warp_extractor=None, dev_ips=None)` | 初始化，分组周期，可选关联弯翘提取器 + devIPS 连接。 |
+| `from_params(start_time, end_time, dev_ips=None)` | 从时间范围构建 Diagnostic（类方法）。 |
 | `_group_cycles()` | 把事件流按 G7/G11 起点、G12/G5/G15 终点切分为周期，合并 GU（G12）和 SF（G5）的 `set_values`。 |
 | `check_cycle_completeness()` | 检查周期完整性异常。 |
 | `calc_cancellation_rate()` | 计算取消率并给出警告。 |

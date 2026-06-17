@@ -194,8 +194,16 @@ engine = AnalysisEngine()
 
 
 def _build_diagnostic(start_time, end_time, dev_ips=None):
+    if dev_ips is None:
+        from database_utils import PostgreSQLHelper
+        try:
+            dev_ips = PostgreSQLHelper.from_connection_string(
+                "PORT=5432;DATABASE=devIPS;HOST=192.168.110.82;PASSWORD=123456;USER ID=postgres"
+            )
+            dev_ips.connect()
+        except Exception:
+            dev_ips = None
     from glue_gap_diagnostic import GlueGapDiagnostic
-
     return GlueGapDiagnostic.from_params(start_time, end_time, dev_ips=dev_ips)
 
 

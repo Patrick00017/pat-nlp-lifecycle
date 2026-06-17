@@ -1254,9 +1254,10 @@ class GlueGapDiagnostic:
             seen = set()
             error_cycles = []
             for ra_item in ra_list:
+                seen = set()
                 idx = ra_item['index']
                 labels = []
-                if ra_item.get('error_detail'):
+                if '材质不匹配' in ra_item.get('anomalies', []):
                     labels.append('材质和系统记录对不上')
                     seen.add('material_mismatch')
                 for cs in cs_issues:
