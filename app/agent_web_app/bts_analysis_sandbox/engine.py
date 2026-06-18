@@ -27,6 +27,7 @@ class AnalysisState(BaseModel):
     target_time: Optional[str] = None
     material: Optional[str] = None
     tool_name: str
+    source: str = 'mssql'
     diagnostic_result: Optional[Dict[str, Any]] = None
     analysis_results: Dict[str, Any] = {}
     execution_path: List[str] = []
@@ -116,6 +117,7 @@ class AnalysisEngine:
         end_time: str,
         target_time: Optional[str] = None,
         material: Optional[str] = None,
+        source: str = 'mssql',
     ) -> str:
         state_id = str(uuid.uuid4())
         self._states[state_id] = AnalysisState(
@@ -125,6 +127,7 @@ class AnalysisEngine:
             target_time=target_time,
             material=material,
             tool_name=tool_name,
+            source=source,
         )
         return state_id
 
@@ -193,7 +196,7 @@ engine = AnalysisEngine()
 # ── 内置节点注册 ──
 
 
-def _build_diagnostic(start_time, end_time, dev_ips=None):
+def _build_diagnostic(start_time, end_time, dev_ips=None, source='mssql'):
     if dev_ips is None:
         from database_utils import PostgreSQLHelper
         try:
@@ -204,7 +207,7 @@ def _build_diagnostic(start_time, end_time, dev_ips=None):
         except Exception:
             dev_ips = None
     from glue_gap_diagnostic import GlueGapDiagnostic
-    return GlueGapDiagnostic.from_params(start_time, end_time, dev_ips=dev_ips)
+    return GlueGapDiagnostic.from_params(start_time, end_time, dev_ips=dev_ips, source=source)
 
 
 def _glue_diagnose(state: AnalysisState) -> str:
@@ -379,7 +382,8 @@ async def init_analysis(body: dict):
         )
 
     state_id = engine.create_state(
-        tool_name, start_time, end_time, target_time, material
+        tool_name, start_time, end_time, target_time, material,
+        source=args.get('source', 'mssql')
     )
     entry = engine.get_entry_node(tool_name)
 
@@ -408,7 +412,7 @@ async def step_analysis(body: dict):
         state.target_time = args["target_time"]
 
     if node_id == "glue_assignments" and state.target_time:
-        diagnostic = _build_diagnostic(state.start_time, state.end_time)
+        diagnostic = _build_diagnostic(state.start_time, state.end_time, source=state.source)
         result = diagnostic.generate_json(target_time=state.target_time)
         state.diagnostic_result = result
 

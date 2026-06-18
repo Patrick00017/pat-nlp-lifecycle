@@ -16,16 +16,20 @@ class GlueGapDiagnostic:
         self.cycles = self._group_cycles()
 
     @classmethod
-    def from_params(cls, start_time, end_time, dev_ips=None):
+    def from_params(cls, start_time, end_time, dev_ips=None, source='mssql'):
         import os
-        from log_parser import test_ips_and_glue_template
-        sandbox = os.path.dirname(os.path.abspath(__file__))
-        old_cwd = os.getcwd()
-        try:
-            os.chdir(sandbox)
-            extractor = test_ips_and_glue_template(start_time=start_time, end_time=end_time)
-        finally:
-            os.chdir(old_cwd)
+        if source == 'postgresql':
+            from log_parser import test_ips_and_glue_template_pg
+            extractor = test_ips_and_glue_template_pg(start_time, end_time)
+        else:
+            from log_parser import test_ips_and_glue_template
+            sandbox = os.path.dirname(os.path.abspath(__file__))
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(sandbox)
+                extractor = test_ips_and_glue_template(start_time, end_time)
+            finally:
+                os.chdir(old_cwd)
         return cls(extractor, dev_ips=dev_ips)
 
     def _to_ts(self, val):

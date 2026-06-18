@@ -46,10 +46,12 @@ llm = MyLlamaCppWithTools(f"models/{MODEL_PATH}")
 llm_with_tools = llm.bind_tools(tools)
 
 conversation_state = {"messages": [], "tool_calls_and_results": []}
-response_result = ''
+response_result = ""
+
 
 class State(TypedDict):
     """State structure for the chatbot with message history."""
+
     messages: Annotated[list, add_messages]
     tool_calls_and_results: List[Dict[str, Any]]
 
@@ -132,6 +134,7 @@ def clean_response(content: str) -> str:
 
     return cleaned if cleaned else content
 
+
 def response(message, history):
     global conversation_state
     global response_result
@@ -141,12 +144,12 @@ def response(message, history):
         # remove the oldest message
         conversation_state["messages"].pop(0)
     conversation_state["tool_calls_and_results"] = []
-    response_result = ''
+    response_result = ""
 
     # Exit commands
     if message.lower() in ["quit", "exit", "q"]:
         print("\nGoodbye!")
-        response_result = 'Goodbye!'
+        response_result = "Goodbye!"
     # Clear conversation history
     elif message.lower() == "clear":
         conversation_state = {"messages": [], "tool_calls_and_results": []}
@@ -163,9 +166,9 @@ def response(message, history):
             # for msg in result['messages']:
             #     if not isinstance(msg, HumanMessage):
             #         response_result += f"\r\n{msg.content}"
-            response_result += '\r\n## function calls: '
+            response_result += "\r\n## function calls: "
             is_msg_tool_call = True
-            for msg in result['tool_calls_and_results']:
+            for msg in result["tool_calls_and_results"]:
                 # if isinstance(msg, list):
                 #     msg = msg[0]
 
@@ -181,7 +184,11 @@ def response(message, history):
                 #     except:
                 #         print("can not convert to json")
                 #         formatted_msg = msg
-                response_result += f"\r\nfunction call: \r\n ```json \n{msg}\n```" if is_msg_tool_call else f"\r\nfunction result: \r\n {msg}"
+                response_result += (
+                    f"\r\nfunction call: \r\n ```json \n{msg}\n```"
+                    if is_msg_tool_call
+                    else f"\r\nfunction result: \r\n {msg}"
+                )
                 # response_result += f"\r\nfunction call: \r\n {msg}\n" if is_msg_tool_call else f"\r\nfunction result: \r\n {msg}\n"
                 is_msg_tool_call = False if is_msg_tool_call else True
 
@@ -222,15 +229,14 @@ def response(message, history):
         finally:
             for i in range(len(response_result)):
                 time.sleep(0.0001)
-                yield "" + response_result[: i+1]
+                yield "" + response_result[: i + 1]
+
 
 def yes_man(message, history):
     if message.endswith("?"):
         return "Yes"
     else:
         return "Ask me anything!"
-
-
 
 
 gr.ChatInterface(
@@ -243,6 +249,6 @@ gr.ChatInterface(
         "query glue set function events in the system and return events list, start time is 2026-01-08 14:03:50.690, and end time is 2026-01-08 15:03:50.690, and desire material is P.-.-.8.J",
         "track the material P.-.-.8.J lifecycle",
     ],
-    save_history=False
+    save_history=False,
     # cache_examples=True,
 ).launch(theme="ocean")

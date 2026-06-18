@@ -12,41 +12,45 @@ from glue_gap_diagnostic import GlueGapDiagnostic
 from database_utils import PostgreSQLHelper
 
 
-def run_diagnostic_from_db():
+def run_diagnostic_from_db(source="mssql"):
     """Run diagnostic with real data from database."""
     print("=" * 60)
-    print("正在连接数据库并解析日志...")
+    print(f"正在连接数据库并解析日志 (数据源: {source})...")
     print("=" * 60)
 
-    start_time = "2026-01-08 12:03:50.690"
-    end_time = "2026-01-08 16:03:50.690"
+    start_time = "2026-06-01 12:03:50.690"
+    end_time = "2026-06-15 16:03:50.690"
 
-    extractor = test_ips_and_glue_template(start_time=start_time, end_time=end_time)
+    if source == "postgresql":
+        diagnostic = GlueGapDiagnostic.from_params(
+            start_time, end_time, source="postgresql"
+        )
+    else:
+        extractor = test_ips_and_glue_template(start_time=start_time, end_time=end_time)
+        diagnostic = GlueGapDiagnostic(extractor)
 
-    print(f"\n匹配到 {len(extractor.raw_parsed_rows)} 个G事件")
-    print(f"材质变更事件: {len(extractor.material_events)}")
-    print(f"赋值函数调用: {len(extractor.set_func_call_events)}")
+    print(f"\n匹配到 {len(diagnostic.extractor.raw_parsed_rows)} 个G事件")
+    print(f"材质变更事件: {len(diagnostic.extractor.material_events)}")
+    print(f"赋值函数调用: {len(diagnostic.extractor.set_func_call_events)}")
 
     print("\n正在查询弯翘数据...")
-    warp_extractor = test_wrap_template(start_time=start_time, end_time=end_time)
-    ws = warp_extractor.get_summary()
+    diagnostic.warp_extractor = test_wrap_template(
+        start_time=start_time, end_time=end_time
+    )
+    ws = diagnostic.warp_extractor.get_summary()
     print(f"弯翘事件总数: {ws['total_warp_events']}")
     print(f"自动调平: {ws['auto_adjust_count']}, 手动调平: {ws['manual_adjust_count']}")
     print(f"复位: {ws['reset_count']}, 换材跟踪: {ws['paper_change_count']}")
 
     print("\n正在连接 devIPS 数据库...")
-    dev_ips = PostgreSQLHelper.from_connection_string(
+    diagnostic.dev_ips = PostgreSQLHelper.from_connection_string(
         "PORT=5432;DATABASE=devIPS;HOST=192.168.110.82;PASSWORD=123456;USER ID=postgres"
     )
     try:
-        dev_ips.connect()
+        diagnostic.dev_ips.connect()
     except Exception as e:
         print(f"devIPS 连接失败: {e}，跨来源一致性检查将跳过")
-        dev_ips = None
-
-    diagnostic = GlueGapDiagnostic(
-        extractor, warp_extractor=warp_extractor, dev_ips=dev_ips
-    )
+        diagnostic.dev_ips = None
 
     # ── 收集所有异常 ──
     anomalies = diagnostic.check_cycle_completeness()
@@ -64,7 +68,7 @@ def run_diagnostic_from_db():
     print("糊间隙赋值异常分析报告")
     print("=" * 60)
     print(f"分析时段: {start_time.split('.')[0]} ~ {end_time.split('.')[0]}")
-    print(f"共匹配 {len(extractor.raw_parsed_rows)} 条事件")
+    print(f"共匹配 {len(diagnostic.extractor.raw_parsed_rows)} 条事件")
 
     print()
     print("--- 发现的异常 ---")
@@ -140,33 +144,53 @@ def run_diagnostic_from_db():
     print("--- 周期详细报告 ---")
     print()
     cs_all = diagnostic.check_cross_source_consistency()
-    error_types = ('material_mismatch', 'weight_mismatch', 'qdm_mismatch', 'qdm_no_data', 'base_setting_mismatch')
-    warn_types = ('fallback_used', 'warp_influence', 'excessive_calculation', 'value_jump', 'negative_value', 'exceeds_hard_limit', 'speed_not_monotonic')
-    info_types = ('no_termination', 'g12_no_g14', 'pre_write_cancel_no_calc')
-    trig_labels = {'G7': '换材触发', 'G11': '立即换材'}
+    error_types = (
+        "material_mismatch",
+        "weight_mismatch",
+        "qdm_mismatch",
+        "qdm_no_data",
+        "base_setting_mismatch",
+    )
+    warn_types = (
+        "fallback_used",
+        "warp_influence",
+        "excessive_calculation",
+        "value_jump",
+        "negative_value",
+        "exceeds_hard_limit",
+        "speed_not_monotonic",
+    )
+    info_types = ("no_termination", "g12_no_g14", "pre_write_cancel_no_calc")
+    trig_labels = {"G7": "换材触发", "G11": "立即换材"}
 
     for c in diagnostic.cycles:
-        sfe = c.get('set_func_event')
-        material = sfe.get('material', '-') if sfe else '-'
-        eid = c['start'].get('EventId', '?')
+        sfe = c.get("set_func_event")
+        material = sfe.get("material", "-") if sfe else "-"
+        eid = c["start"].get("EventId", "?")
         trig = f"{eid}（{trig_labels.get(eid, '其他触发')}）"
-        end_labels = {'complete': '完成', 'cancelled_pre_write': '写值取消', 'interrupted': '中断'}
-        cl = end_labels.get(c['end'], str(c['end']))
-        t = str(c['start'].get('Date', ''))[:19]
+        end_labels = {
+            "complete": "完成",
+            "cancelled_pre_write": "写值取消",
+            "interrupted": "中断",
+        }
+        cl = end_labels.get(c["end"], str(c["end"]))
+        t = str(c["start"].get("Date", ""))[:19]
         print(f"周期 #{c['index']} ({cl})  {trig}  {t}  材质={material}")
 
         # Computed values
-        if c['end'] == 'complete' and sfe:
-            sv = sfe.get('set_values', {})
+        if c["end"] == "complete" and sfe:
+            sv = sfe.get("set_values", {})
             for layer, ld in sv.items():
-                data = ld.get('data', [])
-                cols = ld.get('columns', [])
+                data = ld.get("data", [])
+                cols = ld.get("columns", [])
                 if not data:
                     continue
                 try:
-                    si = cols.index('speed')
-                    vi = cols.index('value')
-                    segs = [f"@{r[si]}={r[vi]}" for r in data if si < len(r) and vi < len(r)]
+                    si = cols.index("speed")
+                    vi = cols.index("value")
+                    segs = [
+                        f"@{r[si]}={r[vi]}" for r in data if si < len(r) and vi < len(r)
+                    ]
                     if segs:
                         print(f"  计算值: {layer}: {' / '.join(segs)}")
                 except ValueError:
@@ -175,15 +199,24 @@ def run_diagnostic_from_db():
         # Errors (确认错误)
         errs = []
         for a in anomalies:
-            if a['cycle_index'] == c['index'] and a['type'] in error_types:
-                tag_map = {'material_mismatch': '材质不匹配', 'fallback_used': '降级匹配',
-                           'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
-                           'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+            if a["cycle_index"] == c["index"] and a["type"] in error_types:
+                tag_map = {
+                    "material_mismatch": "材质不匹配",
+                    "fallback_used": "降级匹配",
+                    "weight_mismatch": "克重不匹配",
+                    "qdm_mismatch": "QDM系数不匹配",
+                    "qdm_no_data": "QDM无配置",
+                    "base_setting_mismatch": "基础设置不匹配",
+                }
                 errs.append(f"{tag_map.get(a['type'], a['type'])}（{a['detail']}）")
         for cs in cs_all:
-            if cs['cycle_index'] == c['index'] and cs['type'] in error_types:
-                tag_map = {'weight_mismatch': '克重不匹配', 'qdm_mismatch': 'QDM系数不匹配',
-                           'qdm_no_data': 'QDM无配置', 'base_setting_mismatch': '基础设置不匹配'}
+            if cs["cycle_index"] == c["index"] and cs["type"] in error_types:
+                tag_map = {
+                    "weight_mismatch": "克重不匹配",
+                    "qdm_mismatch": "QDM系数不匹配",
+                    "qdm_no_data": "QDM无配置",
+                    "base_setting_mismatch": "基础设置不匹配",
+                }
                 errs.append(f"{tag_map.get(cs['type'], cs['type'])}（{cs['detail']}）")
         if errs:
             print(f"  错误: {'; '.join(errs)}")
@@ -191,25 +224,33 @@ def run_diagnostic_from_db():
         # Warnings
         warns = []
         for a in anomalies:
-            if a['cycle_index'] == c['index'] and a['type'] in warn_types:
-                tag_map = {'fallback_used': '降级匹配', 'warp_influence': '弯翘影响',
-                           'excessive_calculation': '重复计算', 'value_jump': '值跳变',
-                           'negative_value': '负值', 'exceeds_hard_limit': '超硬限制',
-                           'speed_not_monotonic': '车速不单调'}
-                warns.append(tag_map.get(a['type'], a['type']))
+            if a["cycle_index"] == c["index"] and a["type"] in warn_types:
+                tag_map = {
+                    "fallback_used": "降级匹配",
+                    "warp_influence": "弯翘影响",
+                    "excessive_calculation": "重复计算",
+                    "value_jump": "值跳变",
+                    "negative_value": "负值",
+                    "exceeds_hard_limit": "超硬限制",
+                    "speed_not_monotonic": "车速不单调",
+                }
+                warns.append(tag_map.get(a["type"], a["type"]))
         for wp in wp_issues:
-            if wp['cycle_index'] == c['index']:
-                warns.append('弯翘影响')
+            if wp["cycle_index"] == c["index"]:
+                warns.append("弯翘影响")
         if warns:
             print(f"  警告: {'; '.join(set(warns))}")
 
         # Info
         infos = []
         for a in anomalies:
-            if a['cycle_index'] == c['index'] and a['type'] in info_types:
-                tag_map = {'no_termination': '被抢断', 'g12_no_g14': '写值完成但缺少计算过程',
-                           'pre_write_cancel_no_calc': '写值取消且没有计算记录'}
-                infos.append(tag_map.get(a['type'], a['type']))
+            if a["cycle_index"] == c["index"] and a["type"] in info_types:
+                tag_map = {
+                    "no_termination": "被抢断",
+                    "g12_no_g14": "写值完成但缺少计算过程",
+                    "pre_write_cancel_no_calc": "写值取消且没有计算记录",
+                }
+                infos.append(tag_map.get(a["type"], a["type"]))
         if infos:
             print(f"  信息: {'; '.join(infos)}")
 
@@ -256,9 +297,7 @@ def run_diagnostic_from_db():
                         segs = lyr.get("segments", [])
                         if segs:
                             vals.append(
-                                " / ".join(
-                                    f"@{s['speed']}={s['value']}" for s in segs
-                                )
+                                " / ".join(f"@{s['speed']}={s['value']}" for s in segs)
                             )
                     val_s = "; ".join(vals)
                 else:
@@ -275,18 +314,23 @@ def run_diagnostic_from_db():
                 cs_all_console = diagnostic.check_cross_source_consistency()
                 error_cycles = []
                 for ra_item in ra:
-                    idx = ra_item['index']
+                    idx = ra_item["index"]
                     labels = []
                     seen = set()
-                    if '材质不匹配' in ra_item.get('anomalies', []):
-                        labels.append('材质和系统记录对不上')
-                        seen.add('material_mismatch')
+                    if "材质不匹配" in ra_item.get("anomalies", []):
+                        labels.append("材质和系统记录对不上")
+                        seen.add("material_mismatch")
                     for cs in cs_all_console:
-                        if cs['cycle_index'] == idx and cs['type'] not in seen:
-                            seen.add(cs['type'])
-                            cs_plain = {'weight_mismatch': '实际克重和档案不一致', 'qdm_mismatch': 'QDM系数和配方不一致',
-                                         'qdm_no_data': 'QDM配方没找到对应配置', 'base_setting_mismatch': '糊间隙基础参数设定对不上', 'speed_coef_mismatch': '车速系数和数据库对不上'}
-                            labels.append(cs_plain.get(cs['type'], cs['type']))
+                        if cs["cycle_index"] == idx and cs["type"] not in seen:
+                            seen.add(cs["type"])
+                            cs_plain = {
+                                "weight_mismatch": "实际克重和档案不一致",
+                                "qdm_mismatch": "QDM系数和配方不一致",
+                                "qdm_no_data": "QDM配方没找到对应配置",
+                                "base_setting_mismatch": "糊间隙基础参数设定对不上",
+                                "speed_coef_mismatch": "车速系数和数据库对不上",
+                            }
+                            labels.append(cs_plain.get(cs["type"], cs["type"]))
                     if labels:
                         error_cycles.append((idx, labels))
                 if error_cycles:
@@ -300,7 +344,9 @@ def run_diagnostic_from_db():
 
     print("--- 后续操作建议 ---")
     print()
-    print("  · 如果发现确认错误（材质不匹配、克重不一致等），建议核实对应周期的原材料信息和设备基础参数")
+    print(
+        "  · 如果发现确认错误（材质不匹配、克重不一致等），建议核实对应周期的原材料信息和设备基础参数"
+    )
     print("  · 如果取消率过高（>30%），建议检查生产排程是否过于密集")
     print("  · 如果出现 QDM 无配置或基础设置不匹配，建议检查 IPS 档案配置")
     print("  · 完整技术细节请查阅 diagnostic_report.md")
@@ -568,7 +614,7 @@ if __name__ == "__main__":
 
     target_time = None
     try:
-        diagnostic = run_diagnostic_from_db()
+        diagnostic = run_diagnostic_from_db(source="postgresql")
         completed = [c for c in diagnostic.cycles if c["end"] == "complete"]
         if completed:
             g12_raw = completed[-1].get("end_event", {}).get("Date", "")
@@ -588,6 +634,7 @@ if __name__ == "__main__":
         diagnostic = run_diagnostic_synthetic()
 
     import json
+
     data = diagnostic.generate_json(target_time=target_time)
     with open("diagnostic_data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
