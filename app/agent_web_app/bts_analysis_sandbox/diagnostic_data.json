@@ -274,13 +274,7 @@
       "material": "Q/Q",
       "flute": "B",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"Q/Q\"+楞型\"B\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [],
       "infos": []
     },
@@ -338,13 +332,7 @@
       "material": "Q/Q",
       "flute": "B",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"Q/Q\"+楞型\"B\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [],
       "infos": []
     },
@@ -402,13 +390,7 @@
       "material": "Q/Q",
       "flute": "B",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"Q/Q\"+楞型\"B\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [],
       "infos": []
     },
@@ -426,13 +408,7 @@
       "material": "Q/5",
       "flute": "A",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"Q/5\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [],
       "infos": []
     },
@@ -490,13 +466,7 @@
       "material": "Q/5",
       "flute": "A",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"Q/5\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [
         "降级匹配"
       ],
@@ -556,13 +526,7 @@
       "material": "Q/5",
       "flute": "A",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"Q/5\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [
         "重复计算"
       ],
@@ -840,13 +804,7 @@
       "material": "7/R",
       "flute": "A",
       "computed_values": {},
-      "errors": [
-        {
-          "type": "qdm_no_data",
-          "label": "QDM无配置",
-          "detail": "材质\"7/R\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
-        }
-      ],
+      "errors": [],
       "warnings": [],
       "infos": []
     }
@@ -868,10 +826,8 @@
           "SF2"
         ],
         "values": [],
-        "anomalies": [
-          "QDM无配置"
-        ],
-        "error_detail": "材质\"7/R\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
+        "anomalies": [],
+        "error_detail": "-"
       },
       {
         "t_label": "T-4",
@@ -988,12 +944,6 @@
       "has_errors": true,
       "cycles_with_errors": [
         {
-          "index": 24,
-          "labels": [
-            "QDM配方没找到对应配置"
-          ]
-        },
-        {
           "index": 22,
           "labels": [
             "实际克重和档案不一致"
@@ -1007,7 +957,7 @@
           ]
         }
       ],
-      "plain_text": "周期 #24 存在以下错误：QDM配方没找到对应配置；周期 #22 存在以下错误：实际克重和档案不一致；周期 #20 存在以下错误：材质和系统记录对不上；实际克重和档案不一致"
+      "plain_text": "周期 #22 存在以下错误：实际克重和档案不一致；周期 #20 存在以下错误：材质和系统记录对不上；实际克重和档案不一致"
     }
   }
 }

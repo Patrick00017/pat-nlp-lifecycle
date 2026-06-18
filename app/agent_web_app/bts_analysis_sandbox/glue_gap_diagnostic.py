@@ -428,13 +428,15 @@ class GlueGapDiagnostic:
                     qdm_map[layer_key] = float(qdm_rows[0][ci + 1]) if len(qdm_rows[0]) > ci + 1 and qdm_rows[0][ci + 1] else None
 
             if not qdm_rows:
-                issues.append({
-                    'type': 'qdm_no_data',
-                    'cycle_index': c['index'],
-                    'layer': ','.join(sv.keys()),
-                    'start_time': str(c['start'].get('Date', '')),
-                    'detail': f'材质"{compact_code}"+楞型"{flute}"在QDM配置表中无对应条目，无法验证QDM系数'
-                })
+                gu_layers = [l for l in sv.keys() if l.startswith('GU')]
+                if gu_layers:
+                    issues.append({
+                        'type': 'qdm_no_data',
+                        'cycle_index': c['index'],
+                        'layer': ','.join(gu_layers),
+                        'start_time': str(c['start'].get('Date', '')),
+                        'detail': f'材质"{compact_code}"+楞型"{flute}"在GU QDM配置表中无对应条目'
+                    })
 
             for layer, ld in sv.items():
                 data = ld.get('data', [])
@@ -463,8 +465,26 @@ class GlueGapDiagnostic:
                             'detail': f'G14使用克重={actual_weight:.0f}g, 数据库(纸板档案)={expected_weight:.0f}g, 差异={actual_weight - expected_weight:.0f}g'
                         })
 
-                # QDM check
-                expected_qdm = qdm_map.get(layer)
+                # QDM check (GU layers from TB_IPS_QdmCoefDF, SF from TB_IPS_QdmCoefSF)
+                if layer.startswith('SF') and '/' in material and self.dev_ips:
+                    ms, ls = material.split('/')
+                    sf_rows = self._query_ips(
+                        'SELECT "F_Glue" FROM "TB_IPS_QdmCoefSF" WHERE "F_MS" = %s AND "F_LS" = %s AND "F_Flute" = %s',
+                        (ms, ls, flute)
+                    )
+                    if sf_rows and sf_rows[0][0]:
+                        expected_qdm = float(sf_rows[0][0])
+                    else:
+                        expected_qdm = None
+                        issues.append({
+                            'type': 'qdm_no_data',
+                            'cycle_index': c['index'],
+                            'layer': layer,
+                            'start_time': str(c['start'].get('Date', '')),
+                            'detail': f'材质"{ms}/{ls}"+楞型"{flute}"在SF QDM配置表中无对应条目'
+                        })
+                else:
+                    expected_qdm = qdm_map.get(layer)
                 if expected_qdm is not None:
                     if abs(actual_qdm - expected_qdm) > 0.01:
                         issues.append({
