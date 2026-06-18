@@ -105,6 +105,7 @@ class KeyEventExtractor:
             # save the next batch based on log info
             # for sf material change ready
             parsed_values = row["ParsedValues"]
+            print(f"I7 -> {parsed_values}")
             handle_func_name = parsed_values["handle_func_name"]
             part = handle_func_to_splicer_part[handle_func_name]
             # assign next material batch
@@ -119,6 +120,7 @@ class KeyEventExtractor:
             # this function will change the splicer state part material and the material event
             # for sf material change check
             parsed_values = row["ParsedValues"]
+            print(f"I8 -> {parsed_values}")
             handle_func_name = parsed_values["handle_func_name"]
             part = handle_func_to_splicer_part[handle_func_name]
             # save material for event generate
@@ -151,6 +153,7 @@ class KeyEventExtractor:
             # df is ready to change paper, get information
             # for df change material ready
             parsed_values = row["ParsedValues"]
+            print(f"I11 -> {parsed_values}")
             # print(parsed_values) # {'module': '换材判定模块', 'ip': '172.32.64.10', 'host': 'BTS-SHLY-SVR', 'username': 'null', 'prev_material': 'T.-.-.7.T', 'prev_flute_type': '3B', 'prev_width': '2400', 'material': 'P.-.-.8.J', 'flute_type': '3B', 'width': '2350', 'next_material': 'P.-.-.8.J'}
             self.df_state['next_batch'] = {
                 'material': parsed_values['material'],
@@ -161,6 +164,7 @@ class KeyEventExtractor:
             # df is changed paper, generate event
             # for df change material check
             parsed_values = row["ParsedValues"]
+            print(f"I12 -> {parsed_values}")
             # print(parsed_values) # {'module': '换材判定模块', 'ip': '172.32.64.10', 'host': 'BTS-SHLY-SVR', 'username': 'null', 'handle_func_name': 'HandleGuChangePaper'}
             # save material for event generate
             prev_material_batch = {
@@ -188,6 +192,37 @@ class KeyEventExtractor:
                 'time': str(row['Date'])
             }
             self.material_events.append(event)
+        # I16: InitInfos 包含所有部位当前材质（PG 特有）
+        elif row['EventId'] == 'I16':
+            parsed_values = row['ParsedValues']
+            print(f"I16 -> {parsed_values}")
+            # for part in ['ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'ms3', 'ls3']:
+            #     prev_material_batch = {
+            #         'material': self.splicer_state[part]["material"],
+            #         'width': self.splicer_state[part]["width"],
+            #         'flute_type': self.splicer_state[part]["flute_type"]
+            #     }
+            #     current_material_batch = {
+            #         'material': parsed_values[]
+            #     }
+            #     self.splicer_state[part] = {
+            #         'material': current_material_batch['material'],
+            #         'width': current_material_batch['width'],
+            #         'flute_type': current_material_batch['flute_type'],
+            #         'next_batch': {
+            #             'material': '-',
+            #             'width': 0,
+            #             'flute_type': '-',
+            #         },
+            #         'change_time': str(row['Date'])
+            #     }
+            #     # generate the event
+            #     event = {
+            #         'part': part,
+            #         'msg': f"({prev_material_batch['material']},{prev_material_batch['width']},{prev_material_batch['flute_type']}) -> ({current_material_batch['material']},{current_material_batch['width']},{current_material_batch['flute_type']})",
+            #         'time': str(row['Date'])
+            #     }
+            #     self.material_events.append(event)
     
     
                 

@@ -256,6 +256,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
         # )
 
         df = pd.concat([df_ips, df_glue], ignore_index=True)
+        # df.to_csv("./pg_raw_messages.csv", index=False)
         if "Date" in df.columns:
             df = df.sort_values("Date").reset_index(drop=True)
 
@@ -993,7 +994,7 @@ if __name__ == "__main__":
 
     # 胶水测试baseDEV
     extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
-        start_time="2026-06-05 15:03:50.690", end_time="2026-06-08 15:03:50.690"
+        start_time="2026-06-01 15:03:50.690", end_time="2026-06-08 15:03:50.690"
     )
     results = extractor.get_glue_set_function_full_event()
     print(results)

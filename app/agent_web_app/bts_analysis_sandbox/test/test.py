@@ -640,4 +640,29 @@ if __name__ == "__main__":
         json.dump(data, f, ensure_ascii=False, indent=2)
     print("JSON 数据已保存到 diagnostic_data.json")
 
+    # ── FSM 引擎测试 ──
+    try:
+        from fsm_engine import GlueGapDiagnosticFSM
+
+        fsm = GlueGapDiagnosticFSM(diagnostic.extractor)
+        fsm.run()
+        fsm_data = fsm.generate_json()
+        print(f"\nFSM 引擎运行完成：{len(fsm_data.get('cycles', []))} 个周期")
+        for c in fsm_data.get("cycles", []):
+            print(f"  {c['position']}#{c['index']} {c['status']['id']} {c['trigger']['label']} mat={c['material']}")
+            if c.get("errors"):
+                for e in c["errors"]:
+                    print(f"    错误: {e['label']}: {e['detail']}")
+            if c.get("warnings"):
+                print(f"    警告: {', '.join(set(c['warnings']))}")
+
+        fsm_report = fsm.generate_report()
+        with open("fsm_report.md", "w", encoding="utf-8") as f:
+            f.write(fsm_report)
+        print("FSM 报告已保存到 fsm_report.md")
+    except Exception as e:
+        print(f"FSM 引擎测试失败: {e}")
+        import traceback
+        traceback.print_exc()
+
     print("\n诊断完成。")
