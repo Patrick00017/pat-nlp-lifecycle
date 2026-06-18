@@ -18,8 +18,8 @@ def run_diagnostic_from_db(source="mssql"):
     print(f"正在连接数据库并解析日志 (数据源: {source})...")
     print("=" * 60)
 
-    start_time = "2026-06-01 12:03:50.690"
-    end_time = "2026-06-15 16:03:50.690"
+    start_time = "2026-06-05 12:03:50.690"
+    end_time = "2026-06-08 16:03:50.690"
 
     if source == "postgresql":
         diagnostic = GlueGapDiagnostic.from_params(
@@ -33,14 +33,14 @@ def run_diagnostic_from_db(source="mssql"):
     print(f"材质变更事件: {len(diagnostic.extractor.material_events)}")
     print(f"赋值函数调用: {len(diagnostic.extractor.set_func_call_events)}")
 
-    print("\n正在查询弯翘数据...")
-    diagnostic.warp_extractor = test_wrap_template(
-        start_time=start_time, end_time=end_time
-    )
-    ws = diagnostic.warp_extractor.get_summary()
-    print(f"弯翘事件总数: {ws['total_warp_events']}")
-    print(f"自动调平: {ws['auto_adjust_count']}, 手动调平: {ws['manual_adjust_count']}")
-    print(f"复位: {ws['reset_count']}, 换材跟踪: {ws['paper_change_count']}")
+    # print("\n正在查询弯翘数据...")
+    # diagnostic.warp_extractor = test_wrap_template(
+    #     start_time=start_time, end_time=end_time
+    # )
+    # ws = diagnostic.warp_extractor.get_summary()
+    # print(f"弯翘事件总数: {ws['total_warp_events']}")
+    # print(f"自动调平: {ws['auto_adjust_count']}, 手动调平: {ws['manual_adjust_count']}")
+    # print(f"复位: {ws['reset_count']}, 换材跟踪: {ws['paper_change_count']}")
 
     print("\n正在连接 devIPS 数据库...")
     diagnostic.dev_ips = PostgreSQLHelper.from_connection_string(
@@ -115,22 +115,22 @@ def run_diagnostic_from_db(source="mssql"):
         idx += 1
 
     # 4) 弯翘影响
-    if wp_issues:
-        max_off = max(
-            abs(float(i["detail"].split("最大=")[-1].split(")")[0]))
-            for i in wp_issues
-            if "最大=" in i["detail"]
-        )
-        print(f"{idx}. [警告] 弯翘调平正在影响胶水赋值")
-        print(f"   弯翘偏移量最大为 {max_off}，涉及 {len(wp_issues)} 个部位")
-        print(f"   → 建议：检查弯翘模块的调平记录（WARP事件），确认偏移量是否合理")
-        print()
-        idx += 1
-    else:
-        print(f"{idx}. [信息] 本次分析未发现弯翘调平的影响")
-        print(f"   所有胶水计算中的弯翘偏移量均为0")
-        print()
-        idx += 1
+    # if wp_issues:
+    #     max_off = max(
+    #         abs(float(i["detail"].split("最大=")[-1].split(")")[0]))
+    #         for i in wp_issues
+    #         if "最大=" in i["detail"]
+    #     )
+    #     print(f"{idx}. [警告] 弯翘调平正在影响胶水赋值")
+    #     print(f"   弯翘偏移量最大为 {max_off}，涉及 {len(wp_issues)} 个部位")
+    #     print(f"   → 建议：检查弯翘模块的调平记录（WARP事件），确认偏移量是否合理")
+    #     print()
+    #     idx += 1
+    # else:
+    #     print(f"{idx}. [信息] 本次分析未发现弯翘调平的影响")
+    #     print(f"   所有胶水计算中的弯翘偏移量均为0")
+    #     print()
+    #     idx += 1
 
     # 5) 材质一致性
     if mc_issues:

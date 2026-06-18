@@ -225,7 +225,7 @@ def test_ips_and_glue_template(start_time, end_time):
 
 
 def test_ips_and_glue_template_pg(start_time, end_time):
-    log_parser = LogParser("log_data/ips_with_glue_template.csv")
+    log_parser = LogParser("log_data/dev_base_glue_template.csv")
     extractor = GlueEventExtractor()
 
     pg = PostgreSQLHelper.from_connection_string(
@@ -265,11 +265,16 @@ def test_ips_and_glue_template_pg(start_time, end_time):
             '"Ip":" ","Host":" ","UserName":" "',
             regex=False,
         )
-
-        # parsed = log_parser.match_messages(df)
-        # for _, row in parsed.iterrows():
-        #     extractor.process(row)
-        # return extractor
+        df["Message"] = df["Message"].str.replace(
+            '"ExceptionInfo":""',
+            '"ExceptionInfo":" "',
+            regex=False,
+        )
+        df["Message"] = df["Message"].str.replace(
+            "品牌LS0=,品牌MS1=,品牌LS1=,品牌MS2=,品牌LS2=,品牌MS3=,品牌LS3=",
+            "品牌LS0= ,品牌MS1= ,品牌LS1= ,品牌MS2= ,品牌LS2= ,品牌MS3= ,品牌LS3=",
+            regex=False,
+        )
 
         parsed_message_df = log_parser.match_messages(df)
         print(parsed_message_df.head())
@@ -988,7 +993,7 @@ if __name__ == "__main__":
 
     # 胶水测试baseDEV
     extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
-        start_time="2026-06-05 14:03:50.690", end_time="2026-06-08 15:03:50.690"
+        start_time="2026-06-05 15:03:50.690", end_time="2026-06-08 15:03:50.690"
     )
     results = extractor.get_glue_set_function_full_event()
     print(results)

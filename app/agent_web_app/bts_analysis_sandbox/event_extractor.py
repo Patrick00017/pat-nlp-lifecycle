@@ -240,7 +240,7 @@ class GlueEventExtractor(KeyEventExtractor):
                 'part': parsed_values['glue_part'],
                 'material': parsed_values['material'],
                 'flute_type': parsed_values['flute_type'],
-                'set_values': {glue_part : self.sf_value_state[glue_part]}, # align the sf glue set function and gu glue set function
+                'set_values': {glue_part : self.sf_value_state.get(glue_part, {})}, # align the sf glue set function and gu glue set function
                 'time': str(row['Date'])
             }
             self.sf_value_state[glue_part] = {}

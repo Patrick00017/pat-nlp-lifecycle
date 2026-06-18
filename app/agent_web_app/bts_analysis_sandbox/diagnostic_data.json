@@ -5,73 +5,1009 @@
     {
       "index": 0,
       "status": {
-        "id": "complete",
-        "label": "完成"
+        "id": "interrupted",
+        "label": "中断"
       },
-      "trigger_time": "2026-01-08 14:00:01",
+      "trigger_time": "2026-06-05 13:09:21",
       "trigger": {
-        "id": "G7",
-        "label": "G7（换材触发）"
+        "id": "G11",
+        "label": "G11（立即换材）"
       },
-      "material": "P.-.-.8.J",
+      "material": "-",
       "flute": "-",
-      "computed_values": {
-        "GU1": [
-          {
-            "speed": "50",
-            "value": "2.0"
-          },
-          {
-            "speed": "100",
-            "value": "3.5"
-          },
-          {
-            "speed": "150",
-            "value": "8.0"
-          }
-        ]
-      },
+      "computed_values": {},
       "errors": [],
-      "warnings": [
-        "弯翘影响"
-      ],
-      "infos": []
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
     },
     {
       "index": 1,
       "status": {
-        "id": "cancelled_pre_write",
-        "label": "写值取消"
+        "id": "interrupted",
+        "label": "中断"
       },
-      "trigger_time": "2026-01-08 14:01:00",
+      "trigger_time": "2026-06-05 13:09:21",
       "trigger": {
-        "id": "G7",
-        "label": "G7（换材触发）"
+        "id": "G11",
+        "label": "G11（立即换材）"
       },
       "material": "-",
       "flute": "-",
       "computed_values": {},
       "errors": [],
       "warnings": [],
-      "infos": []
+      "infos": [
+        "被抢断"
+      ]
     },
     {
       "index": 2,
       "status": {
-        "id": "cancelled_pre_write",
-        "label": "写值取消"
+        "id": "complete",
+        "label": "完成"
       },
-      "trigger_time": "2026-01-08 14:02:00",
+      "trigger_time": "2026-06-05 13:09:22",
       "trigger": {
-        "id": "G7",
-        "label": "G7（换材触发）"
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q.K.K.K.K",
+      "flute": "5BA",
+      "computed_values": {
+        "GU1": [
+          {
+            "speed": "1",
+            "value": "41.72"
+          },
+          {
+            "speed": "2",
+            "value": "45.89"
+          },
+          {
+            "speed": "3",
+            "value": "50.06"
+          },
+          {
+            "speed": "4",
+            "value": "50.06"
+          },
+          {
+            "speed": "100",
+            "value": "41.72"
+          },
+          {
+            "speed": "200",
+            "value": "41.72"
+          },
+          {
+            "speed": "300",
+            "value": "41.72"
+          },
+          {
+            "speed": "400",
+            "value": "41.72"
+          }
+        ],
+        "SF2": [
+          {
+            "speed": "10",
+            "value": "965.33"
+          },
+          {
+            "speed": "20",
+            "value": "965.33"
+          },
+          {
+            "speed": "30",
+            "value": "965.33"
+          },
+          {
+            "speed": "50",
+            "value": "965.33"
+          },
+          {
+            "speed": "60",
+            "value": "965.33"
+          },
+          {
+            "speed": "100",
+            "value": "965.33"
+          },
+          {
+            "speed": "200",
+            "value": "965.33"
+          },
+          {
+            "speed": "300",
+            "value": "965.33"
+          }
+        ],
+        "GU2": [
+          {
+            "speed": "1",
+            "value": "40.73"
+          },
+          {
+            "speed": "10",
+            "value": "37.03"
+          },
+          {
+            "speed": "100",
+            "value": "37.03"
+          },
+          {
+            "speed": "110",
+            "value": "37.03"
+          },
+          {
+            "speed": "120",
+            "value": "37.03"
+          },
+          {
+            "speed": "130",
+            "value": "37.03"
+          },
+          {
+            "speed": "140",
+            "value": "37.03"
+          },
+          {
+            "speed": "300",
+            "value": "37.03"
+          }
+        ],
+        "SF1": [
+          {
+            "speed": "10",
+            "value": "220.10"
+          },
+          {
+            "speed": "50",
+            "value": "220.10"
+          },
+          {
+            "speed": "60",
+            "value": "220.10"
+          },
+          {
+            "speed": "120",
+            "value": "220.10"
+          },
+          {
+            "speed": "150",
+            "value": "220.10"
+          },
+          {
+            "speed": "160",
+            "value": "220.10"
+          },
+          {
+            "speed": "200",
+            "value": "220.10"
+          },
+          {
+            "speed": "300",
+            "value": "220.10"
+          }
+        ]
+      },
+      "errors": [
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=400g, 数据库(纸板档案)=1090g, 差异=-690g"
+        },
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=340g, 数据库(纸板档案)=1090g, 差异=-750g"
+        },
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=460g, 数据库(纸板档案)=1090g, 差异=-630g"
+        },
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=340g, 数据库(纸板档案)=1090g, 差异=-750g"
+        }
+      ],
+      "warnings": [
+        "重复计算"
+      ],
+      "infos": []
+    },
+    {
+      "index": 3,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 13:09:27",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
       },
       "material": "-",
       "flute": "-",
       "computed_values": {},
       "errors": [],
       "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 4,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 13:09:27",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 5,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 13:09:28",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q/Q",
+      "flute": "B",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"Q/Q\"+楞型\"B\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [],
+      "infos": []
+    },
+    {
+      "index": 6,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 15:11:46",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 7,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 15:11:46",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 8,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 15:11:47",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q/Q",
+      "flute": "B",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"Q/Q\"+楞型\"B\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [],
+      "infos": []
+    },
+    {
+      "index": 9,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 16:36:50",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 10,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 16:36:50",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 11,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 16:36:50",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q/Q",
+      "flute": "B",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"Q/Q\"+楞型\"B\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [],
+      "infos": []
+    },
+    {
+      "index": 12,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 16:38:49",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q/5",
+      "flute": "A",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"Q/5\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [],
+      "infos": []
+    },
+    {
+      "index": 13,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 16:41:19",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 14,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 16:41:19",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 15,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 16:41:19",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q/5",
+      "flute": "A",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"Q/5\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [
+        "降级匹配"
+      ],
+      "infos": []
+    },
+    {
+      "index": 16,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 16:55:21",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 17,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 16:55:22",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 18,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 16:55:22",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q/5",
+      "flute": "A",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"Q/5\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [
+        "重复计算"
+      ],
+      "infos": []
+    },
+    {
+      "index": 19,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 17:04:12",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 20,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 17:04:12",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "9.Q.Q.-.-",
+      "flute": "3A",
+      "computed_values": {
+        "GU1": [
+          {
+            "speed": "1",
+            "value": "23.40"
+          },
+          {
+            "speed": "2",
+            "value": "25.75"
+          },
+          {
+            "speed": "3",
+            "value": "28.09"
+          },
+          {
+            "speed": "4",
+            "value": "28.09"
+          },
+          {
+            "speed": "100",
+            "value": "23.40"
+          },
+          {
+            "speed": "200",
+            "value": "23.40"
+          },
+          {
+            "speed": "300",
+            "value": "23.40"
+          },
+          {
+            "speed": "400",
+            "value": "23.40"
+          }
+        ],
+        "SF2": [
+          {
+            "speed": "10",
+            "value": "1141.33"
+          },
+          {
+            "speed": "20",
+            "value": "1141.33"
+          },
+          {
+            "speed": "30",
+            "value": "1141.33"
+          },
+          {
+            "speed": "50",
+            "value": "1141.33"
+          },
+          {
+            "speed": "60",
+            "value": "1141.33"
+          },
+          {
+            "speed": "100",
+            "value": "1141.33"
+          },
+          {
+            "speed": "200",
+            "value": "1141.33"
+          },
+          {
+            "speed": "300",
+            "value": "1141.33"
+          }
+        ]
+      },
+      "errors": [
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=255g, 数据库(纸板档案)=425g, 差异=-170g"
+        },
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=400g, 数据库(纸板档案)=425g, 差异=-25g"
+        }
+      ],
+      "warnings": [
+        "降级匹配"
+      ],
+      "infos": []
+    },
+    {
+      "index": 21,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 17:04:32",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 22,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 17:04:32",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "Q.Q.Q.-.-",
+      "flute": "3A",
+      "computed_values": {
+        "GU1": [
+          {
+            "speed": "1",
+            "value": "31.21"
+          },
+          {
+            "speed": "2",
+            "value": "34.33"
+          },
+          {
+            "speed": "3",
+            "value": "37.45"
+          },
+          {
+            "speed": "4",
+            "value": "37.45"
+          },
+          {
+            "speed": "100",
+            "value": "31.21"
+          },
+          {
+            "speed": "200",
+            "value": "31.21"
+          },
+          {
+            "speed": "300",
+            "value": "31.21"
+          },
+          {
+            "speed": "400",
+            "value": "31.21"
+          }
+        ],
+        "SF2": [
+          {
+            "speed": "10",
+            "value": "965.33"
+          },
+          {
+            "speed": "20",
+            "value": "965.33"
+          },
+          {
+            "speed": "30",
+            "value": "965.33"
+          },
+          {
+            "speed": "50",
+            "value": "965.33"
+          },
+          {
+            "speed": "60",
+            "value": "965.33"
+          },
+          {
+            "speed": "100",
+            "value": "965.33"
+          },
+          {
+            "speed": "200",
+            "value": "965.33"
+          },
+          {
+            "speed": "300",
+            "value": "965.33"
+          }
+        ]
+      },
+      "errors": [
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=340g, 数据库(纸板档案)=510g, 差异=-170g"
+        },
+        {
+          "type": "weight_mismatch",
+          "label": "克重不匹配",
+          "detail": "G14使用克重=340g, 数据库(纸板档案)=510g, 差异=-170g"
+        }
+      ],
+      "warnings": [],
+      "infos": []
+    },
+    {
+      "index": 23,
+      "status": {
+        "id": "interrupted",
+        "label": "中断"
+      },
+      "trigger_time": "2026-06-05 17:08:10",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "-",
+      "flute": "-",
+      "computed_values": {},
+      "errors": [],
+      "warnings": [],
+      "infos": [
+        "被抢断"
+      ]
+    },
+    {
+      "index": 24,
+      "status": {
+        "id": "complete",
+        "label": "完成"
+      },
+      "trigger_time": "2026-06-05 17:08:10",
+      "trigger": {
+        "id": "G11",
+        "label": "G11（立即换材）"
+      },
+      "material": "7/R",
+      "flute": "A",
+      "computed_values": {},
+      "errors": [
+        {
+          "type": "qdm_no_data",
+          "label": "QDM无配置",
+          "detail": "材质\"7/R\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
+        }
+      ],
+      "warnings": [],
       "infos": []
     }
-  ]
+  ],
+  "recent_assignments": {
+    "target_time": "2026-06-05 17:08:41",
+    "events": [
+      {
+        "t_label": "T-5",
+        "cycle_index": 24,
+        "is_active": true,
+        "end_time": "2026-06-05 17:08:11",
+        "end_status": {
+          "id": "complete",
+          "label": "完成"
+        },
+        "material": "7/R",
+        "layers": [
+          "SF2"
+        ],
+        "values": [],
+        "anomalies": [
+          "QDM无配置"
+        ],
+        "error_detail": "材质\"7/R\"+楞型\"A\"在QDM配置表中无对应条目，无法验证QDM系数"
+      },
+      {
+        "t_label": "T-4",
+        "cycle_index": 23,
+        "is_active": false,
+        "end_time": "2026-06-05 17:08:10",
+        "end_status": {
+          "id": "interrupted",
+          "label": "中断"
+        },
+        "material": "N/A",
+        "layers": [],
+        "values": [],
+        "anomalies": [
+          "被抢断"
+        ],
+        "error_detail": "-"
+      },
+      {
+        "t_label": "T-3",
+        "cycle_index": 22,
+        "is_active": false,
+        "end_time": "2026-06-05 17:04:33",
+        "end_status": {
+          "id": "complete",
+          "label": "完成"
+        },
+        "material": "Q.Q.Q.-.-",
+        "layers": [
+          "GU1",
+          "SF2"
+        ],
+        "values": [
+          "@1=31.21",
+          "@2=34.33",
+          "@3=37.45",
+          "@4=37.45",
+          "@100=31.21",
+          "@200=31.21",
+          "@300=31.21",
+          "@400=31.21",
+          "@10=965.33",
+          "@20=965.33",
+          "@30=965.33",
+          "@50=965.33",
+          "@60=965.33",
+          "@100=965.33",
+          "@200=965.33",
+          "@300=965.33"
+        ],
+        "anomalies": [
+          "克重不匹配"
+        ],
+        "error_detail": "G14使用克重=340g, 数据库(纸板档案)=510g, 差异=-170g"
+      },
+      {
+        "t_label": "T-2",
+        "cycle_index": 21,
+        "is_active": false,
+        "end_time": "2026-06-05 17:04:32",
+        "end_status": {
+          "id": "interrupted",
+          "label": "中断"
+        },
+        "material": "N/A",
+        "layers": [],
+        "values": [],
+        "anomalies": [
+          "被抢断"
+        ],
+        "error_detail": "-"
+      },
+      {
+        "t_label": "T-1",
+        "cycle_index": 20,
+        "is_active": false,
+        "end_time": "2026-06-05 17:04:13",
+        "end_status": {
+          "id": "complete",
+          "label": "完成"
+        },
+        "material": "9.Q.Q.-.-",
+        "layers": [
+          "GU1",
+          "SF2"
+        ],
+        "values": [
+          "@1=23.40",
+          "@2=25.75",
+          "@3=28.09",
+          "@4=28.09",
+          "@100=23.40",
+          "@200=23.40",
+          "@300=23.40",
+          "@400=23.40",
+          "@10=1141.33",
+          "@20=1141.33",
+          "@30=1141.33",
+          "@50=1141.33",
+          "@60=1141.33",
+          "@100=1141.33",
+          "@200=1141.33",
+          "@300=1141.33"
+        ],
+        "anomalies": [
+          "降级匹配",
+          "材质不匹配",
+          "克重不匹配"
+        ],
+        "error_detail": "周期#20: DF生命周期材质\"Q.Q.Q.-.-\"与设定材质\"9.Q.Q.-.-\"不一致；G14使用克重=255g, 数据库(纸板档案)=425g, 差异=-170g"
+      }
+    ],
+    "conclusion": {
+      "has_errors": true,
+      "cycles_with_errors": [
+        {
+          "index": 24,
+          "labels": [
+            "QDM配方没找到对应配置"
+          ]
+        },
+        {
+          "index": 22,
+          "labels": [
+            "实际克重和档案不一致"
+          ]
+        },
+        {
+          "index": 20,
+          "labels": [
+            "材质和系统记录对不上",
+            "实际克重和档案不一致"
+          ]
+        }
+      ],
+      "plain_text": "周期 #24 存在以下错误：QDM配方没找到对应配置；周期 #22 存在以下错误：实际克重和档案不一致；周期 #20 存在以下错误：材质和系统记录对不上；实际克重和档案不一致"
+    }
+  }
 }
