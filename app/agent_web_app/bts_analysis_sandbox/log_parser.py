@@ -288,6 +288,40 @@ def test_ips_and_glue_template_pg(start_time, end_time):
     finally:
         pg.close_connection()
 
+def test_from_csv():
+    log_parser = LogParser("log_data/dev_base_glue_template.csv")
+    extractor = GlueEventExtractor()
+
+    # df = pd.read_csv("test_template_examples.csv")
+    df = pd.read_csv("pg_raw_messages.csv")
+    if "Date" in df.columns:
+        df = df.sort_values("Date").reset_index(drop=True)
+    # 预处理：将空字符串替换为空格，避免 parse 库空捕获 bug
+    df["Message"] = df["Message"].str.replace(
+        '"Ip":"","Host":"","UserName":""',
+        '"Ip":" ","Host":" ","UserName":" "',
+        regex=False,
+    )
+    df["Message"] = df["Message"].str.replace(
+        '"ExceptionInfo":""',
+        '"ExceptionInfo":" "',
+        regex=False,
+    )
+    df["Message"] = df["Message"].str.replace(
+        "品牌LS0=,品牌MS1=,品牌LS1=,品牌MS2=,品牌LS2=,品牌MS3=,品牌LS3=",
+        "品牌LS0= ,品牌MS1= ,品牌LS1= ,品牌MS2= ,品牌LS2= ,品牌MS3= ,品牌LS3=",
+        regex=False,
+    )
+    parsed_message_df = log_parser.match_messages(df)
+    print(parsed_message_df.head())
+    none_rows = parsed_message_df[parsed_message_df["EventId"].isna()]
+    if len(none_rows) > 0:
+        none_rows.to_csv("./none.csv")
+    for index, row in parsed_message_df.iterrows():
+        extractor.process(row)
+    print(extractor.event_count_dict)
+    return extractor
+
 
 def test_hotspray_template(start_time, end_time):
     # 从 YAML 文件加载配置
@@ -993,9 +1027,10 @@ if __name__ == "__main__":
     # print(results)
 
     # 胶水测试baseDEV
-    extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
-        start_time="2026-06-01 15:03:50.690", end_time="2026-06-08 15:03:50.690"
-    )
+    # extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
+    #     start_time="2026-06-01 15:03:50.690", end_time="2026-06-08 15:03:50.690"
+    # )
+    extractor: GlueEventExtractor = test_from_csv()
     results = extractor.get_glue_set_function_full_event()
     print(results)
 

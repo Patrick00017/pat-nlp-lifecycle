@@ -166,6 +166,7 @@ class PositionFSM:
 
     # ── G7 / G11: 开始新周期 ──
 
+
     def _on_G7(self, event):
         self._open_cycle(event, 'G7')
 

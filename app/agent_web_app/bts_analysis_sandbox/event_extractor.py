@@ -14,7 +14,8 @@ class KeyEventExtractor:
                 time: '2026-03-02 15:39:32.530'
             } 
         """
-
+        # all event count
+        self.event_count_dict = {}
         # material change events
         self.material_events = [] # will be changed when I8, I12 is triggered
         
@@ -99,6 +100,11 @@ class KeyEventExtractor:
                 "ParsedValues": parsed_values
             }
         """
+        if row["EventId"] in self.event_count_dict.keys():
+            self.event_count_dict[row["EventId"]] = self.event_count_dict[row["EventId"]] + 1
+        else:
+            self.event_count_dict[row["EventId"]] = 1
+                    
         # check log eventid
         if row["EventId"] == "I7":
             # get change paper ready event, and next material.
@@ -153,7 +159,7 @@ class KeyEventExtractor:
             # df is ready to change paper, get information
             # for df change material ready
             parsed_values = row["ParsedValues"]
-            print(f"I11 -> {parsed_values}")
+            # print(f"I11 -> {parsed_values}")
             # print(parsed_values) # {'module': '换材判定模块', 'ip': '172.32.64.10', 'host': 'BTS-SHLY-SVR', 'username': 'null', 'prev_material': 'T.-.-.7.T', 'prev_flute_type': '3B', 'prev_width': '2400', 'material': 'P.-.-.8.J', 'flute_type': '3B', 'width': '2350', 'next_material': 'P.-.-.8.J'}
             self.df_state['next_batch'] = {
                 'material': parsed_values['material'],
@@ -164,7 +170,7 @@ class KeyEventExtractor:
             # df is changed paper, generate event
             # for df change material check
             parsed_values = row["ParsedValues"]
-            print(f"I12 -> {parsed_values}")
+            # print(f"I12 -> {parsed_values}")
             # print(parsed_values) # {'module': '换材判定模块', 'ip': '172.32.64.10', 'host': 'BTS-SHLY-SVR', 'username': 'null', 'handle_func_name': 'HandleGuChangePaper'}
             # save material for event generate
             prev_material_batch = {
@@ -195,7 +201,7 @@ class KeyEventExtractor:
         # I16: InitInfos 包含所有部位当前材质（PG 特有）
         elif row['EventId'] == 'I16':
             parsed_values = row['ParsedValues']
-            print(f"I16 -> {parsed_values}")
+            # print(f"I16 -> {parsed_values}")
             # for part in ['ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'ms3', 'ls3']:
             #     prev_material_batch = {
             #         'material': self.splicer_state[part]["material"],
@@ -252,6 +258,7 @@ class GlueEventExtractor(KeyEventExtractor):
             # setgluegu set gu value
             # based on self.gu_value_state, so G14 is triggered before G12
             parsed_values = row["ParsedValues"]
+            # print(f"{row['EventId']} -> {parsed_values}")
             # generate func event
             event = {
                 'func': parsed_values['set_func_name'],
@@ -268,6 +275,7 @@ class GlueEventExtractor(KeyEventExtractor):
             # setgluesf1/2 set gu value
             # based on self.sf_value_state, so G4 is triggered before G5
             parsed_values = row["ParsedValues"]
+            # print(f"{row['EventId']} -> {parsed_values}")
             glue_part = parsed_values['glue_part']
             # generate func event
             event = {
@@ -282,6 +290,7 @@ class GlueEventExtractor(KeyEventExtractor):
             self.set_func_call_events.append(event)
         elif row['EventId'] == 'G4': # SF calculate value
             parsed_values = row["ParsedValues"]
+            print(f"{row['EventId']} -> {parsed_values}")
             glue_part = parsed_values['glue_part']
             # 创建副本并删除指定字段
             filtered_data = parsed_values.copy()
@@ -304,6 +313,7 @@ class GlueEventExtractor(KeyEventExtractor):
             self.sf_value_state[glue_part] = data
         elif row['EventId'] == 'G14': # GU calculate value
             parsed_values = row["ParsedValues"]
+            # print(f"{row['EventId']} -> {parsed_values}")
             glue_part = parsed_values['glue_part']
             # 创建副本并删除指定字段
             filtered_data = parsed_values.copy()
