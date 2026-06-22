@@ -305,16 +305,14 @@ class GlueEventExtractor(KeyEventExtractor):
                 'type': 'glue',
                 'material': parsed_values['material'],
                 'flute_type': parsed_values['flute_type'],
-                'set_values': self.gu_value_state.get(glue_part, {}), # align the sf glue set function and gu glue set function
+                'set_values': self.sf_value_state.get(glue_part, {}), # align the sf glue set function and gu glue set function
                 'time': str(row['Date'])
             }
             self.sf_value_state[glue_part] = {}
-            self.gu_value_state[glue_part] = {}
             self.set_func_call_events.append(event)
         elif row['EventId'] == 'G4': # SF calculate value
             parsed_values = row["ParsedValues"]
             print(f"{row['EventId']} -> {parsed_values}")
-            exit()
             glue_part = parsed_values['glue_part']
             # 创建副本并删除指定字段
             filtered_data = parsed_values.copy()
@@ -349,11 +347,11 @@ class GlueEventExtractor(KeyEventExtractor):
 
             # convert to simple format
             data = {
-                'columns': ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'warp_offset', 'value'],
+                'columns': ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'value'],
                 'data': []
             }
             for i in range(1, 9, 1):
-                temp = [filtered_data[f'speed{i}'], filtered_data[f'min_glue{i}'], filtered_data[f'max_glue{i}'], filtered_data[f'min_weight{i}'], filtered_data[f'max_weight{i}'], filtered_data[f'current_glue_weight{i}'], filtered_data[f'speed_factor{i}'], filtered_data[f'min_speed{i}'], filtered_data[f'qdm_factor{i}'], filtered_data[f'ui_factor{i}'], filtered_data.get(f'warp_offset{i}', '0'), filtered_data[f'value{i}']]
+                temp = [filtered_data[f'speed{i}'], filtered_data[f'min_glue{i}'], filtered_data[f'max_glue{i}'], filtered_data[f'min_weight{i}'], filtered_data[f'max_weight{i}'], filtered_data[f'current_glue_weight{i}'], filtered_data[f'speed_factor{i}'], filtered_data[f'min_speed{i}'], filtered_data[f'qdm_factor{i}'], filtered_data[f'ui_factor{i}'], filtered_data[f'value{i}']]
                 data['data'].append(temp)
 
             # print(self.gu_value_state)

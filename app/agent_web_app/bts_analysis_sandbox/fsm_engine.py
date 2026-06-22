@@ -78,6 +78,8 @@ class GlueState(Enum):
 class IssueType(Enum):
     MATERIAL_DISMATCH = 'material_dismatch'
     QDM_DISMATCH = 'qdm_dismatch'
+    QDM_NOT_EXIST = 'qdm_not_exist'
+    WEIGHT_DISMATCH = 'qdm_dismatch'
     BASEDOC_DISMATCH = 'basedoc_dismatch'
     NO_SET_VALUES = 'no_set_values'
 
@@ -276,63 +278,123 @@ class PositionFSM:
         segments = self._parse_segments(event['set_values'])
         self._run_qdm_check(segments)
         # 3. base doc
-        print(errors)
+        # print(errors)
         return errors
 
     def _parse_segments(self, pv):
-        # ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'warp_offset', 'value']
+        # sf:
+        # ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'offset', 'value']
+        # df:
+        # ['speed', 'min_glue', 'max_glue', 'min_weight', 'max_weight', 'current_glue_weight', 'speed_factor', 'min_speed', 'qdm_factor', 'ui_factor', 'value']
         segments = []
         data = pv.get('data')
-        # print(data)
-        for i in range(0, 8):
-            speed = data[i][0]
-            min_glue = data[i][1]
-            max_glue = data[i][2]
-            min_weight = data[i][3]
-            max_weight = data[i][4]
-            current_glue_weight = data[i][5]
-            speed_factor = data[i][6]
-            min_speed = data[i][7]
-            qdm_factor = data[i][8]
-            ui_factor = data[i][9]
-            warp_offset = data[i][10]
-            value = data[i][11]
-            segments.append({
-                'speed': speed, 'value': value,
-                'min_glue': min_glue, 'max_glue': max_glue,
-                'min_weight': min_weight, 'max_weight': max_weight,
-                'cur_weight': current_glue_weight, 'speed_factor': speed_factor,
-                'qdm_factor': qdm_factor, 'ui_factor': ui_factor,
-                'warp_offset': warp_offset, 'min_speed': min_speed
-            })
+        if self.position.startswith("SF"):
+            for i in range(0, 8):
+                speed = data[i][0]
+                min_glue = data[i][1]
+                max_glue = data[i][2]
+                min_weight = data[i][3]
+                max_weight = data[i][4]
+                current_glue_weight = data[i][5]
+                speed_factor = data[i][6]
+                min_speed = data[i][7]
+                qdm_factor = data[i][8]
+                ui_factor = data[i][9]
+                warp_offset = data[i][10]
+                value = data[i][11]
+                segments.append({
+                    'speed': speed, 'value': value,
+                    'min_glue': min_glue, 'max_glue': max_glue,
+                    'min_weight': min_weight, 'max_weight': max_weight,
+                    'cur_weight': current_glue_weight, 'speed_factor': speed_factor,
+                    'qdm_factor': qdm_factor, 'ui_factor': ui_factor,
+                    'warp_offset': warp_offset, 'min_speed': min_speed
+                })
+        else:
+            for i in range(0, 8):
+                speed = data[i][0]
+                min_glue = data[i][1]
+                max_glue = data[i][2]
+                min_weight = data[i][3]
+                max_weight = data[i][4]
+                current_glue_weight = data[i][5]
+                speed_factor = data[i][6]
+                min_speed = data[i][7]
+                qdm_factor = data[i][8]
+                ui_factor = data[i][9]
+                value = data[i][10]
+                segments.append({
+                    'speed': speed, 'value': value,
+                    'min_glue': min_glue, 'max_glue': max_glue,
+                    'min_weight': min_weight, 'max_weight': max_weight,
+                    'cur_weight': current_glue_weight, 'speed_factor': speed_factor,
+                    'qdm_factor': qdm_factor, 'ui_factor': ui_factor,
+                    'min_speed': min_speed
+                })
         print(f"segs: {segments}")
         return segments
 
     # ── 校验方法（由 _run_checks 统一调用） ──
 
     def _run_qdm_check(self, segments):
-        print("check qdm")
-        if not self.dev_ips:
-            return
+        # print(f"{self.position} -> check qdm")
+        first = segments[0]
+        # print(f"{self.position} -> {first}")
         if not segments or not self.material:
             return
-        first = segments[0]
-        print(first)
-        # QDM 校验
-        if '/' in self.material and self.position.startswith('SF'):
-            ms, ls = self.material.split('/')
-            rows = self._query_ips('SELECT "F_Glue" FROM "TB_IPS_QdmCoefSF" WHERE "F_MS" = %s AND "F_LS" = %s AND "F_Flute" = %s', (ms, ls, self.flute))
-            if rows and rows[0][0]:
-                expected_qdm = float(rows[0][0])
-                actual_qdm = first.get('qdm_factor')
-                if actual_qdm is not None:
-                    try:
+        if not self.dev_ips:
+            expected_qdm = 1.0
+            if expected_qdm != first['qdm_factor']:
+                return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'id': 0}) # todo
+        else:
+            # QDM 校验
+            if '/' in self.material and self.position.startswith('SF'):
+                ms, ls = self.material.split('/')
+                rows = self._query_ips('SELECT "F_Glue" FROM "TB_IPS_QdmCoefSF" WHERE "F_MS" = %s AND "F_LS" = %s AND "F_Flute" = %s', (ms, ls, self.flute))
+                if rows and rows[0][0]:
+                    expected_qdm = float(rows[0][0])
+                    actual_qdm = first.get('qdm_factor')
+                    print(f"expected_qdm: {expected_qdm}\r\nactual_qdm: {actual_qdm}")
+                    if actual_qdm is not None:
                         if abs(float(actual_qdm) - expected_qdm) > 0:
-                            self.issues.append(AnalysisIssue('qdm_mismatch', f'QDM系数={actual_qdm}, 数据库={expected_qdm}', self.cycle_index, self.position, 'error'))
-                    except (ValueError, TypeError):
-                        pass
-            else:
-                self.issues.append(AnalysisIssue('qdm_no_data', f'材质"{ms}/{ls}"+楞型"{self.flute}"在SF QDM中无条目', self.cycle_index, self.position, 'error'))
+                            return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'id': 0}) # todo
+                else:
+                    return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'id': 0}) # todo
+
+    def _run_weight_check(self, segments):
+        # print(f"{self.position} -> check weight")
+        first = segments[0]
+        # print(f"{self.position} -> {first}")
+        if not segments or not self.material:
+            return
+        if not self.dev_ips:
+            expected_weight = 500
+            if expected_weight != first['cur_weight']:
+                return Issue("克重不匹配", IssueType.WEIGHT_DISMATCH, {'id': 0}) # todo
+        else:
+            # 克重校验
+            parts = [p for p in self.material.split('.') if p != '-'] if '.' in self.material else []
+            if not parts and '/' in self.material:
+                parts = []
+            if parts:
+                total = 0.0
+                all_found = True
+                for pc in parts:
+                    rows = self._query_ips('SELECT "SPC_GlueWeight" FROM "S_PaperCodes" WHERE "SPC_Code" = %s', (pc,))
+                    if rows and rows[0][0]:
+                        total += float(rows[0][0])
+                    else:
+                        all_found = False
+                        break
+                if all_found:
+                    actual_w = first.get('cur_weight')
+                    if actual_w is not None:
+                        try:
+                            actual_w = float(actual_w)
+                            if abs(actual_w - total) > 1:
+                                self.issues.append(AnalysisIssue('weight_mismatch', f'克重={actual_w:.0f}g, 档案={total:.0f}g, 差异={actual_w-total:.0f}g', self.cycle_index, self.position, 'error'))
+                        except (ValueError, TypeError):
+                            pass
 
     def _run_checks(self):
         self._check_cross_source()
@@ -344,29 +406,7 @@ class PositionFSM:
             return
         first = self.computed_segments[0]
 
-        # 克重校验
-        parts = [p for p in self.material.split('.') if p != '-'] if '.' in self.material else []
-        if not parts and '/' in self.material:
-            parts = []
-        if parts:
-            total = 0.0
-            all_found = True
-            for pc in parts:
-                rows = self._query_ips('SELECT "SPC_GlueWeight" FROM "S_PaperCodes" WHERE "SPC_Code" = %s', (pc,))
-                if rows and rows[0][0]:
-                    total += float(rows[0][0])
-                else:
-                    all_found = False
-                    break
-            if all_found:
-                actual_w = first.get('cur_weight')
-                if actual_w is not None:
-                    try:
-                        actual_w = float(actual_w)
-                        if abs(actual_w - total) > 1:
-                            self.issues.append(AnalysisIssue('weight_mismatch', f'克重={actual_w:.0f}g, 档案={total:.0f}g, 差异={actual_w-total:.0f}g', self.cycle_index, self.position, 'error'))
-                    except (ValueError, TypeError):
-                        pass
+        
 
         
 
