@@ -1031,8 +1031,26 @@ if __name__ == "__main__":
     #     start_time="2026-06-01 15:03:50.690", end_time="2026-06-08 15:03:50.690"
     # )
     extractor: GlueEventExtractor = test_from_csv()
-    results = extractor.get_glue_set_function_full_event()
-    print(results)
+    # results = extractor.get_glue_set_function_full_event()
+    results = extractor.get_all_events()
+    # print(results)
+    from fsm_engine import GlueGapDiagnosticFSM
+
+    fsm = GlueGapDiagnosticFSM(extractor)
+    fsm.run()
+    # fsm_data = fsm.generate_json()
+    # print(f"\nFSM 引擎运行完成：{len(fsm_data.get('cycles', []))} 个周期")
+    # for c in fsm_data.get("cycles", []):
+    #     print(f"  {c['position']}#{c['index']} {c['status']['id']} {c['trigger']['label']} mat={c['material']}")
+    #     if c.get("errors"):
+    #         for e in c["errors"]:
+    #             print(f"    错误: {e['label']}: {e['detail']}")
+    #     if c.get("warnings"):
+    #         print(f"    警告: {', '.join(set(c['warnings']))}")
+    # fsm_report = fsm.generate_report()
+    # with open("fsm_report.md", "w", encoding="utf-8") as f:
+    #     f.write(fsm_report)
+    # print("FSM 报告已保存到 fsm_report.md")
 
     # 弯翘测试
     # extractor: WarpEventExtractor = test_wrap_template(start_time="2026-01-08 14:00:00.000", end_time="2026-01-08 15:00:00.000")

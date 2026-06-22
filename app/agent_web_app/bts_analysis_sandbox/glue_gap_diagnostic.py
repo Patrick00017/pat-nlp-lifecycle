@@ -439,7 +439,8 @@ class GlueGapDiagnostic:
                     })
 
             for layer, ld in sv.items():
-                data = ld.get('data', [])
+                # data = ld.get('data', [])
+                data = ld
                 if not data:
                     continue
                 cols = ld.get('columns', [])
