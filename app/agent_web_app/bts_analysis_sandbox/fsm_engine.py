@@ -589,20 +589,11 @@ class GlueGapDiagnosticFSM:
                 self.fsms[part].process_event(evt)
                 
     def get_results(self):
-        # merge
         results = {}
         fsm_events = {}
         for pos in _ALL_POSITIONS:
-            # print(f"{pos} ------> ")
-            # print(self.fsms[pos].full_events)
             fsm_events[pos] = self.fsms[pos].full_events
 
         results['glue_events'] = fsm_events
         results['material_events'] = self.all_material_events
-        print(results)
-        
-        # import json, os
-        # output_path = os.path.join(os.path.dirname(__file__), "fsm_results.json")
-        # with open(output_path, "w", encoding="utf-8") as f:
-        #     json.dump(results, f, ensure_ascii=False, indent=2, default=str)
-        # print(f"FSM 结果已保存到 {output_path}")
+        return results
