@@ -3,3 +3,4 @@
 *.txt
 *.sqlite3
 *.bin
+node_modules

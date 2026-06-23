@@ -1038,6 +1038,7 @@ if __name__ == "__main__":
 
     fsm = GlueGapDiagnosticFSM(extractor)
     fsm.run()
+    fsm.get_results()
     # fsm_data = fsm.generate_json()
     # print(f"\nFSM 引擎运行完成：{len(fsm_data.get('cycles', []))} 个周期")
     # for c in fsm_data.get("cycles", []):
