@@ -187,3 +187,9 @@ export async function connectSSE(url, payload, onMessage, onError) {
     console.error('Failed to establish SSE connection:', error);
   }
 };
+
+export async function fetchFSMResults() {
+  const res = await fetch('/sample_fsm_results.json');
+  if (!res.ok) throw new Error('Fetch FSM results failed: ' + res.status);
+  return res.json();
+}
