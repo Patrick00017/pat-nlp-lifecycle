@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { funcQuery, analysisInit, analysisStep, analysisStepback } from '../api'
-import FSMViewer from './FSMViewer'
+
 
 const ANALYSIS_TOOLS = {
   get_material_change_in_log:       { label: '材料变更分析', entryNode: 'mc_timeline' },
@@ -19,7 +19,6 @@ export default function DataAnalysis() {
   const [isQuerying, setIsQuerying] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
   const [isStepping, setIsStepping] = useState(false)
-  const [showFSM, setShowFSM] = useState(false)
   const chatRef = useRef(null)
   const hasExecutedRef = useRef(false)
 
@@ -328,33 +327,6 @@ export default function DataAnalysis() {
         )}
         {chatLog.map((entry, i) => renderEntry(entry, i))}
       </div>
-
-      {!showFSM && (
-        <div style={{ textAlign: 'center', margin: '12px 0' }}>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowFSM(true)}
-            style={{ fontSize: 14, padding: '8px 24px' }}
-          >
-            📊 FSM 诊断结果
-          </button>
-        </div>
-      )}
-
-      {showFSM && (
-        <div style={{ marginBottom: 12, maxHeight: '60vh', overflowY: 'auto' }}>
-          <div style={{ textAlign: 'right' }}>
-            <button
-              className="btn"
-              onClick={() => setShowFSM(false)}
-              style={{ fontSize: 13, padding: '4px 12px', marginBottom: 8 }}
-            >
-              隐藏
-            </button>
-          </div>
-          <FSMViewer />
-        </div>
-      )}
 
       <div className="composer">
         <div className="composer-actions" style={{ flexDirection: 'column', gap: 8 }}>

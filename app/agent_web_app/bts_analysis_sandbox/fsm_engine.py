@@ -97,6 +97,17 @@ class Issue:
     type: IssueType
     args: object
 
+    def to_dict(self):
+        # args = self.args
+        # if isinstance(args, dict):
+        #     args = {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+        #             for k, v in args.items()}
+        return {
+            'detail': self.detail,
+            'type': self.type.value if isinstance(self.type, IssueType) else self.type,
+            'args': str(self.args),
+        }
+
 @dataclass
 class AnalysisIssue:
     type: str
@@ -594,6 +605,31 @@ class GlueGapDiagnosticFSM:
         for pos in _ALL_POSITIONS:
             fsm_events[pos] = self.fsms[pos].full_events
 
+        # 转换 Issue 对象为字典，避免 JSON 序列化时变成字符串
+        for events in fsm_events.values():
+            for evt in events:
+                if 'errors' in evt:
+                    evt['errors'] = [e.to_dict() if isinstance(e, Issue) else e for e in evt['errors']]
+
         results['glue_events'] = fsm_events
         results['material_events'] = self.all_material_events
+
         return results
+
+    def save_results(self, filepath=None):
+        import json, os, uuid
+        results = self.get_results()
+
+        class UUIDEncoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, (uuid.UUID,)):
+                    return str(obj)
+                return super().default(obj)
+
+        if filepath is None:
+            filepath = os.path.join(os.path.dirname(__file__), "environments", "fsm_results.json")
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(results, f, ensure_ascii=False, indent=2, cls=UUIDEncoder)
+        print(f"FSM 结果已保存到 {filepath}")
+        return filepath

@@ -3,7 +3,7 @@ import { fetchFSMResults } from '../api';
 import TimelineView from './TimelineView';
 import ChartView from './ChartView';
 
-const POSITIONS = ['GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3'];
+const POSITIONS = ['GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3', 'MAT'];
 
 export default function FSMViewer() {
   const [data, setData] = useState(null);
@@ -21,8 +21,17 @@ export default function FSMViewer() {
   if (loading) return <div style={{ padding: 20, color: '#6b7280' }}>加载 FSM 结果...</div>;
   if (!data) return <div style={{ padding: 20, color: '#dc2626' }}>无法加载 FSM 结果文件</div>;
 
-  const events = data.glue_events?.[position] || [];
-  const selectedData = selectedEvent?.set_values ? selectedEvent : null;
+  const isMat = position === 'MAT';
+  const events = isMat
+    ? (data.material_events || []).map(e => ({
+        event_id: (e.part || '').toUpperCase(),
+        time: e.time,
+        material: e.msg,
+        errors: [],
+        warnings: [],
+      }))
+    : (data.glue_events?.[position] || []);
+  const selectedData = !isMat && selectedEvent?.set_values ? selectedEvent : null;
 
   return (
     <div style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>

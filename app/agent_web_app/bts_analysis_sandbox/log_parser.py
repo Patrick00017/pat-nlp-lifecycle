@@ -1027,10 +1027,10 @@ if __name__ == "__main__":
     # print(results)
 
     # 胶水测试baseDEV
-    # extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
-    #     start_time="2026-06-01 15:03:50.690", end_time="2026-06-08 15:03:50.690"
-    # )
-    extractor: GlueEventExtractor = test_from_csv()
+    extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
+        start_time="2026-06-01 15:03:50.690", end_time="2026-06-01 17:03:50.690"
+    )
+    # extractor: GlueEventExtractor = test_from_csv()
     # results = extractor.get_glue_set_function_full_event()
     results = extractor.get_all_events()
     # print(results)
