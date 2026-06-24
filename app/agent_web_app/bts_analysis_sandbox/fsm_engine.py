@@ -444,7 +444,16 @@ class PositionFSM:
             if '/' in self.material:
                 codes = self.material.split('/')          # "8/J" → ["8","J"]
             elif '.' in self.material:
-                codes = [p for p in self.material.split('.') if p != '-']  # 去-部分
+                parts = self.material.split('.')
+                if self.position == 'GU1':
+                    relevant = [parts[0], parts[1]]
+                elif self.position == 'GU2':
+                    relevant = [parts[2], parts[3]]
+                elif self.position == 'GU3':
+                    relevant = [parts[4]] if len(parts) > 4 else []
+                else:
+                    relevant = [p for p in parts if p != '-']
+                codes = [c for c in relevant if c != '-']
             else:
                 return None
             if not codes:
@@ -585,6 +594,19 @@ class GlueGapDiagnosticFSM:
             except Exception:
                 self.dev_ips = None
 
+    # ── 查询辅助 ──
+
+    def _query_ips(self, sql, params=None):
+        if not self.dev_ips:
+            return None
+        try:
+            cur = self.dev_ips.conn.cursor()
+            cur.execute(sql, params or ())
+            return cur.fetchall()
+        except Exception:
+            self.dev_ips.conn.rollback()
+            return None
+
     # ── 运行 ──
 
     def run(self):
@@ -614,6 +636,53 @@ class GlueGapDiagnosticFSM:
         results['glue_events'] = fsm_events
         results['material_events'] = self.all_material_events
 
+        # ── 查询数据库参考表写入 results ──
+        results['qdm_df'] = []
+        results['qdm_sf'] = []
+        results['basedoc_gu'] = []
+        results['basedoc_sf'] = []
+        results['speed_coef'] = []
+        results['paper_codes'] = []
+
+        if self.dev_ips:
+            try:
+                rows = self._query_ips('SELECT "F_Paper", "F_Flute", "F_Glue1", "F_Glue2", "F_Glue3" FROM "TB_IPS_QdmCoefDF"')
+                if rows:
+                    results['qdm_df'] = [{'paper': r[0], 'flute': r[1], 'glue1': r[2], 'glue2': r[3], 'glue3': r[4]} for r in rows]
+            except Exception:
+                pass
+            try:
+                rows = self._query_ips('SELECT "F_MS", "F_LS", "F_Flute", "F_Glue" FROM "TB_IPS_QdmCoefSF"')
+                if rows:
+                    results['qdm_sf'] = [{'ms': r[0], 'ls': r[1], 'flute': r[2], 'glue': r[3]} for r in rows]
+            except Exception:
+                pass
+            try:
+                rows = self._query_ips('SELECT "F_Flute", "F_Position", "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" FROM "TB_IPS_GlueGu"')
+                if rows:
+                    results['basedoc_gu'] = [{'flute': r[0], 'position': r[1], 'min_glue': r[2], 'max_glue': r[3], 'min_weight': r[4], 'max_weight': r[5]} for r in rows]
+            except Exception:
+                pass
+            try:
+                rows = self._query_ips('SELECT "F_Flute", "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" FROM "TB_IPS_GlueSF"')
+                if rows:
+                    results['basedoc_sf'] = [{'flute': r[0], 'min_glue': r[1], 'max_glue': r[2], 'min_weight': r[3], 'max_weight': r[4]} for r in rows]
+            except Exception:
+                pass
+            try:
+                rows = self._query_ips('SELECT "F_Position", "F_Speed", "F_Coef" FROM "TB_IPS_GlueSpeedCoef" ORDER BY "F_Position", "F_Speed"')
+                if rows:
+                    results['speed_coef'] = [{'position': r[0], 'speed': r[1], 'coef': r[2]} for r in rows]
+            except Exception:
+                pass
+            try:
+                rows = self._query_ips('SELECT "SPC_Code", "SPC_GlueWeight" FROM "S_PaperCodes"')
+                if rows:
+                    results['paper_codes'] = [{'code': r[0], 'weight': r[1]} for r in rows]
+            except Exception:
+                pass
+        
+        results['description'] = "glue_events中保存的是已经成功的胶水赋值事件，其中errors中是已经确认的错误，是最需要注意的部分。material_events是这个时间段内的所有换材事件，如果出现材质不匹配的错误，可以使用id在这里匹配对应的换材事件。qdm_df中保存的是GU1，GU2，GU3使用的用于取qdm_factor的数据表。qdm_sf中保存的是SF1，SF2，SF3在胶水赋值时取qdm_factor的数据表。basedoc_gu保存的是GU1，GU2，GU3在胶水赋值时取基础楞型的数据表。basedoc_sf保存的是SF1，SF2，SF3在胶水赋值时取基础楞型的数据表。speed_coef中保存的是取车速系数的数据表。paper_codes中保存的是取克重的数据表。"
         return results
 
     def save_results(self, filepath=None):

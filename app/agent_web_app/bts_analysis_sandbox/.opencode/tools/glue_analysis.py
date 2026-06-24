@@ -41,4 +41,4 @@ except Exception as e:
         "traceback": traceback.format_exc(),
     }
     print(json.dumps(error_output, ensure_ascii=False))
-    sys.exit(1)
+    # sys.exit(1)

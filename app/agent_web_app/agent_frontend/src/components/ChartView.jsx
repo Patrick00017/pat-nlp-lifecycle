@@ -21,21 +21,25 @@ export default function ChartView({ event, onBack, materialEvents }) {
     max: row[maxIdx] ? parseFloat(row[maxIdx]) : undefined,
   }));
 
-  // 仅当存在材质不匹配错误时，显示附近换材记录（前 5 + 后 5）
-  const hasMatError = (event.errors || []).some(e => e.type === 'material_dismatch');
+  // 用 material_dismatch 的 args.id 精确匹配换材事件
+  const matErrorIds = (event.errors || [])
+    .filter(e => e.type === 'material_dismatch')
+    .map(e => e.args?.id)
+    .filter(Boolean);
   const relatedMaterials = [];
-  let glueTime = 0;
-  if (hasMatError && materialEvents && event.time) {
-    glueTime = new Date(event.time).getTime();
-    const withTime = materialEvents.map(me => ({
-      ...me,
-      _t: new Date(me.time).getTime(),
-    }));
-    const sorted = withTime.sort((a, b) => a._t - b._t);
-    const idx = sorted.findIndex(m => m._t >= glueTime);
-    const start = Math.max(0, idx - 5);
-    const end = Math.min(sorted.length, idx + 5);
-    relatedMaterials.push(...sorted.slice(start, end));
+  if (matErrorIds.length > 0 && materialEvents) {
+    const sorted = [...materialEvents].sort((a, b) => new Date(a.time) - new Date(b.time));
+    const matchedIndices = matErrorIds
+      .map(id => sorted.findIndex(m => m.id === id))
+      .filter(i => i >= 0);
+    if (matchedIndices.length > 0) {
+      const minIdx = Math.max(0, Math.min(...matchedIndices) - 5);
+      const maxIdx = Math.min(sorted.length - 1, Math.max(...matchedIndices) + 5);
+      const idSet = new Set(matErrorIds);
+      for (const m of sorted.slice(minIdx, maxIdx + 1)) {
+        relatedMaterials.push({ ...m, _isMatch: idSet.has(m.id), _t: new Date(m.time).getTime() });
+      }
+    }
   }
 
   const reasonMap = { normal: '正常换材', reset: '复位' };
@@ -104,16 +108,24 @@ export default function ChartView({ event, onBack, materialEvents }) {
             📋 附近换材记录 ({relatedMaterials.length})
           </div>
           {(() => {
-            const before = relatedMaterials.filter(m => m._t < glueTime);
-            const after = relatedMaterials.filter(m => m._t >= glueTime);
             const reasonMap = { normal: '正常换材', reset: '复位' };
+            const matchedItems = relatedMaterials.filter(m => m._isMatch);
+            if (matchedItems.length === 0) return null;
+            const matchIndices = relatedMaterials
+              .map((m, i) => m._isMatch ? i : -1)
+              .filter(i => i >= 0);
+            const minMatchIdx = Math.min(...matchIndices);
+            const maxMatchIdx = Math.max(...matchIndices);
+            const before = relatedMaterials.filter((m, i) => !m._isMatch && i < minMatchIdx);
+            const after = relatedMaterials.filter((m, i) => !m._isMatch && i > maxMatchIdx);
             const rows = [];
-            const renderItem = (me, idx) => (
+
+            const renderItem = (me, idx, isMatch = false) => (
               <div key={idx} style={{
                 display: 'flex', gap: 8, fontSize: 13, padding: '3px 8px',
                 color: '#6b7280', fontFamily: 'monospace',
-                background: idx % 2 === 0 ? '#f9fafb' : 'transparent',
-                borderRadius: 4,
+                background: isMatch ? '#fef3c7' : (idx % 2 === 0 ? '#f9fafb' : 'transparent'),
+                borderRadius: 4, fontWeight: isMatch ? 600 : 400,
               }}>
                 <span>{me.time ? me.time.slice(11, 19) : ''}</span>
                 <span style={{ fontWeight: 600, minWidth: 32 }}>{(me.part || '').toUpperCase()}</span>
@@ -121,12 +133,15 @@ export default function ChartView({ event, onBack, materialEvents }) {
                 <span style={{ color: '#9ca3af' }}>{reasonMap[me.reason] || me.reason || ''}</span>
               </div>
             );
+
             if (before.length > 0) {
-              rows.push(<div key="before" style={{ fontSize: 12, color: '#9ca3af', padding: '2px 8px', fontWeight: 500 }}>— 之前 —</div>);
+              rows.push(<div key="before-title" style={{ fontSize: 12, color: '#9ca3af', padding: '2px 8px', fontWeight: 500 }}>— 之前 —</div>);
               before.forEach((m, i) => rows.push(renderItem(m, i)));
             }
+            rows.push(<div key="recent-title" style={{ fontSize: 12, color: '#d97706', padding: '2px 8px', fontWeight: 500, marginTop: before.length > 0 ? 4 : 0 }}>⭐ 最近</div>);
+            matchedItems.forEach((m, i) => rows.push(renderItem(m, i, true)));
             if (after.length > 0) {
-              rows.push(<div key="after" style={{ fontSize: 12, color: '#9ca3af', padding: '2px 8px', fontWeight: 500, marginTop: 4 }}>— 之后 —</div>);
+              rows.push(<div key="after-title" style={{ fontSize: 12, color: '#9ca3af', padding: '2px 8px', fontWeight: 500, marginTop: 4 }}>— 之后 —</div>);
               after.forEach((m, i) => rows.push(renderItem(m, i)));
             }
             return rows;

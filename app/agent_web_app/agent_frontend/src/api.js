@@ -189,7 +189,7 @@ export async function connectSSE(url, payload, onMessage, onError) {
 };
 
 export async function fetchFSMResults() {
-  const res = await fetch('/sample_fsm_results.json');
+  const res = await fetch(`${BASE}/api/fsm-results`);
   if (!res.ok) throw new Error('Fetch FSM results failed: ' + res.status);
   return res.json();
 }

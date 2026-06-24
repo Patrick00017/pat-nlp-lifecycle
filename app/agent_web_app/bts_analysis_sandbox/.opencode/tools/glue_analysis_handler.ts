@@ -16,7 +16,12 @@ export default tool({
     let raw: string
     try {
       raw = await $`${condaPath} ${script} ${args.start_time} ${args.end_time}`.text()
-    } catch {
+    } catch (e) {
+      return JSON.stringify({
+        status: "error",
+        error: String(e),
+        detail: String(e),
+      })
       try {
         raw = await $`python ${script}`.text()
       } catch {
