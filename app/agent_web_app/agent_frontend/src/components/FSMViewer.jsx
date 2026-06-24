@@ -23,13 +23,18 @@ export default function FSMViewer() {
 
   const isMat = position === 'MAT';
   const events = isMat
-    ? (data.material_events || []).map(e => ({
-        event_id: (e.part || '').toUpperCase(),
-        time: e.time,
-        material: e.msg,
-        errors: [],
-        warnings: [],
-      }))
+    ? (data.material_events || []).map(e => {
+        const reasonMap = { 'normal': '正常换材', 'reset': '复位' };
+        const reason = reasonMap[e.reason] || e.reason || '';
+        return {
+          event_id: (e.part || '').toUpperCase(),
+          time: e.time,
+          material: e.msg,
+          flute_type: reason,
+          errors: [],
+          warnings: [],
+        };
+      })
     : (data.glue_events?.[position] || []);
   const selectedData = !isMat && selectedEvent?.set_values ? selectedEvent : null;
 
@@ -73,7 +78,7 @@ export default function FSMViewer() {
       {/* content */}
       <div style={{ padding: 16, minHeight: 200 }}>
         {selectedData ? (
-          <ChartView event={selectedEvent} onBack={() => setSelectedEvent(null)} />
+          <ChartView event={selectedEvent} onBack={() => setSelectedEvent(null)} materialEvents={data.material_events} />
         ) : (
           <TimelineView events={events} onSelectEvent={(evt) => setSelectedEvent(evt)} />
         )}

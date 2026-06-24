@@ -12,8 +12,9 @@ const ISSUE_STYLES = {
   no_set_values:       { color: '#9ca3af', bg: '#f9fafb', icon: '💤', label: '无数据' },
 };
 
-export default function IssueBadge({ type, detail }) {
+export default function IssueBadge({ type, detail, args }) {
   const style = ISSUE_STYLES[type] || { color: '#6b7280', bg: '#f3f4f6', icon: '?', label: type };
+  const displayText = args?.msg || style.label;
   return (
     <span
       title={detail}
@@ -27,7 +28,7 @@ export default function IssueBadge({ type, detail }) {
       }}
     >
       <span style={{ fontSize: 13 }}>{style.icon}</span>
-      <span>{style.label}</span>
+      <span style={{ fontSize: 11, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</span>
     </span>
   );
 }

@@ -50,7 +50,7 @@ export default function IssuePanel({ issues = [] }) {
                 <div>
                   <strong>{item.meta.title}</strong>
                   <br />
-                  <span style={{ color: '#6b7280' }}>{item.detail}</span>
+                  <span style={{ color: '#6b7280' }}>{item.args?.msg || item.detail}</span>
                 </div>
               </div>
             ))}

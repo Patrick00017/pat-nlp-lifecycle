@@ -1,7 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import IssuePanel from './IssuePanel';
 
-export default function ChartView({ event, onBack }) {
+export default function ChartView({ event, onBack, materialEvents }) {
   if (!event) return null;
   const sv = event.set_values;
   if (!sv || !sv.data) {
@@ -20,6 +20,25 @@ export default function ChartView({ event, onBack }) {
     min: row[minIdx] ? parseFloat(row[minIdx]) : undefined,
     max: row[maxIdx] ? parseFloat(row[maxIdx]) : undefined,
   }));
+
+  // 仅当存在材质不匹配错误时，显示附近换材记录（前 5 + 后 5）
+  const hasMatError = (event.errors || []).some(e => e.type === 'material_dismatch');
+  const relatedMaterials = [];
+  let glueTime = 0;
+  if (hasMatError && materialEvents && event.time) {
+    glueTime = new Date(event.time).getTime();
+    const withTime = materialEvents.map(me => ({
+      ...me,
+      _t: new Date(me.time).getTime(),
+    }));
+    const sorted = withTime.sort((a, b) => a._t - b._t);
+    const idx = sorted.findIndex(m => m._t >= glueTime);
+    const start = Math.max(0, idx - 5);
+    const end = Math.min(sorted.length, idx + 5);
+    relatedMaterials.push(...sorted.slice(start, end));
+  }
+
+  const reasonMap = { normal: '正常换材', reset: '复位' };
 
   return (
     <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb' }}>
@@ -77,6 +96,43 @@ export default function ChartView({ event, onBack }) {
       <div style={{ padding: '0 16px 12px' }}>
         <IssuePanel issues={[...(event.errors || []), ...(event.warnings || [])]} />
       </div>
+
+      {/* 附近换材记录 */}
+      {relatedMaterials.length > 0 && (
+        <div style={{ padding: '0 16px 12px', borderTop: '1px solid #e5e7eb' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6, paddingTop: 8 }}>
+            📋 附近换材记录 ({relatedMaterials.length})
+          </div>
+          {(() => {
+            const before = relatedMaterials.filter(m => m._t < glueTime);
+            const after = relatedMaterials.filter(m => m._t >= glueTime);
+            const reasonMap = { normal: '正常换材', reset: '复位' };
+            const rows = [];
+            const renderItem = (me, idx) => (
+              <div key={idx} style={{
+                display: 'flex', gap: 8, fontSize: 13, padding: '3px 8px',
+                color: '#6b7280', fontFamily: 'monospace',
+                background: idx % 2 === 0 ? '#f9fafb' : 'transparent',
+                borderRadius: 4,
+              }}>
+                <span>{me.time ? me.time.slice(11, 19) : ''}</span>
+                <span style={{ fontWeight: 600, minWidth: 32 }}>{(me.part || '').toUpperCase()}</span>
+                <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me.msg}</span>
+                <span style={{ color: '#9ca3af' }}>{reasonMap[me.reason] || me.reason || ''}</span>
+              </div>
+            );
+            if (before.length > 0) {
+              rows.push(<div key="before" style={{ fontSize: 12, color: '#9ca3af', padding: '2px 8px', fontWeight: 500 }}>— 之前 —</div>);
+              before.forEach((m, i) => rows.push(renderItem(m, i)));
+            }
+            if (after.length > 0) {
+              rows.push(<div key="after" style={{ fontSize: 12, color: '#9ca3af', padding: '2px 8px', fontWeight: 500, marginTop: 4 }}>— 之后 —</div>);
+              after.forEach((m, i) => rows.push(renderItem(m, i)));
+            }
+            return rows;
+          })()}
+        </div>
+      )}
     </div>
   );
 }

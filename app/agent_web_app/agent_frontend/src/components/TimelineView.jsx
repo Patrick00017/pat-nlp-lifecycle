@@ -50,10 +50,10 @@ export default function TimelineView({ events = [], onSelectEvent }) {
               <span style={{ fontWeight: 600, fontSize: 13 }}>{evt.event_id}</span>
               <span style={{ fontSize: 12, color: '#374151' }}>{label}</span>
               {(evt.errors || []).map((err, j) => (
-                <IssueBadge key={j} type={err.type} detail={err.detail} />
+                <IssueBadge key={j} type={err.type} detail={err.detail} args={err.args} />
               ))}
               {(evt.warnings || []).map((w, j) => (
-                <IssueBadge key={`w${j}`} type={w.type} detail={w.detail} />
+                <IssueBadge key={`w${j}`} type={w.type} detail={w.detail} args={w.args} />
               ))}
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>

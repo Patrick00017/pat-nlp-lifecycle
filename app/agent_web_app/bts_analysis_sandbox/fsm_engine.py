@@ -98,14 +98,14 @@ class Issue:
     args: object
 
     def to_dict(self):
-        # args = self.args
-        # if isinstance(args, dict):
-        #     args = {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
-        #             for k, v in args.items()}
+        args = self.args
+        if isinstance(args, dict):
+            args = {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+                    for k, v in args.items()}
         return {
             'detail': self.detail,
             'type': self.type.value if isinstance(self.type, IssueType) else self.type,
-            'args': str(self.args),
+            'args': args,
         }
 
 @dataclass
