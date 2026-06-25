@@ -2,7 +2,6 @@ from utils import load_config
 from database_utils import SQLServerHelper, PostgreSQLHelper
 import pandas as pd
 from parse import parse
-from fsm import KeyEventExtractor
 from event_extractor import (
     GlueEventExtractor,
     VacuumBlowerEventExtractor,

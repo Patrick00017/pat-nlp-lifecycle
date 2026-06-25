@@ -1,5 +1,0 @@
-EventId->EventTemplate
-CR1->{"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"HandlePubMsg--SF2，本次为正常换材，材质=8/A,楞型=B","ExceptionInfo":null}	
-CR2->{"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"进入 SetCorrugatedRollSF2 准备点位赋值，芯纸材质=8，里纸材质=A,门幅=2150,楞型=B","ExceptionInfo":null}	
-CR3->{"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"SF2瓦楞辊设定值 操作侧=60,驱动侧=60","ExceptionInfo":null}	
-CR4->{"Module":"{module}","Ip":"{ip}","Host":"{host}","UserName":{username},"Content":"SetCorrugatedRollSF2--赋值完成.芯纸材质=8，里纸材质=A,门幅=2150,楞型=B","ExceptionInfo":null}	
