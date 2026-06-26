@@ -2,7 +2,7 @@
   "glue_events": {
     "GU1": [
       {
-        "id": "9a1a0228-706b-11f1-9b62-005056c00008",
+        "id": "b8893503-7137-11f1-b538-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -161,10 +161,53 @@
             "time": "2026-06-10 15:15:38.245811"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8890de7-7137-11f1-86c6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：F.4.Z.-.-，目前材质：F.4.Z.-.-"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.63, QDM实际使用:1.63, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=245.0g, 档案:245.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1c8d91-706b-11f1-b64f-005056c00008",
+        "id": "b88b7753-7137-11f1-9ece-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -323,10 +366,53 @@
             "time": "2026-06-10 15:22:43.240901"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88b7752-7137-11f1-be5a-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：D.5.F.-.-，目前材质：D.5.F.-.-"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=260.0g, 档案:260.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1c8d93-706b-11f1-a4f6-005056c00008",
+        "id": "b88b9f7a-7137-11f1-8dd4-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -485,10 +571,53 @@
             "time": "2026-06-10 15:22:46.361512"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88b7752-7137-11f1-be5a-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：D.5.F.-.-，目前材质：D.5.F.-.-"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=260.0g, 档案:260.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1de217-706b-11f1-8097-005056c00008",
+        "id": "b88cd96a-7137-11f1-a0a0-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -647,10 +776,53 @@
             "time": "2026-06-10 15:26:18.495813"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88cad81-7137-11f1-a013-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：G.4.E.-.-，目前材质：G.4.E.-.-"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.78, QDM实际使用:1.78, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1e3019-706b-11f1-b8fb-005056c00008",
+        "id": "b88d27e3-7137-11f1-9cfb-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -809,10 +981,53 @@
             "time": "2026-06-10 15:27:12.418381"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88cad81-7137-11f1-a013-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：G.4.E.-.-，目前材质：G.4.E.-.-"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.78, QDM实际使用:1.78, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a201ac2-706b-11f1-8bda-005056c00008",
+        "id": "b88ea0dc-7137-11f1-8125-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -971,10 +1186,53 @@
             "time": "2026-06-10 15:39:51.432355"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88e6b1a-7137-11f1-b74e-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：H.4.H.-.-，目前材质：H.4.H.-.-"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=205.0g, 档案:205.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a228ecc-706b-11f1-9ec9-005056c00008",
+        "id": "b8909ab1-7137-11f1-b532-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -1133,10 +1391,53 @@
             "time": "2026-06-10 15:46:56.192139"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8909ab0-7137-11f1-b24c-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：E.2.3.4.E，目前材质：E.2.3.4.E"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a22e2bf-706b-11f1-8b45-005056c00008",
+        "id": "b890e901-7137-11f1-a0b9-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -1295,10 +1596,53 @@
             "time": "2026-06-10 15:47:04.451231"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8909ab0-7137-11f1-b24c-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：E.2.3.4.E，目前材质：E.2.3.4.E"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a29106c-706b-11f1-b499-005056c00008",
+        "id": "b895af3b-7137-11f1-b3fd-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -1457,10 +1801,53 @@
             "time": "2026-06-10 15:55:23.229980"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a29377d-706b-11f1-93d7-005056c00008",
+        "id": "b89601b1-7137-11f1-9fa0-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -1619,10 +2006,53 @@
             "time": "2026-06-10 15:55:35.528470"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2ab4ce-706b-11f1-bfc0-005056c00008",
+        "id": "b89729ea-7137-11f1-a564-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -1781,10 +2211,53 @@
             "time": "2026-06-10 16:00:47.877475"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2b8787-706b-11f1-a8d1-005056c00008",
+        "id": "b897e399-7137-11f1-98b2-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -1943,10 +2416,53 @@
             "time": "2026-06-10 16:02:01.391837"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2c3523-706b-11f1-8cd5-005056c00008",
+        "id": "b899c9d6-7137-11f1-8688-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -2105,10 +2621,53 @@
             "time": "2026-06-10 16:02:57.000980"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2cf087-706b-11f1-90bb-005056c00008",
+        "id": "b89ad85b-7137-11f1-9da8-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -2267,10 +2826,53 @@
             "time": "2026-06-10 16:06:00.318110"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2e5846-706b-11f1-9187-005056c00008",
+        "id": "b89cffb7-7137-11f1-9fbe-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -2429,10 +3031,53 @@
             "time": "2026-06-10 16:07:23.811290"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89c8667-7137-11f1-a9d6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2f2dcb-706b-11f1-8afb-005056c00008",
+        "id": "b89dc1b9-7137-11f1-97a8-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -2591,10 +3236,53 @@
             "time": "2026-06-10 16:09:04.682824"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89c8667-7137-11f1-a9d6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a319f5e-706b-11f1-ad30-005056c00008",
+        "id": "b89f9ee6-7137-11f1-9a35-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -2753,10 +3441,53 @@
             "time": "2026-06-10 16:29:21.719797"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89c8667-7137-11f1-a9d6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=310.0g, 档案:310.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a33d4db-706b-11f1-9b7d-005056c00008",
+        "id": "b8a265e3-7137-11f1-bb1d-005056c00008",
         "func": "SetGlueGu",
         "part": "GU1",
         "type": "glue",
@@ -2915,12 +3646,55 @@
             "time": "2026-06-10 17:03:23.775457"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a217d1-7137-11f1-b8d5-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.4.9.5.F，目前材质：B.4.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=300.0g, 档案:300.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       }
     ],
     "GU2": [
       {
-        "id": "9a228ecd-706b-11f1-95a5-005056c00008",
+        "id": "b8909ab2-7137-11f1-9338-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -3079,10 +3853,53 @@
             "time": "2026-06-10 15:46:56.192139"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8909ab0-7137-11f1-b24c-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：E.2.3.4.E，目前材质：E.2.3.4.E"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=185.0g, 档案:185.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a22e2c0-706b-11f1-b3fd-005056c00008",
+        "id": "b890e902-7137-11f1-b08c-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -3241,10 +4058,53 @@
             "time": "2026-06-10 15:47:04.451231"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8909ab0-7137-11f1-b24c-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：E.2.3.4.E，目前材质：E.2.3.4.E"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=185.0g, 档案:185.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a29106d-706b-11f1-ac2b-005056c00008",
+        "id": "b895af3c-7137-11f1-9168-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -3403,10 +4263,53 @@
             "time": "2026-06-10 15:55:23.229980"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a29377e-706b-11f1-bc57-005056c00008",
+        "id": "b89601b2-7137-11f1-ac39-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -3565,10 +4468,53 @@
             "time": "2026-06-10 15:55:35.528470"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2ab4cf-706b-11f1-b5d1-005056c00008",
+        "id": "b89729eb-7137-11f1-bebc-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -3727,10 +4673,53 @@
             "time": "2026-06-10 16:00:47.877475"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2b8788-706b-11f1-be25-005056c00008",
+        "id": "b897e39a-7137-11f1-8983-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -3889,10 +4878,53 @@
             "time": "2026-06-10 16:02:01.391837"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2c3524-706b-11f1-8835-005056c00008",
+        "id": "b899c9d7-7137-11f1-98e5-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -4051,10 +5083,53 @@
             "time": "2026-06-10 16:02:57.000980"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2cf088-706b-11f1-b746-005056c00008",
+        "id": "b89ad85c-7137-11f1-9395-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -4213,10 +5288,53 @@
             "time": "2026-06-10 16:06:00.318110"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2e7f38-706b-11f1-bb75-005056c00008",
+        "id": "b89cffb8-7137-11f1-b150-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -4375,10 +5493,53 @@
             "time": "2026-06-10 16:07:23.811290"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89c8667-7137-11f1-a9d6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2f2dcc-706b-11f1-8f27-005056c00008",
+        "id": "b89dc1ba-7137-11f1-87d7-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -4537,10 +5698,53 @@
             "time": "2026-06-10 16:09:04.682824"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89c8667-7137-11f1-a9d6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a319f5f-706b-11f1-8602-005056c00008",
+        "id": "b89f9ee7-7137-11f1-ad41-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -4699,10 +5903,53 @@
             "time": "2026-06-10 16:29:21.719797"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89c8667-7137-11f1-a9d6-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.5.9.5.F，目前材质：B.5.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a33d4dc-706b-11f1-b053-005056c00008",
+        "id": "b8a265e4-7137-11f1-86c6-005056c00008",
         "func": "SetGlueGu",
         "part": "GU2",
         "type": "glue",
@@ -4861,13 +6108,56 @@
             "time": "2026-06-10 17:03:23.775457"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a217d1-7137-11f1-b8d5-005056c00008",
+              "msg": "DF材质匹配成功，赋值材质：B.4.9.5.F，目前材质：B.4.9.5.F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 7.0, 预期: 7.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       }
     ],
     "GU3": [],
     "SF1": [
       {
-        "id": "9a191260-706b-11f1-84e9-005056c00008",
+        "id": "b88898ea-7137-11f1-9530-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5028,10 +6318,59 @@
               "msg": "ms1,赋值材质：4,目前材质:-"
             }
           }
+        ],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88871ba-7137-11f1-a6b2-005056c00008",
+              "msg": "ls1,赋值材质：Z,目前材质:Z"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=245.0g, 档案:245.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
         ]
       },
       {
-        "id": "9a191262-706b-11f1-b255-005056c00008",
+        "id": "b888bfd4-7137-11f1-a8bb-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5183,10 +6522,67 @@
             "time": "2026-06-10 15:15:08.544131"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88898eb-7137-11f1-a134-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88871ba-7137-11f1-a6b2-005056c00008",
+              "msg": "ls1,赋值材质：Z,目前材质:Z"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=245.0g, 档案:245.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1b6ab5-706b-11f1-a7e6-005056c00008",
+        "id": "b88adb4e-7137-11f1-9273-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5338,10 +6734,67 @@
             "time": "2026-06-10 15:22:26.100517"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b889d910-7137-11f1-9bdb-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88adb4d-7137-11f1-bfd7-005056c00008",
+              "msg": "ls1,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.21, QDM实际使用:1.21, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=245.0g, 档案:245.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1b6ab7-706b-11f1-9151-005056c00008",
+        "id": "b88b0222-7137-11f1-afdf-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5493,10 +6946,67 @@
             "time": "2026-06-10 15:22:27.532881"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88b0221-7137-11f1-a3ee-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88adb4d-7137-11f1-bfd7-005056c00008",
+              "msg": "ls1,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.16, QDM实际使用:1.16, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1de219-706b-11f1-999a-005056c00008",
+        "id": "b88d00d6-7137-11f1-9378-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5648,10 +7158,67 @@
             "time": "2026-06-10 15:26:27.013783"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88bc71a-7137-11f1-813a-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88cd96b-7137-11f1-b8bc-005056c00008",
+              "msg": "ls1,赋值材质：E,目前材质:E"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.23, QDM实际使用:1.23, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=280.0g, 档案:280.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1e0921-706b-11f1-8062-005056c00008",
+        "id": "b88d00d8-7137-11f1-ba22-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5803,10 +7370,67 @@
             "time": "2026-06-10 15:26:31.715376"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88d00d7-7137-11f1-996d-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88cd96b-7137-11f1-b8bc-005056c00008",
+              "msg": "ls1,赋值材质：E,目前材质:E"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=270.0g, 档案:270.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1f3078-706b-11f1-b127-005056c00008",
+        "id": "b88df25e-7137-11f1-a7cd-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -5958,10 +7582,67 @@
             "time": "2026-06-10 15:39:22.129325"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88d4f44-7137-11f1-8dc4-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88df25d-7137-11f1-89da-005056c00008",
+              "msg": "ls1,赋值材质：H,目前材质:H"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.33, QDM实际使用:1.33, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=205.0g, 档案:205.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a1f5778-706b-11f1-af04-005056c00008",
+        "id": "b88e1973-7137-11f1-aaa0-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -6113,10 +7794,67 @@
             "time": "2026-06-10 15:39:24.669835"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88e1972-7137-11f1-91a5-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88df25d-7137-11f1-89da-005056c00008",
+              "msg": "ls1,赋值材质：H,目前材质:H"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.33, QDM实际使用:1.33, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=205.0g, 档案:205.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a211f3a-706b-11f1-ad70-005056c00008",
+        "id": "b88fd788-7137-11f1-8068-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -6268,10 +8006,67 @@
             "time": "2026-06-10 15:46:30.845006"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88ec89d-7137-11f1-a118-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88fd787-7137-11f1-9f7d-005056c00008",
+              "msg": "ls1,赋值材质：3,目前材质:3"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.31, QDM实际使用:1.31, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=185.0g, 档案:185.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2146af-706b-11f1-9e60-005056c00008",
+        "id": "b88ffe95-7137-11f1-b77e-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -6423,10 +8218,67 @@
             "time": "2026-06-10 15:46:35.955793"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88ffe94-7137-11f1-837e-005056c00008",
+              "msg": "ms1,赋值材质：2,目前材质:2"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b88fd787-7137-11f1-9f7d-005056c00008",
+              "msg": "ls1,赋值材质：3,目前材质:3"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.45, QDM实际使用:1.45, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=170.0g, 档案:170.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a241e98-706b-11f1-a0f5-005056c00008",
+        "id": "b891ac73-7137-11f1-aa52-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -6578,10 +8430,67 @@
             "time": "2026-06-10 15:51:49.046000"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8910fe2-7137-11f1-b653-005056c00008",
+              "msg": "ms1,赋值材质：2,目前材质:2"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b891857b-7137-11f1-95cc-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=200.0g, 档案:200.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a29d3d0-706b-11f1-9d5a-005056c00008",
+        "id": "b8965b18-7137-11f1-a140-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -6733,10 +8642,67 @@
             "time": "2026-06-10 16:00:40.620072"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8962909-7137-11f1-a8b1-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8965b15-7137-11f1-a9a9-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a29fac4-706b-11f1-91f2-005056c00008",
+        "id": "b896b4c4-7137-11f1-aca3-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -6888,10 +8854,67 @@
             "time": "2026-06-10 16:00:47.710357"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8962909-7137-11f1-a8b1-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8965b15-7137-11f1-a9a9-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2b6072-706b-11f1-9750-005056c00008",
+        "id": "b897bc2b-7137-11f1-8b64-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7043,10 +9066,67 @@
             "time": "2026-06-10 16:02:01.241199"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8975117-7137-11f1-8088-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8978ab0-7137-11f1-be75-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2bae8a-706b-11f1-829e-005056c00008",
+        "id": "b8981bbc-7137-11f1-ad13-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7198,10 +9278,67 @@
             "time": "2026-06-10 16:02:56.846965"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8975117-7137-11f1-8088-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8978ab0-7137-11f1-be75-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2cf085-706b-11f1-8be1-005056c00008",
+        "id": "b89aa069-7137-11f1-b999-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7353,10 +9490,67 @@
             "time": "2026-06-10 16:06:00.052418"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89a6605-7137-11f1-8ad9-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89aa066-7137-11f1-8061-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2f5565-706b-11f1-acc7-005056c00008",
+        "id": "b89dc1bc-7137-11f1-9bed-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7508,10 +9702,67 @@
             "time": "2026-06-10 16:13:57.758795"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89dc1bb-7137-11f1-a3a0-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89d637d-7137-11f1-8764-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2fa38b-706b-11f1-97be-005056c00008",
+        "id": "b89e0fc0-7137-11f1-b79d-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7663,10 +9914,67 @@
             "time": "2026-06-10 16:16:01.023170"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89dc1bb-7137-11f1-a3a0-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89e0fbf-7137-11f1-b881-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a30dbf5-706b-11f1-98fd-005056c00008",
+        "id": "b89efa14-7137-11f1-9bb5-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7818,10 +10126,67 @@
             "time": "2026-06-10 16:28:44.346867"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89dc1bb-7137-11f1-a3a0-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89efa13-7137-11f1-a0fe-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a310317-706b-11f1-a90b-005056c00008",
+        "id": "b89f505a-7137-11f1-8265-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -7973,10 +10338,67 @@
             "time": "2026-06-10 16:28:46.416543"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89efa15-7137-11f1-a8cf-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89efa13-7137-11f1-a0fe-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a32ea99-706b-11f1-9747-005056c00008",
+        "id": "b8a1240b-7137-11f1-9332-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -8128,10 +10550,67 @@
             "time": "2026-06-10 17:02:45.062072"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89fc5e3-7137-11f1-bf58-005056c00008",
+              "msg": "ms1,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a0fd01-7137-11f1-87ac-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=225.0g, 档案:225.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a3311a8-706b-11f1-a3d5-005056c00008",
+        "id": "b8a14b0f-7137-11f1-8c90-005056c00008",
         "func": "SetGlueSF1",
         "part": "SF1",
         "type": "glue",
@@ -8283,12 +10762,69 @@
             "time": "2026-06-10 17:02:46.141263"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a1240c-7137-11f1-85d5-005056c00008",
+              "msg": "ms1,赋值材质：4,目前材质:4"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a0fd01-7137-11f1-87ac-005056c00008",
+              "msg": "ls1,赋值材质：9,目前材质:9"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=215.0g, 档案:215.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       }
     ],
     "SF2": [
       {
-        "id": "9a29d3d1-706b-11f1-b4a4-005056c00008",
+        "id": "b8968d58-7137-11f1-b611-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -8440,10 +10976,67 @@
             "time": "2026-06-10 16:00:40.642712"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8965b16-7137-11f1-9271-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8965b17-7137-11f1-8549-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2ab4cd-706b-11f1-95b8-005056c00008",
+        "id": "b89729e9-7137-11f1-ba9e-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -8595,10 +11188,67 @@
             "time": "2026-06-10 16:00:47.788124"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89702fb-7137-11f1-88d2-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89729e8-7137-11f1-ad61-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2b6073-706b-11f1-b569-005056c00008",
+        "id": "b897bc2c-7137-11f1-baf3-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -8750,10 +11400,67 @@
             "time": "2026-06-10 16:02:01.303567"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8978ab1-7137-11f1-94cd-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8978ab2-7137-11f1-8245-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2c0e26-706b-11f1-be57-005056c00008",
+        "id": "b899c9d5-7137-11f1-af3f-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -8905,10 +11612,67 @@
             "time": "2026-06-10 16:02:56.930754"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8995491-7137-11f1-8731-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b899a2b3-7137-11f1-a363-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2cf086-706b-11f1-b278-005056c00008",
+        "id": "b89ad85a-7137-11f1-b806-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9060,10 +11824,67 @@
             "time": "2026-06-10 16:06:00.156823"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89aa067-7137-11f1-baa1-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89aa068-7137-11f1-86f5-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2f7c6f-706b-11f1-a2c6-005056c00008",
+        "id": "b89e0fbe-7137-11f1-a52a-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9215,10 +12036,67 @@
             "time": "2026-06-10 16:15:34.007313"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89d637e-7137-11f1-8e0d-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89de8b7-7137-11f1-9133-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a2ff1a4-706b-11f1-b3e8-005056c00008",
+        "id": "b89e36bb-7137-11f1-9e55-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9370,10 +12248,67 @@
             "time": "2026-06-10 16:19:24.871627"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89e36ba-7137-11f1-b6c1-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89de8b7-7137-11f1-9133-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a308dfc-706b-11f1-a308-005056c00008",
+        "id": "b89ed307-7137-11f1-a846-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9525,10 +12460,67 @@
             "time": "2026-06-10 16:28:33.100429"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89e36ba-7137-11f1-b6c1-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89eabf9-7137-11f1-b6db-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a30b526-706b-11f1-8d75-005056c00008",
+        "id": "b89ed309-7137-11f1-a6d9-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9680,10 +12672,67 @@
             "time": "2026-06-10 16:28:35.685188"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89ed308-7137-11f1-9d5d-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89eabf9-7137-11f1-b6db-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a327563-706b-11f1-9554-005056c00008",
+        "id": "b8a0aeca-7137-11f1-8e8c-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9835,10 +12884,67 @@
             "time": "2026-06-10 17:02:37.849467"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b89fffea-7137-11f1-a58d-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a087bd-7137-11f1-bcb1-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       },
       {
-        "id": "9a329c6e-706b-11f1-8c28-005056c00008",
+        "id": "b8a0d5e2-7137-11f1-a947-005056c00008",
         "func": "SetGlueSF2",
         "part": "SF2",
         "type": "glue",
@@ -9990,14 +13096,71 @@
             "time": "2026-06-10 17:02:39.922576"
           }
         },
-        "errors": []
+        "errors": [],
+        "warnings": [
+          {
+            "detail": "取消",
+            "type": "cancel",
+            "args": {}
+          }
+        ],
+        "passes": [
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a0aecb-7137-11f1-9fdb-005056c00008",
+              "msg": "ms2,赋值材质：5,目前材质:5"
+            }
+          },
+          {
+            "detail": "材质匹配成功",
+            "type": "material_pass",
+            "args": {
+              "id": "b8a087bd-7137-11f1-bcb1-005056c00008",
+              "msg": "ls2,赋值材质：F,目前材质:F"
+            }
+          },
+          {
+            "detail": "QDM检验完成",
+            "type": "qdm_pass",
+            "args": {
+              "qdm_id": 0,
+              "msg": "QDM设置:1.0, QDM实际使用:1.00, 检验完成"
+            }
+          },
+          {
+            "detail": "克重匹配",
+            "type": "weight_pass",
+            "args": {
+              "weight_id": 0,
+              "msg": "克重=255.0g, 档案:255.0g, 匹配完成"
+            }
+          },
+          {
+            "detail": "基础设置匹配(min_glue)",
+            "type": "basedoc_pass",
+            "args": {
+              "basedoc_id": 0,
+              "msg": "实际: 8.0, 预期: 8.0"
+            }
+          },
+          {
+            "detail": "车速系数匹配",
+            "type": "speed_pass",
+            "args": {
+              "speed_coef_id": 0,
+              "msg": "实际: 2.0, 预期: 2.0"
+            }
+          }
+        ]
       }
     ],
     "SF3": []
   },
   "material_events": [
     {
-      "id": "9a18eb77-706b-11f1-8019-005056c00008",
+      "id": "b88871ba-7137-11f1-a6b2-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(-,0,-) -> (Z,3050,F)",
@@ -10005,7 +13168,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a191261-706b-11f1-9126-005056c00008",
+      "id": "b88898eb-7137-11f1-a134-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(-,0,-) -> (4,3050,F)",
@@ -10013,7 +13176,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a19d744-706b-11f1-a261-005056c00008",
+      "id": "b8890de7-7137-11f1-86c6-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(-.-.-.-.-,0,-) -> (F.4.Z.-.-,3050,3F)",
@@ -10021,7 +13184,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a19d745-706b-11f1-b310-005056c00008",
+      "id": "b8893502-7137-11f1-8260-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(-,0,-) -> (F,3050,3F)",
@@ -10029,7 +13192,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1a464f-706b-11f1-99e1-005056c00008",
+      "id": "b889aa2b-7137-11f1-acc8-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(F,3050,3F) -> (F,3050,3F)",
@@ -10037,7 +13200,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1a6dbf-706b-11f1-8b2d-005056c00008",
+      "id": "b889d910-7137-11f1-9bdb-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,3050,F) -> (4,3050,F)",
@@ -10045,7 +13208,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1abbf2-706b-11f1-9586-005056c00008",
+      "id": "b88a3156-7137-11f1-ab7f-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(Z,3050,F) -> (Z,3050,F)",
@@ -10053,7 +13216,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1b6ab4-706b-11f1-b71f-005056c00008",
+      "id": "b88adb4d-7137-11f1-bfd7-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(Z,3050,F) -> (F,3000,F)",
@@ -10061,7 +13224,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1b6ab6-706b-11f1-953b-005056c00008",
+      "id": "b88b0221-7137-11f1-a3ee-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,3050,F) -> (5,3000,F)",
@@ -10069,7 +13232,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1c6652-706b-11f1-a766-005056c00008",
+      "id": "b88b7752-7137-11f1-be5a-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(F.4.Z.-.-,3050,3F) -> (D.5.F.-.-,3000,3F)",
@@ -10077,7 +13240,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1c8d92-706b-11f1-b89d-005056c00008",
+      "id": "b88b7754-7137-11f1-8b43-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(F,3050,3F) -> (D,3000,3F)",
@@ -10085,7 +13248,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1cb4a2-706b-11f1-b948-005056c00008",
+      "id": "b88b9f7b-7137-11f1-84c3-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(D,3000,3F) -> (D,3000,3F)",
@@ -10093,7 +13256,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1cdb9e-706b-11f1-9f61-005056c00008",
+      "id": "b88bc71a-7137-11f1-813a-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3000,F) -> (5,3000,F)",
@@ -10101,7 +13264,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1cdb9f-706b-11f1-9658-005056c00008",
+      "id": "b88bc71b-7137-11f1-a623-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(F,3000,F) -> (F,3000,F)",
@@ -10109,7 +13272,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1dbae2-706b-11f1-bf9b-005056c00008",
+      "id": "b88cad81-7137-11f1-a013-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(D.5.F.-.-,3000,3F) -> (G.4.E.-.-,3000,3F)",
@@ -10117,7 +13280,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1de218-706b-11f1-941a-005056c00008",
+      "id": "b88cd96b-7137-11f1-b8bc-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(F,3000,F) -> (E,3000,F)",
@@ -10125,7 +13288,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1de21a-706b-11f1-80c4-005056c00008",
+      "id": "b88d00d7-7137-11f1-996d-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3000,F) -> (4,3000,F)",
@@ -10133,7 +13296,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1e0922-706b-11f1-9d12-005056c00008",
+      "id": "b88d00d9-7137-11f1-a238-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(D,3000,3F) -> (G,3000,3F)",
@@ -10141,7 +13304,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1e301a-706b-11f1-a9a6-005056c00008",
+      "id": "b88d4f43-7137-11f1-aaf0-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(G,3000,3F) -> (G,3000,3F)",
@@ -10149,7 +13312,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1e9075-706b-11f1-a6de-005056c00008",
+      "id": "b88d4f44-7137-11f1-8dc4-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,3000,F) -> (4,3000,F)",
@@ -10157,7 +13320,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1e9076-706b-11f1-8b08-005056c00008",
+      "id": "b88d7776-7137-11f1-ade6-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(E,3000,F) -> (E,3000,F)",
@@ -10165,7 +13328,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a1f0950-706b-11f1-a789-005056c00008",
+      "id": "b88df25d-7137-11f1-89da-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(E,3000,F) -> (H,2850,F)",
@@ -10173,7 +13336,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1f3079-706b-11f1-8c83-005056c00008",
+      "id": "b88e1972-7137-11f1-91a5-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,3000,F) -> (4,2850,F)",
@@ -10181,7 +13344,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1fcca7-706b-11f1-b622-005056c00008",
+      "id": "b88e6b1a-7137-11f1-b74e-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(G.4.E.-.-,3000,3F) -> (H.4.H.-.-,2850,3F)",
@@ -10189,7 +13352,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a1ff3a3-706b-11f1-9490-005056c00008",
+      "id": "b88ea0db-7137-11f1-95d7-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(G,3000,3F) -> (H,2850,3F)",
@@ -10197,7 +13360,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a201ac3-706b-11f1-b7fd-005056c00008",
+      "id": "b88ec89c-7137-11f1-868e-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(H,2850,3F) -> (H,2850,3F)",
@@ -10205,7 +13368,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2041bf-706b-11f1-b1cb-005056c00008",
+      "id": "b88ec89d-7137-11f1-a118-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,2850,F) -> (4,2850,F)",
@@ -10213,7 +13376,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2041c0-706b-11f1-ae0d-005056c00008",
+      "id": "b88eef4b-7137-11f1-933a-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(H,2850,F) -> (H,2850,F)",
@@ -10221,7 +13384,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a211f39-706b-11f1-ae51-005056c00008",
+      "id": "b88fd787-7137-11f1-9f7d-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(H,2850,F) -> (3,3000,F)",
@@ -10229,7 +13392,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a2146ae-706b-11f1-9c6b-005056c00008",
+      "id": "b88ffe94-7137-11f1-837e-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,2850,F) -> (2,3000,F)",
@@ -10237,7 +13400,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a22409d-706b-11f1-89a0-005056c00008",
+      "id": "b8909ab0-7137-11f1-b24c-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(H.4.H.-.-,2850,3F) -> (E.2.3.4.E,3000,5FC)",
@@ -10245,7 +13408,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a22bb6f-706b-11f1-b1e5-005056c00008",
+      "id": "b890c1c8-7137-11f1-8293-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(H,2850,3F) -> (E,3000,5FC)",
@@ -10253,7 +13416,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a23397a-706b-11f1-bb13-005056c00008",
+      "id": "b8910fe1-7137-11f1-8d0e-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(E,3000,5FC) -> (E,3000,5FC)",
@@ -10261,7 +13424,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a236f6f-706b-11f1-90bd-005056c00008",
+      "id": "b8910fe2-7137-11f1-b653-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(2,3000,F) -> (2,3000,F)",
@@ -10269,7 +13432,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a23957b-706b-11f1-821f-005056c00008",
+      "id": "b8910fe3-7137-11f1-b29b-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(3,3000,F) -> (3,3000,F)",
@@ -10277,7 +13440,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a23a92d-706b-11f1-8502-005056c00008",
+      "id": "b89136f3-7137-11f1-b509-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(-,0,-) -> (4,3000,-)",
@@ -10285,7 +13448,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a23a92e-706b-11f1-98df-005056c00008",
+      "id": "b89136f4-7137-11f1-bc8e-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(-,0,-) -> (E,3000,-)",
@@ -10293,7 +13456,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a241e97-706b-11f1-8fae-005056c00008",
+      "id": "b891857b-7137-11f1-95cc-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(3,3000,F) -> (9,3150,F)",
@@ -10301,7 +13464,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a28e956-706b-11f1-b163-005056c00008",
+      "id": "b8959b2f-7137-11f1-aa6d-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(E.2.3.4.E,3000,5FC) -> (B.5.9.5.F,3150,5FC)",
@@ -10309,7 +13472,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a29106e-706b-11f1-9044-005056c00008",
+      "id": "b895d6bc-7137-11f1-bd28-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(E,3000,5FC) -> (B,3150,5FC)",
@@ -10317,7 +13480,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a295e8a-706b-11f1-96ff-005056c00008",
+      "id": "b8962908-7137-11f1-adc1-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3150,5FC) -> (B,3150,5FC)",
@@ -10325,7 +13488,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a298592-706b-11f1-8baa-005056c00008",
+      "id": "b8962909-7137-11f1-a8b1-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(2,3000,F) -> (5,3150,F)",
@@ -10333,7 +13496,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a298593-706b-11f1-9136-005056c00008",
+      "id": "b8965b15-7137-11f1-a9a9-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3150,F) -> (9,3150,F)",
@@ -10341,7 +13504,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a29ac97-706b-11f1-8677-005056c00008",
+      "id": "b8965b16-7137-11f1-9271-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(4,3000,-) -> (5,3150,-)",
@@ -10349,7 +13512,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a29ac98-706b-11f1-8626-005056c00008",
+      "id": "b8965b17-7137-11f1-8549-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(E,3000,-) -> (F,3150,-)",
@@ -10357,7 +13520,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2a2df8-706b-11f1-bd84-005056c00008",
+      "id": "b896dc24-7137-11f1-887d-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3150,5FC) -> (B,3050,5FC)",
@@ -10365,7 +13528,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2a6626-706b-11f1-a489-005056c00008",
+      "id": "b896dc25-7137-11f1-81bd-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3150,F) -> (5,3050,F)",
@@ -10373,7 +13536,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2a6627-706b-11f1-a865-005056c00008",
+      "id": "b89702fa-7137-11f1-acfc-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3150,F) -> (9,3050,F)",
@@ -10381,7 +13544,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2a8dc5-706b-11f1-b878-005056c00008",
+      "id": "b89702fb-7137-11f1-88d2-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3150,-) -> (5,3050,-)",
@@ -10389,7 +13552,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2a8dc6-706b-11f1-8141-005056c00008",
+      "id": "b89729e8-7137-11f1-ad61-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3150,-) -> (F,3050,-)",
@@ -10397,7 +13560,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2aeaf2-706b-11f1-b107-005056c00008",
+      "id": "b8975116-7137-11f1-a1b5-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3050,5FC) -> (B,3150,5FC)",
@@ -10405,7 +13568,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2b1272-706b-11f1-976e-005056c00008",
+      "id": "b8975117-7137-11f1-8088-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3050,F) -> (5,3150,F)",
@@ -10413,7 +13576,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2b1273-706b-11f1-8f13-005056c00008",
+      "id": "b8978ab0-7137-11f1-be75-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3050,F) -> (9,3150,F)",
@@ -10421,7 +13584,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2b398d-706b-11f1-8d2a-005056c00008",
+      "id": "b8978ab1-7137-11f1-94cd-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3050,-) -> (5,3150,-)",
@@ -10429,7 +13592,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2b398e-706b-11f1-84d5-005056c00008",
+      "id": "b8978ab2-7137-11f1-8245-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3050,-) -> (F,3150,-)",
@@ -10437,7 +13600,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2bae8b-706b-11f1-830e-005056c00008",
+      "id": "b8984334-7137-11f1-bf9c-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3150,5FC) -> (B,3050,5FC)",
@@ -10445,7 +13608,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2bae8c-706b-11f1-b32c-005056c00008",
+      "id": "b898df6f-7137-11f1-bbcf-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3150,F) -> (5,3050,F)",
@@ -10453,7 +13616,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2be6b0-706b-11f1-8bf1-005056c00008",
+      "id": "b899066d-7137-11f1-a794-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3150,F) -> (9,3050,F)",
@@ -10461,7 +13624,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2be6b1-706b-11f1-9ac1-005056c00008",
+      "id": "b8995491-7137-11f1-8731-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3150,-) -> (5,3050,-)",
@@ -10469,7 +13632,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2c0e25-706b-11f1-9a57-005056c00008",
+      "id": "b899a2b3-7137-11f1-a363-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3150,-) -> (F,3050,-)",
@@ -10477,7 +13640,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2c832f-706b-11f1-a794-005056c00008",
+      "id": "b89a6604-7137-11f1-bafc-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3050,5FC) -> (B,3150,5FC)",
@@ -10485,7 +13648,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2cb6d1-706b-11f1-adc2-005056c00008",
+      "id": "b89a6605-7137-11f1-8ad9-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3050,F) -> (5,3150,F)",
@@ -10493,7 +13656,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2cb6d2-706b-11f1-b798-005056c00008",
+      "id": "b89aa066-7137-11f1-8061-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3050,F) -> (9,3150,F)",
@@ -10501,7 +13664,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2cb6d3-706b-11f1-a2a4-005056c00008",
+      "id": "b89aa067-7137-11f1-baa1-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3050,-) -> (5,3150,-)",
@@ -10509,7 +13672,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2cf084-706b-11f1-86ef-005056c00008",
+      "id": "b89aa068-7137-11f1-86f5-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3050,-) -> (F,3150,-)",
@@ -10517,7 +13680,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2e3131-706b-11f1-9776-005056c00008",
+      "id": "b89c8667-7137-11f1-a9d6-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(B.5.9.5.F,3150,5FC) -> (B.5.9.5.F,3050,5FC)",
@@ -10525,7 +13688,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a2e5845-706b-11f1-a18c-005056c00008",
+      "id": "b89cad76-7137-11f1-9998-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3150,5FC) -> (B,3050,5FC)",
@@ -10533,7 +13696,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a2ea645-706b-11f1-8325-005056c00008",
+      "id": "b89d3484-7137-11f1-a232-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3050,5FC) -> (B,3150,5FC)",
@@ -10541,7 +13704,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2ea646-706b-11f1-a842-005056c00008",
+      "id": "b89d637c-7137-11f1-9cc0-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3150,F) -> (5,3150,F)",
@@ -10549,7 +13712,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2ecd7f-706b-11f1-b92a-005056c00008",
+      "id": "b89d637d-7137-11f1-8764-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3150,F) -> (9,3150,F)",
@@ -10557,7 +13720,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2ecd80-706b-11f1-ba04-005056c00008",
+      "id": "b89d637e-7137-11f1-8e0d-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3150,-) -> (5,3150,-)",
@@ -10565,7 +13728,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2ecd81-706b-11f1-83a3-005056c00008",
+      "id": "b89d637f-7137-11f1-95e5-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3150,-) -> (F,3150,-)",
@@ -10573,7 +13736,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a2f2dcd-706b-11f1-85db-005056c00008",
+      "id": "b89dc1bb-7137-11f1-a3a0-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3150,F) -> (5,3050,F)",
@@ -10581,7 +13744,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a2f7c6e-706b-11f1-8f2b-005056c00008",
+      "id": "b89de8b7-7137-11f1-9133-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3150,-) -> (F,3050,C)",
@@ -10589,7 +13752,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a2fa38a-706b-11f1-95a5-005056c00008",
+      "id": "b89e0fbf-7137-11f1-b881-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3150,F) -> (9,3050,F)",
@@ -10597,7 +13760,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a2fca92-706b-11f1-b53f-005056c00008",
+      "id": "b89e36ba-7137-11f1-b6c1-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3150,-) -> (5,3050,C)",
@@ -10605,7 +13768,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a308dfb-706b-11f1-87f4-005056c00008",
+      "id": "b89eabf9-7137-11f1-b6db-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3050,C) -> (F,3050,C)",
@@ -10613,7 +13776,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a30b525-706b-11f1-9fec-005056c00008",
+      "id": "b89ed308-7137-11f1-9d5d-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3050,C) -> (5,3050,C)",
@@ -10621,7 +13784,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a30dbf4-706b-11f1-9985-005056c00008",
+      "id": "b89efa13-7137-11f1-a0fe-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3050,F) -> (9,3050,F)",
@@ -10629,7 +13792,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a310316-706b-11f1-996c-005056c00008",
+      "id": "b89efa15-7137-11f1-a8cf-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3050,F) -> (5,3050,F)",
@@ -10637,7 +13800,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a312a36-706b-11f1-b5fd-005056c00008",
+      "id": "b89f77b0-7137-11f1-a9fb-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3150,5FC) -> (B,3050,5FC)",
@@ -10645,7 +13808,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a319f60-706b-11f1-99db-005056c00008",
+      "id": "b89fc5e2-7137-11f1-b314-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3050,5FC) -> (B,3050,5FC)",
@@ -10653,7 +13816,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a31d8be-706b-11f1-abe3-005056c00008",
+      "id": "b89fc5e3-7137-11f1-bf58-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3050,F) -> (5,3050,F)",
@@ -10661,7 +13824,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a31d8bf-706b-11f1-89f0-005056c00008",
+      "id": "b89fffe9-7137-11f1-89d1-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3050,F) -> (9,3050,F)",
@@ -10669,7 +13832,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a31d8c0-706b-11f1-bf6f-005056c00008",
+      "id": "b89fffea-7137-11f1-a58d-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3050,C) -> (5,3050,C)",
@@ -10677,7 +13840,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a32002b-706b-11f1-96dd-005056c00008",
+      "id": "b89fffeb-7137-11f1-a6f2-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3050,C) -> (F,3050,C)",
@@ -10685,7 +13848,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a327562-706b-11f1-85bf-005056c00008",
+      "id": "b8a087bd-7137-11f1-bcb1-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,3050,C) -> (F,2900,C)",
@@ -10693,7 +13856,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a329c6d-706b-11f1-924e-005056c00008",
+      "id": "b8a0aecb-7137-11f1-9fdb-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,3050,C) -> (5,2900,C)",
@@ -10701,7 +13864,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a32c373-706b-11f1-a35e-005056c00008",
+      "id": "b8a0fd01-7137-11f1-87ac-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,3050,F) -> (9,2900,F)",
@@ -10709,7 +13872,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a32ea9a-706b-11f1-bce7-005056c00008",
+      "id": "b8a1240c-7137-11f1-85d5-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(5,3050,F) -> (4,2900,F)",
@@ -10717,7 +13880,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a3386c6-706b-11f1-95b0-005056c00008",
+      "id": "b8a217d1-7137-11f1-b8d5-005056c00008",
       "part": "df",
       "type": "material",
       "msg": "(B.5.9.5.F,3050,5FC) -> (B.4.9.5.F,2900,5FC)",
@@ -10725,7 +13888,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a3386c7-706b-11f1-b1d1-005056c00008",
+      "id": "b8a23ed5-7137-11f1-8357-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,3050,5FC) -> (B,2900,5FC)",
@@ -10733,7 +13896,7 @@
       "reason": "normal"
     },
     {
-      "id": "9a33d4dd-706b-11f1-b6c6-005056c00008",
+      "id": "b8a28ce6-7137-11f1-9807-005056c00008",
       "part": "ls0",
       "type": "material",
       "msg": "(B,2900,5FC) -> (B,2900,5FC)",
@@ -10741,7 +13904,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a3403ee-706b-11f1-a801-005056c00008",
+      "id": "b8a2b414-7137-11f1-b574-005056c00008",
       "part": "ms1",
       "type": "material",
       "msg": "(4,2900,F) -> (4,2900,F)",
@@ -10749,7 +13912,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a3403ef-706b-11f1-b5f6-005056c00008",
+      "id": "b8a2b415-7137-11f1-9fe0-005056c00008",
       "part": "ls1",
       "type": "material",
       "msg": "(9,2900,F) -> (9,2900,F)",
@@ -10757,7 +13920,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a342dae-706b-11f1-89a5-005056c00008",
+      "id": "b8a2df61-7137-11f1-899a-005056c00008",
       "part": "ms2",
       "type": "material",
       "msg": "(5,2900,C) -> (5,2900,C)",
@@ -10765,7 +13928,7 @@
       "reason": "hq"
     },
     {
-      "id": "9a342daf-706b-11f1-8459-005056c00008",
+      "id": "b8a2df62-7137-11f1-9c9e-005056c00008",
       "part": "ls2",
       "type": "material",
       "msg": "(F,2900,C) -> (F,2900,C)",

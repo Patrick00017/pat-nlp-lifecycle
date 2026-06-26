@@ -112,8 +112,36 @@ class IssueType(Enum):
     SPEED_COEF_DISMATCH = 'speed_coef_dismatch'
     NO_SET_VALUES = 'no_set_values'
 
-# ── 问题记录 ──
+class WarningType(Enum):
+    CANCEL = 'cancel'
 
+class PassType(Enum):
+    MATERIAL_PASS = 'material_pass'
+    QDM_PASS = 'qdm_pass'
+    SPEED_PASS = 'speed_pass'
+    WEIGHT_PASS = 'weight_pass'
+    BASEDOC_PASS = 'basedoc_pass'
+    
+
+# ── 值得记录的关键事件，比如被取消 ──
+@dataclass
+class Warning:
+    detail: str
+    type: WarningType
+    args: object
+
+    def to_dict(self):
+        args = self.args
+        if isinstance(args, dict):
+            args = {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+                    for k, v in args.items()}
+        return {
+            'detail': self.detail,
+            'type': self.type.value if isinstance(self.type, WarningType) else self.type,
+            'args': args,
+        }
+
+# ── 问题记录 ──
 @dataclass
 class Issue:
     detail: str
@@ -131,45 +159,23 @@ class Issue:
             'args': args,
         }
 
+# ── 问题记录 ──
 @dataclass
-class AnalysisIssue:
-    type: str
+class Pass:
     detail: str
-    cycle_index: int
-    layer: str = ''
-    severity: str = 'error'
+    type: PassType
+    args: object
 
-
-# ── 状态转移记录 ──
-
-@dataclass
-class TransitionStep:
-    time: str
-    event_id: str
-    from_state: str
-    to_state: str
-    detail: str = ''
-
-
-# ── 周期记录 ──
-
-@dataclass
-class CycleRecord:
-    index: int
-    position: str
-    start_time: str
-    end_time: str
-    trigger_id: str
-    material: str
-    flute: str
-    end_status: str
-    computed_segments: list = field(default_factory=list)
-    errors: list = field(default_factory=list)
-    warnings: list = field(default_factory=list)
-    infos: list = field(default_factory=list)
-    lifecycle: dict = field(default_factory=dict)
-    transitions: list = field(default_factory=list)
-
+    def to_dict(self):
+        args = self.args
+        if isinstance(args, dict):
+            args = {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+                    for k, v in args.items()}
+        return {
+            'detail': self.detail,
+            'type': self.type.value if isinstance(self.type, PassType) else self.type,
+            'args': args,
+        }
 
 # ── 单个位置 FSM ──
 
@@ -295,10 +301,13 @@ class PositionFSM:
                 'material': parsed_values['material'],
                 'flute_type': parsed_values['flute_type'],
                 'set_values': self.gu_value_state[self.glue_part], 
-                'time': str(row['Date'])
+                'time': str(row['Date']),
+                'event_issue': 'normal' or 'disable'
             }
         """
         
+        warnings = []
+        passes = []
         errors = []
         self.material = event['material']
         self.flute = event['flute_type']
@@ -310,39 +319,73 @@ class PositionFSM:
             ls_material = self.material_event[f"ls{self.position[2]}"]['material']
             if len(event['material'].split('/')) == 1:
                 return
+            
             if event['material'].split('/')[0] != ms_material:
                 errors.append(Issue("材质匹配失败", IssueType.MATERIAL_DISMATCH, {'id': self.material_event[f"ms{self.position[2]}"]['id'], 'msg':f"ms{self.position[2]},赋值材质：{event['material'].split('/')[0]},目前材质:{ms_material}"}))
+            else:
+                passes.append(Pass("材质匹配成功", PassType.MATERIAL_PASS, {'id': self.material_event[f"ms{self.position[2]}"]['id'], 'msg':f"ms{self.position[2]},赋值材质：{event['material'].split('/')[0]},目前材质:{ms_material}"}))
+            
             if event['material'].split('/')[1] != ls_material:
-                errors.append(Issue("材质匹配失败", IssueType.MATERIAL_DISMATCH, {'id': self.material_event[f"ls{self.position[2]}"]['id'], 'msg':f"ls{self.position[2]},赋值材质：{event['material'].split('/')[1]},目前材质:{ls_material}"}))    
+                errors.append(Issue("材质匹配失败", IssueType.MATERIAL_DISMATCH, {'id': self.material_event[f"ls{self.position[2]}"]['id'], 'msg':f"ls{self.position[2]},赋值材质：{event['material'].split('/')[1]},目前材质:{ls_material}"}))   
+            else:
+                passes.append(Pass("材质匹配成功", PassType.MATERIAL_PASS, {'id': self.material_event[f"ls{self.position[2]}"]['id'], 'msg':f"ls{self.position[2]},赋值材质：{event['material'].split('/')[1]},目前材质:{ls_material}"})) 
         else:
             if event['material'] != self.material_event['df']['material']:
                 errors.append(Issue("材质匹配失败", IssueType.MATERIAL_DISMATCH, {'id': self.material_event['df']['id'], 'msg': f"DF材质匹配失败，赋值材质：{event['material']}，目前材质：{self.material_event['df']['material']}"}))
+            else:
+                passes.append(Pass("材质匹配成功", PassType.MATERIAL_PASS, {'id': self.material_event['df']['id'], 'msg': f"DF材质匹配成功，赋值材质：{event['material']}，目前材质：{self.material_event['df']['material']}"}))
         
         # 2. no set_values
         if event['set_values'] == {}:
             errors.append(Issue("无计算结果", IssueType.NO_SET_VALUES, {}))
-            return errors
+
         # extract calculation segments
         segments = self._parse_segments(event['set_values'])
         # 2. qdm
-        qdm_issue = self._run_qdm_factor_check(segments)
-        if qdm_issue != None:
-            errors.append(qdm_issue)
+        qdm_result = self._run_qdm_factor_check(segments)
+        if qdm_result != None:
+            if isinstance(qdm_result, Issue):
+                errors.append(qdm_result)
+            elif isinstance(qdm_result, Warning):
+                warnings.append(qdm_result)
+            elif isinstance(qdm_result, Pass):
+                passes.append(qdm_result)
         # 3. weight
-        weight_issue = self._run_weight_factor_check(segments)
-        if weight_issue != None:
-            errors.append(weight_issue)
+        weight_result = self._run_weight_factor_check(segments)
+        if weight_result != None:
+            if isinstance(weight_result, Issue):
+                errors.append(weight_result)
+            elif isinstance(weight_result, Warning):
+                warnings.append(weight_result)
+            elif isinstance(weight_result, Pass):
+                passes.append(weight_result)
         # 4. base doc
-        basedoc_issue = self._run_base_setting_check(segments)
-        if basedoc_issue != None:
-            errors.append(basedoc_issue)
+        basedoc_result = self._run_base_setting_check(segments)
+        if basedoc_result != None:
+            if isinstance(basedoc_result, Issue):
+                errors.append(basedoc_result)
+            elif isinstance(basedoc_result, Warning):
+                warnings.append(basedoc_result)
+            elif isinstance(basedoc_result, Pass):
+                passes.append(basedoc_result)
         # 5. speed coef
-        speed_coef_issue = self._run_speed_coef_check(segments)
-        if speed_coef_issue != None:
-            errors.append(speed_coef_issue)
-            
+        speed_coef_result = self._run_speed_coef_check(segments)
+        if speed_coef_result != None:
+            if isinstance(speed_coef_result, Issue):
+                errors.append(speed_coef_result)
+            elif isinstance(speed_coef_result, Warning):
+                warnings.append(speed_coef_result)
+            elif isinstance(speed_coef_result, Pass):
+                passes.append(speed_coef_result)
+        
+        # 1. is disable
+        if event['event_issue'] == 'disable':
+            # this event is been canceled
+            warnings.append(Warning("取消", WarningType.CANCEL, {}))
         full_event = event
         full_event['errors'] = errors
+        full_event['warnings'] = warnings
+        full_event['passes'] = passes
         self.full_events.append(full_event)
 
     def _parse_segments(self, pv):
@@ -409,7 +452,9 @@ class PositionFSM:
         if not self.dev_ips:
             expected_qdm = 1.0
             if expected_qdm != first['qdm_factor']:
-                return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{first['qdm_factor']}, 匹配不上"}) # todo
+                return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{first['qdm_factor']}, 匹配不上"})
+            else:
+                return Pass("QDM模拟检验完成", PassType.QDM_PASS, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{first['qdm_factor']}, 检验完成"})
         else:
             # QDM 校验
             if '/' in self.material and self.position.startswith('SF'):
@@ -421,7 +466,9 @@ class PositionFSM:
                     # print(f"expected_qdm: {expected_qdm}\r\nactual_qdm: {actual_qdm}")
                     if actual_qdm is not None:
                         if abs(float(actual_qdm) - expected_qdm) > 0:
-                            return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{actual_qdm}, 匹配不上"}) # todo
+                            return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{actual_qdm}, 匹配不上"})
+                        else:
+                            return Pass("QDM检验完成", PassType.QDM_PASS, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{actual_qdm}, 检验完成"})
                 else:
                     return Issue("QDM系数查询不到", IssueType.QDM_NOT_EXIST, {'qdm_id': self.qdm_event_id, 'msg': f"无对应QDM配置"}) # todo
             else:
@@ -448,6 +495,8 @@ class PositionFSM:
                     actual_qdm = first.get('qdm_factor')
                     if actual_qdm is not None and abs(float(actual_qdm) - expected_qdm) > 0:
                         return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{actual_qdm}, 匹配不上"})
+                    else:
+                        return Pass("QDM检验完成", PassType.QDM_PASS, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{actual_qdm}, 检验完成"})
                 else:
                     return Issue("QDM系数查询不到", IssueType.QDM_NOT_EXIST, {'qdm_id': self.qdm_event_id, 'msg': "无对应QDM配置"})
         return None
@@ -461,7 +510,9 @@ class PositionFSM:
         if not self.dev_ips:
             expected_weight = 500
             if expected_weight != first['cur_weight']:
-                return Issue("克重不匹配", IssueType.WEIGHT_DISMATCH, {'weight_id': self.weight_event_id}) # todo
+                return Issue("克重不匹配", IssueType.WEIGHT_DISMATCH, {'weight_id': self.weight_event_id, 'msg': f"克重设置:{expected_weight}, QDM实际使用:{first['cur_weight']}, 匹配不上"})
+            else:
+                return Pass("克重匹配", PassType.WEIGHT_PASS, {'weight_id': self.weight_event_id, 'msg': f"克重设置:{expected_weight}, QDM实际使用:{first['cur_weight']}, 匹配完成"})
         else:
              # 判断材质格式
             if '/' in self.material:
@@ -497,6 +548,8 @@ class PositionFSM:
                 actual_w = float(actual_w)
                 if abs(actual_w - total) > 1:
                     return Issue("克重不匹配", IssueType.WEIGHT_DISMATCH, {"weight_id": self.weight_event_id, "msg": f'克重={actual_w:.0f}g, 档案={total:.0f}g, 差异={actual_w-total:.0f}g'})
+                else:
+                    return Pass("克重匹配", PassType.WEIGHT_PASS, {'weight_id': self.weight_event_id, 'msg': f'克重={actual_w}g, 档案:{total}g, 匹配完成'})
             else:
                 return Issue("克重查询不到", IssueType.WEIGHT_NOT_EXIST, {'weight_id': self.weight_event_id, 'msg': "克重设置不存在"})
 
@@ -537,6 +590,9 @@ class PositionFSM:
             if abs(float(actual) - expected) > 0:
                 return Issue(f"基础设置不匹配({field_name})", IssueType.BASEDOC_DISMATCH,
                             {'basedoc_id': self.basedoc_event_id, 'msg': f"实际: {float(actual)}, 预期: {expected}"})
+            else:
+                return Pass(f"基础设置匹配({field_name})", PassType.BASEDOC_PASS,
+                            {'basedoc_id': self.basedoc_event_id, 'msg': f"实际: {float(actual)}, 预期: {expected}"})
         return None
     
     def _run_speed_coef_check(self, segments):
@@ -564,12 +620,15 @@ class PositionFSM:
         speed = int(float(first['speed']))
         actual = float(first['speed_factor'])
         expected = db.get(speed)
-        if expected is None:
-            return  # 车速段点不匹配，跳过
-        if abs(actual - expected) > 0:
-            return Issue("车速系数不匹配", IssueType.SPEED_COEF_DISMATCH,
-                        {'speed_coef_id': self.speed_coef_id, 'msg': f"实际: {actual}, 预期: {expected}"})
-        return None
+        if expected is not None:
+            if abs(actual - expected) > 0:
+                return Issue("车速系数不匹配", IssueType.SPEED_COEF_DISMATCH,
+                            {'speed_coef_id': self.speed_coef_id, 'msg': f"实际: {actual}, 预期: {expected}"})
+            else:
+                return Pass("车速系数匹配", PassType.SPEED_PASS,
+                            {'speed_coef_id': self.speed_coef_id, 'msg': f"实际: {actual}, 预期: {expected}"})
+        return Issue("车速系数不存在", IssueType.SPEED_COEF_NOT_EXIST,
+                        {'speed_coef_id': self.speed_coef_id, 'msg': f"车速系数不存在"})
     # ── 查询辅助 ──
 
     def _query_ips(self, sql, params=None):
@@ -655,6 +714,10 @@ class GlueGapDiagnosticFSM:
             for evt in events:
                 if 'errors' in evt:
                     evt['errors'] = [e.to_dict() if isinstance(e, Issue) else e for e in evt['errors']]
+                if 'warnings' in evt:
+                    evt['warnings'] = [e.to_dict() if isinstance(e, Warning) else e for e in evt['warnings']]
+                if 'passes' in evt:
+                    evt['passes'] = [e.to_dict() if isinstance(e, Pass) else e for e in evt['passes']]
 
         results['glue_events'] = fsm_events
         results['material_events'] = self.all_material_events
@@ -710,7 +773,7 @@ class GlueGapDiagnosticFSM:
     def save_results(self, filepath=None):
         import json, os, uuid
         results = self.get_results()
-
+        print(results['glue_events'])
         if filepath is None:
             filepath = os.path.join(os.path.dirname(__file__), "environments", "fsm_results.json")
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
