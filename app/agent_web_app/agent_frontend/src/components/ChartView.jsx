@@ -98,7 +98,7 @@ export default function ChartView({ event, onBack, materialEvents }) {
 
       {/* issues */}
       <div style={{ padding: '0 16px 12px' }}>
-        <IssuePanel issues={[...(event.errors || []), ...(event.warnings || [])]} />
+        <IssuePanel errors={event.errors} warnings={event.warnings} passes={event.passes} />
       </div>
 
       {/* 附近换材记录 */}
