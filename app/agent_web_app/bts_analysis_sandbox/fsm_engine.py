@@ -11,6 +11,29 @@ from typing import Any, Dict, List, Optional
 from collections import defaultdict
 from event_extractor import GlueEventExtractor
 from parse import parse
+import json
+import decimal
+import array
+import uuid
+class CustomJsonEncoder(json.JSONEncoder):
+    """
+    Json解析器，解决识别Decimal出错的问题
+    """
+
+    def default(self, obj):
+        if isinstance(obj, bytes):
+            return str(obj, encoding='utf-8')
+        if isinstance(obj, int):
+            return int(obj)
+        elif isinstance(obj, float):
+            return float(obj)
+        elif isinstance(obj, decimal.Decimal):
+            return float(obj)
+        elif isinstance(obj, (uuid.UUID,)):
+            return str(obj)
+        else:
+            return super(CustomJsonEncoder, self).default(obj)
+
 
 # GU -> QDM col
 qdm_col_map = {'GU1': 'F_Glue1', 'GU2': 'F_Glue2', 'GU3': 'F_Glue3'}
@@ -372,7 +395,7 @@ class PositionFSM:
                     'qdm_factor': qdm_factor, 'ui_factor': ui_factor,
                     'min_speed': min_speed
                 })
-        print(f"segs: {segments}")
+        # print(f"segs: {segments}")
         return segments
 
     # ── 校验方法（由 _run_checks 统一调用） ──
@@ -395,7 +418,7 @@ class PositionFSM:
                 if rows and rows[0][0]:
                     expected_qdm = float(rows[0][0])
                     actual_qdm = first.get('qdm_factor')
-                    print(f"expected_qdm: {expected_qdm}\r\nactual_qdm: {actual_qdm}")
+                    # print(f"expected_qdm: {expected_qdm}\r\nactual_qdm: {actual_qdm}")
                     if actual_qdm is not None:
                         if abs(float(actual_qdm) - expected_qdm) > 0:
                             return Issue("QDM系数不匹配", IssueType.QDM_DISMATCH, {'qdm_id': self.qdm_event_id, 'msg': f"QDM设置:{expected_qdm}, QDM实际使用:{actual_qdm}, 匹配不上"}) # todo
@@ -522,7 +545,7 @@ class PositionFSM:
         if not self.dev_ips:
             return
 
-        pos_map = {'GU1': 1, 'GU2': 2, 'GU3': 3, 'SF1': 4, 'SF2': 5, 'SF3': 6}
+        pos_map = {'GU1': 0, 'GU2': 1, 'GU3': 2, 'SF1': 3, 'SF2': 4, 'SF3': 5}
         pos = pos_map.get(self.position)
         if pos is None:
             return
@@ -588,7 +611,7 @@ class GlueGapDiagnosticFSM:
             from database_utils import PostgreSQLHelper
             try:
                 self.dev_ips = PostgreSQLHelper.from_connection_string(
-                    "PORT=5432;DATABASE=devIPS;HOST=192.168.110.82;PASSWORD=123456;USER ID=postgres"
+                    "PORT=5433;DATABASE=IPS;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
                 )
                 self.dev_ips.connect()
             except Exception:
@@ -611,7 +634,7 @@ class GlueGapDiagnosticFSM:
 
     def run(self):
         for evt in self.all_events:
-            print(evt)
+            # print(evt)
             type = evt.get('type', '')
             part = evt.get('part', '')
             if type == 'material':
@@ -635,7 +658,6 @@ class GlueGapDiagnosticFSM:
 
         results['glue_events'] = fsm_events
         results['material_events'] = self.all_material_events
-
         # ── 查询数据库参考表写入 results ──
         results['qdm_df'] = []
         results['qdm_sf'] = []
@@ -689,16 +711,10 @@ class GlueGapDiagnosticFSM:
         import json, os, uuid
         results = self.get_results()
 
-        class UUIDEncoder(json.JSONEncoder):
-            def default(self, obj):
-                if isinstance(obj, (uuid.UUID,)):
-                    return str(obj)
-                return super().default(obj)
-
         if filepath is None:
             filepath = os.path.join(os.path.dirname(__file__), "environments", "fsm_results.json")
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(results, f, ensure_ascii=False, indent=2, cls=UUIDEncoder)
+            json.dump(results, f, ensure_ascii=False, indent=2, cls=CustomJsonEncoder)
         print(f"FSM 结果已保存到 {filepath}")
         return filepath

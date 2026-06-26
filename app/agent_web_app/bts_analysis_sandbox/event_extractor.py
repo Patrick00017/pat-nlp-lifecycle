@@ -4,6 +4,7 @@ import numpy as np
 from constant import handle_func_to_splicer_part
 from utils import material_part_count, is_material_equal
 import uuid
+from parse import parse
 
 class KeyEventExtractor:
     def __init__(self):
@@ -107,7 +108,71 @@ class KeyEventExtractor:
             self.event_count_dict[row["EventId"]] = 1
                     
         # check log eventid
-        if row["EventId"] == "I7":
+        if row["EventId"] == 'I1':
+            content = row['ParsedValues']['content'] + ' '
+            print(f"I1 -> {content}")
+            # LS0横切换材了。上笔材质=B，门幅=3150；本批材质=B，门幅=3050\r\nLS0材质校准：当前正在用的材质=B，门幅=3150，校准后的材质=B，门幅=3050\r\n
+            ls0_template1 = "{idk0}LS0材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls0_template2 = "LS0横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ms1_template1 = "{idk0}MS1材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ms1_template2 = "{idk0}MS1横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls1_template1 = "{idk0}LS1材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls1_template2 = "{idk0}LS1横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ms2_template1 = "{idk0}MS2材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ms2_template2 = "{idk0}MS2横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls2_template1 = "{idk0}LS2材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls2_template2 = "{idk0}LS2横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            
+            part2templates = {
+                "ls0": [ls0_template1, ls0_template2],
+                "ms1": [ms1_template1, ms1_template2],
+                "ls1": [ls1_template1, ls1_template2],
+                "ms2": [ms2_template1, ms2_template2],
+                "ls2": [ls2_template1, ls2_template2]
+            }
+            
+            for k, v in part2templates.items():
+                results = parse(v[0], content)
+                print(f"{k} -> 0 -> {results}")
+                if results == None:
+                    results = parse(v[1], content)
+                    print(f"{k} -> 1 -> {results}")
+                if results:
+                    # update the state
+                    prev_info = {
+                        'material': self.splicer_state[k]['material'],
+                        'width': self.splicer_state[k]['width'],
+                        'flute_type': self.splicer_state[k]['flute_type']
+                    }
+                    current_info = {
+                        'material': results['next_material'],
+                        'width': results['next_width'],
+                        'flute_type': self.splicer_state[k]['flute_type'] if self.splicer_state[k]['flute_type'] != '-' else '-'
+                    }
+                    self.splicer_state[k] = {
+                        'material': current_info['material'],
+                        'width': current_info['width'],
+                        'flute_type': current_info['flute_type'],
+                        'next_batch': {
+                            'material': '-',
+                            'width': 0,
+                            'flute_type': '-',
+                        },
+                        'change_time': str(row['Date'])
+                    }
+                    # generate the event
+                    event = {
+                        'id': uuid.uuid1(),
+                        'part': k,
+                        'type': 'material',
+                        'msg': f"({prev_info['material']},{prev_info['width']},{prev_info['flute_type']}) -> ({current_info['material']},{current_info['width']},{current_info['flute_type']})",
+                        'time': str(row['Date']),
+                        'reason': 'hq'
+                    }
+                    print(event)
+                    self.material_events.append(event)
+        
+        elif row["EventId"] == "I7":
             # get change paper ready event, and next material.
             # save the next batch based on log info
             # for sf material change ready
@@ -118,8 +183,8 @@ class KeyEventExtractor:
             # assign next material batch
             self.splicer_state[part]["next_batch"] = {
                 'material': parsed_values["next_material"],
-                'width': int(parsed_values["width"]),
-                'flute_type': parsed_values["flute_type"]
+                'width': int(parsed_values["next_width"]),
+                'flute_type': parsed_values["next_flute_type"].split('，')[0]
             }
         elif row["EventId"] == "I8":
             # Change paper is checked by the system.
@@ -254,14 +319,24 @@ class GlueEventExtractor(KeyEventExtractor):
         # glue part
         # set func call events
         self.set_func_call_events = [] # will be changed when G12, G5 is triggered
-        # gu set value
-        self.gu_value_state = {}
-        # sf value state
+        # gu的目前计算配方
+        self.gu_value_state = {
+            'GU1': {},
+            'GU2': {},
+            'GU3': {}
+        }
+        # gu的准备事件和中间事件
+        self.gu_current_info = {}
+        # sf的目前计算配方，键值对part-》配方，在完成事件出现后清理
         self.sf_value_state = {}
+        # 记录sf的准备事件和中间事件出现的，值键值对part-》信息，在完成事件出现后清理
+        self.sf_current_info = {
+            'SF1': {},
+            'SF2': {},
+            'SF3': {}
+        }
         # raw parsed rows for diagnostic analysis
         self.raw_parsed_rows = []
-        
-        self.glue_part = ''
 
     def process(self, row):
         # print(row['EventId'])
@@ -277,19 +352,24 @@ class GlueEventExtractor(KeyEventExtractor):
             parsed_values = row["ParsedValues"]
             # print(f"{row['EventId']} -> {parsed_values}")
             # generate func event
-            event = {
-                'id': uuid.uuid1(),
-                'func': parsed_values['set_func_name'],
-                'part': self.glue_part,
-                'type': 'glue',
-                'material': parsed_values['material'],
-                'flute_type': parsed_values['flute_type'],
-                'set_values': self.gu_value_state[self.glue_part], 
-                'time': str(row['Date'])
-            }
+            # print(f"G12 -> material: {self.gu_current_info['material']}, flute: {self.gu_current_info['flute_type']}, key: {self.gu_value_state.keys()}")
+            for k, v in self.gu_value_state.items():
+                if v != {}:
+                    event = {
+                        'id': uuid.uuid1(),
+                        'func': parsed_values['set_func_name'],
+                        'part': k,
+                        'type': 'glue',
+                        'material': parsed_values['material'],
+                        'flute_type': parsed_values['flute_type'],
+                        'set_values': v, 
+                        'time': str(row['Date']),
+                        'event_issue': "normal"
+                    }
+                    self.set_func_call_events.append(event)
             # clear gu value state
-            self.gu_value_state[self.glue_part] = {}
-            self.set_func_call_events.append(event)
+            self.gu_value_state = {}
+            self.gu_current_info = {}
         elif row['EventId'] == 'G5':
             # complete signal
             # setgluesf1/2 set gu value
@@ -306,13 +386,15 @@ class GlueEventExtractor(KeyEventExtractor):
                 'material': parsed_values['material'],
                 'flute_type': parsed_values['flute_type'],
                 'set_values': self.sf_value_state.get(glue_part, {}), # align the sf glue set function and gu glue set function
-                'time': str(row['Date'])
+                'time': str(row['Date']),
+                'event_issue': "normal"
             }
             self.sf_value_state[glue_part] = {}
+            self.sf_current_info[glue_part] = {}
             self.set_func_call_events.append(event)
         elif row['EventId'] == 'G4': # SF calculate value
             parsed_values = row["ParsedValues"]
-            print(f"{row['EventId']} -> {parsed_values}")
+            # print(f"{row['EventId']} -> {parsed_values}")
             glue_part = parsed_values['glue_part']
             # 创建副本并删除指定字段
             filtered_data = parsed_values.copy()
@@ -336,7 +418,7 @@ class GlueEventExtractor(KeyEventExtractor):
         elif row['EventId'] == 'G14': # GU calculate value
             parsed_values = row["ParsedValues"]
             # print(f"{row['EventId']} -> {parsed_values}")
-            self.glue_part = parsed_values['glue_part']
+            glue_part = parsed_values['glue_part']
             # 创建副本并删除指定字段
             filtered_data = parsed_values.copy()
             remove_fields = ['module', 'ip', 'host', 'username', 'glue_part']
@@ -354,14 +436,83 @@ class GlueEventExtractor(KeyEventExtractor):
                 temp = [filtered_data[f'speed{i}'], filtered_data[f'min_glue{i}'], filtered_data[f'max_glue{i}'], filtered_data[f'min_weight{i}'], filtered_data[f'max_weight{i}'], filtered_data[f'current_glue_weight{i}'], filtered_data[f'speed_factor{i}'], filtered_data[f'min_speed{i}'], filtered_data[f'qdm_factor{i}'], filtered_data[f'ui_factor{i}'], filtered_data[f'value{i}']]
                 data['data'].append(temp)
 
-            # print(self.gu_value_state)
             # add gu values to data
-            self.gu_value_state[self.glue_part] = data
+            self.gu_value_state[glue_part] = data
             # print("set.............................")
             # print(self.gu_value_state)
-        elif row['EventId'] == 'G15':
-            # GU pre-write cancellation: values were calculated but never written to device
-            pass
+        elif row['EventId'] == 'G7':
+            # GU要开始赋值
+            parsed_values = row["ParsedValues"]     
+            # 进入 {set_func_name} 准备点位赋值，材质={material},楞型={flute_type}
+            material = parsed_values['material']
+            flute_type = parsed_values['flute_type']
+            # GU部分用的是全材质，所以不需要分
+            self.gu_current_info = {
+                'material': material,
+                'flute_type': flute_type
+            } 
+        elif row['EventId'] == 'G2':
+            # SF部位开始赋值的准备事件
+            # SetGlueSF1       
+            parsed_values = row["ParsedValues"]     
+            set_func_name = parsed_values['set_func_name']
+            # print(f"G2 -> {parsed_values}, {set_func_name.split('SetGlue')}")
+            part = set_func_name.split('SetGlue')[1]
+            info = {
+                'ms_material': parsed_values['medium_material'],
+                'ls_material': parsed_values['liner_material'],
+                'flute_type': parsed_values['flute_type']
+            }
+            self.sf_current_info[part] = info
+        elif row['EventId'] == 'G13':
+            # 由于没有开启开关，所以没有赋值的事件
+            # 应该是SF和GU公用
+            # complete signal
+            parsed_values = row["ParsedValues"]
+            # print(f"G13 -> {parsed_values}")
+            part = parsed_values['glue_part']
+            if part.startswith("SF"):
+                # SF
+                info = self.sf_current_info[part]
+                # print(info)
+                if info == {}:
+                    return
+                # generate func event
+                event = {
+                    'id': uuid.uuid1(),
+                    'func': parsed_values['set_func_name'],
+                    'part': parsed_values['glue_part'],
+                    'type': 'glue',
+                    'material': f"{info['ms_material']}/{info['ls_material']}",
+                    'flute_type': info['flute_type'],
+                    'set_values': self.sf_value_state[part], 
+                    'time': str(row['Date']),
+                    'event_issue': "disable"
+                }
+                # clear gu value state
+                self.sf_value_state[part] = {}
+                self.sf_current_info[part] = {}
+                self.set_func_call_events.append(event)
+            else:
+                # GU
+                if self.gu_current_info == {}: # 一上来就有不赋值的情况，忽略
+                    return
+                # generate func event
+                event = {
+                    'id': uuid.uuid1(),
+                    'func': parsed_values['set_func_name'],
+                    'part': parsed_values['glue_part'],
+                    'type': 'glue',
+                    'material': self.gu_current_info['material'],
+                    'flute_type': self.gu_current_info['flute_type'],
+                    'set_values': self.gu_value_state[parsed_values['glue_part']], 
+                    'time': str(row['Date']),
+                    'event_issue': "disable"
+                }
+                # clear gu value state
+                self.gu_value_state[part] = {}
+                self.gu_current_info = {}
+                self.set_func_call_events.append(event)
 
     def track_machine_material_lifecycle(self, events, index):
         set_func_event = events[index]

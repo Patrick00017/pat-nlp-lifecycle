@@ -224,11 +224,11 @@ def test_ips_and_glue_template(start_time, end_time):
 
 
 def test_ips_and_glue_template_pg(start_time, end_time):
-    log_parser = LogParser("log_data/dev_base_glue_template.csv")
+    log_parser = LogParser("log_data/hnhy_glue_template.csv")
     extractor = GlueEventExtractor()
 
     pg = PostgreSQLHelper.from_connection_string(
-        "PORT=5432;DATABASE=devBaseDB;HOST=192.168.110.82;PASSWORD=123456;USER ID=postgres"
+        "PORT=5433;DATABASE=BaseDB;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
     )
     pg.connect()
 
@@ -255,7 +255,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
         # )
 
         df = pd.concat([df_ips, df_glue], ignore_index=True)
-        # df.to_csv("./pg_raw_messages.csv", index=False)
+        df.to_csv("./pg_raw_messages.csv", index=False)
         if "Date" in df.columns:
             df = df.sort_values("Date").reset_index(drop=True)
 
@@ -1027,7 +1027,7 @@ if __name__ == "__main__":
 
     # 胶水测试baseDEV
     extractor: GlueEventExtractor = test_ips_and_glue_template_pg(
-        start_time="2026-06-01 15:03:50.690", end_time="2026-06-01 17:03:50.690"
+        start_time="2026-06-10 15:03:50.690", end_time="2026-06-10 17:03:50.690"
     )
     # extractor: GlueEventExtractor = test_from_csv()
     # results = extractor.get_glue_set_function_full_event()

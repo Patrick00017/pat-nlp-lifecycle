@@ -1,6 +1,6 @@
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 
-const BASE = 'http://localhost:8000'
+const BASE = 'http://localhost:8082'
 
 export async function sendChat(message, threadId = null, mode = 'IPS') {
   const body = { message }
