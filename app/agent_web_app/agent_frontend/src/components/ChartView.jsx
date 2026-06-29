@@ -67,7 +67,7 @@ export default function ChartView({ event, onBack, materialEvents }) {
         </span>
         {event.material && (
           <span style={{ fontSize: 12, color: '#6b7280' }}>
-            {event.material} / {event.flute_type}
+            材质：{event.material} 楞型：{event.flute_type}
           </span>
         )}
       </div>

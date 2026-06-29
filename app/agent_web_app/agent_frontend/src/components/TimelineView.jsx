@@ -1,5 +1,11 @@
 import IssueBadge from './IssueBadge';
 
+function fmtMaterial(msg) {
+  const m = msg?.match(/\(([^,]+),([^,]+),([^)]+)\)\s*->\s*\(([^,]+),([^,]+),([^)]+)\)/);
+  if (!m) return msg;
+  return `(材质：${m[1]},门幅：${m[2]},楞型：${m[3]}) -> (材质：${m[4]},门幅：${m[5]},楞型：${m[6]})`;
+}
+
 const EVENT_LABELS = {
   'G1': 'HandleGuGlueMsg', 'G2': 'SetGlueSF*', 'G3': '任务终止',
   'G4': 'SF糊间隙计算', 'G5': 'SF写值完成', 'G6': '换材通知',
@@ -57,8 +63,10 @@ export default function TimelineView({ events = [], onSelectEvent }) {
               ))}
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-              {evt.material && <span style={{ marginRight: 12 }}>材质: {evt.material}</span>}
-              {evt.flute_type && <span>楞型: {evt.flute_type}</span>}
+              {evt.material && evt.material.includes('->')
+                ? <span>{fmtMaterial(evt.material)}</span>
+                : evt.material && <span>材质：{evt.material}  楞型：{evt.flute_type || ''}</span>
+              }
             </div>
           </div>
         );
