@@ -16,10 +16,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('chat')
   return (
     <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
-      {activeTab === 'chat' && <ChatPanel />}
-      {activeTab === 'analysis' && <DataAnalysis />}
-      {activeTab === 'fsm' && <DiagnosisChat />}
-      {activeTab === 'opencode' && <OpenCodePanel />}
+      <div style={{ height: '100%', display: activeTab === 'chat' ? '' : 'none' }}><ChatPanel /></div>
+      <div style={{ height: '100%', display: activeTab === 'analysis' ? '' : 'none' }}><DataAnalysis /></div>
+      <div style={{ height: '100%', display: activeTab === 'fsm' ? '' : 'none' }}><DiagnosisChat /></div>
+      <div style={{ height: '100%', display: activeTab === 'opencode' ? '' : 'none' }}><OpenCodePanel /></div>
     </Tabs>
   )
 }
