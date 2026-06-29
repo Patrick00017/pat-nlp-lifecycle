@@ -28,6 +28,7 @@ export default function TimelineView({ events = [], onSelectEvent }) {
       {events.map((evt, i) => {
         const label = EVENT_LABELS[evt.event_id] || evt.event_id;
         const isClickable = evt.set_values && evt.set_values.data;
+        const isMatEvent = !isClickable && evt.material?.includes('->');
         return (
           <div
             key={i}
@@ -35,7 +36,7 @@ export default function TimelineView({ events = [], onSelectEvent }) {
             style={{
               position: 'relative', marginBottom: 12, padding: '8px 12px',
               borderRadius: 6, cursor: isClickable ? 'pointer' : 'default',
-              background: isClickable ? '#f9fafb' : 'transparent',
+              background: isMatEvent || isClickable ? '#f9fafb' : 'transparent',
               border: '1px solid',
               borderColor: isClickable ? '#e5e7eb' : 'transparent',
               transition: 'background 0.15s',

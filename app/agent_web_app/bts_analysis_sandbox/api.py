@@ -15,6 +15,10 @@ app.add_middleware(
 
 DATA_PATH = Path(__file__).parent / "environments" / "fsm_results.json"
 
+@app.on_event("startup")
+def clear_fsm_results():
+    DATA_PATH.write_text("{}", encoding="utf-8")
+
 @app.get("/api/fsm-results")
 def get_results():
     return json.loads(DATA_PATH.read_text(encoding="utf-8"))

@@ -69,6 +69,7 @@ export default function FSMViewer() {
 
   const glueTotal = Object.values(data.glue_events || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
   const matTotal = data.material_events?.length || 0;
+  const isEmpty = glueTotal + matTotal === 0;
 
   return (
     <div style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
@@ -79,7 +80,7 @@ export default function FSMViewer() {
       }}>
         <span style={{ fontWeight: 600, fontSize: 14 }}>事件诊断</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-          <span style={{ fontSize: 12, color: '#6b7280' }}>{glueTotal} 个事件</span>
+          {!isEmpty && <span style={{ fontSize: 12, color: '#6b7280' }}>{glueTotal} 个事件</span>}
           <button
             onClick={loadData}
             disabled={loading}
@@ -89,45 +90,57 @@ export default function FSMViewer() {
               fontSize: 12, color: '#6b7280', opacity: loading ? 0.5 : 1,
             }}
           >
-            {loading ? '刷新中...' : '🔄 刷新'}
+            {loading ? '刷新中...' : '🔄 加载数据'}
           </button>
         </div>
       </div>
 
-      {/* position tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
-        {POSITIONS.map(pos => {
-          const cnt = pos === 'ALL'
-            ? glueTotal + matTotal
-            : data.glue_events?.[pos]?.length || 0;
-          return (
-            <button
-              key={pos}
-              onClick={() => { setPosition(pos); setSelectedEvent(null); }}
-              style={{
-                flex: 1, padding: '8px 4px', border: 'none',
-                background: position === pos ? '#fff' : '#f9fafb',
-                borderBottom: position === pos ? '2px solid #3b82f6' : '2px solid transparent',
-                fontWeight: position === pos ? 600 : 400,
-                fontSize: 13, cursor: 'pointer', color: position === pos ? '#1e40af' : '#6b7280',
-                transition: 'all 0.1s',
-              }}
-            >
-              {pos}
-              <span style={{ fontSize: 11, marginLeft: 4, color: '#9ca3af' }}>({cnt})</span>
-            </button>
-          );
-        })}
-      </div>
+      {isEmpty ? (
+        <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>📋</div>
+          <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>暂无诊断数据</div>
+          <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+            请先通过工具或服务端生成诊断结果，<br />然后点击刷新按钮加载
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* position tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+            {POSITIONS.map(pos => {
+              const cnt = pos === 'ALL'
+                ? glueTotal + matTotal
+                : data.glue_events?.[pos]?.length || 0;
+              return (
+                <button
+                  key={pos}
+                  onClick={() => { setPosition(pos); setSelectedEvent(null); }}
+                  style={{
+                    flex: 1, padding: '8px 4px', border: 'none',
+                    background: position === pos ? '#fff' : '#f9fafb',
+                    borderBottom: position === pos ? '2px solid #3b82f6' : '2px solid transparent',
+                    fontWeight: position === pos ? 600 : 400,
+                    fontSize: 13, cursor: 'pointer', color: position === pos ? '#1e40af' : '#6b7280',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  {pos}
+                  <span style={{ fontSize: 11, marginLeft: 4, color: '#9ca3af' }}>({cnt})</span>
+                </button>
+              );
+            })}
+          </div>
 
-      {/* content */}
-      <div style={{ padding: 16, minHeight: 200 }}>
-        {selectedData ? (
-          <ChartView event={selectedEvent} onBack={() => setSelectedEvent(null)} materialEvents={data.material_events} />
-        ) : (
-          <TimelineView events={events} onSelectEvent={(evt) => setSelectedEvent(evt)} />
-        )}
-      </div>
+          {/* content */}
+          <div style={{ padding: 16, minHeight: 200 }}>
+            {selectedData ? (
+              <ChartView event={selectedEvent} onBack={() => setSelectedEvent(null)} materialEvents={data.material_events} />
+            ) : (
+              <TimelineView events={events} onSelectEvent={(evt) => setSelectedEvent(evt)} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
