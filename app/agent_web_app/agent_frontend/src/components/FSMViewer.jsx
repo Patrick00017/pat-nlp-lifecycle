@@ -3,7 +3,7 @@ import { fetchFSMResults } from '../api';
 import TimelineView from './TimelineView';
 import ChartView from './ChartView';
 
-const POSITIONS = ['GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3', 'MAT'];
+const POSITIONS = ['ALL', 'GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3', 'MAT'];
 
 export default function FSMViewer() {
   const [data, setData] = useState(null);
@@ -21,8 +21,32 @@ export default function FSMViewer() {
   if (loading) return <div style={{ padding: 20, color: '#6b7280' }}>加载 FSM 结果...</div>;
   if (!data) return <div style={{ padding: 20, color: '#dc2626' }}>无法加载 FSM 结果文件</div>;
 
+  const isAll = position === 'ALL';
   const isMat = position === 'MAT';
-  const events = isMat
+
+  const events = isAll
+    ? (() => {
+        const all = [];
+        for (const pos of ['GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3']) {
+          for (const evt of (data.glue_events?.[pos] || [])) {
+            all.push(evt);
+          }
+        }
+        const reasonMap = { normal: '正常换材', reset: '复位' };
+        for (const e of (data.material_events || [])) {
+          all.push({
+            event_id: (e.part || '').toUpperCase(),
+            time: e.time,
+            material: e.msg,
+            flute_type: reasonMap[e.reason] || e.reason || '',
+            errors: [],
+            warnings: [],
+          });
+        }
+        all.sort((a, b) => new Date(a.time) - new Date(b.time));
+        return all;
+      })()
+    : isMat
     ? (data.material_events || []).map(e => {
         const reasonMap = { 'normal': '正常换材', 'reset': '复位' };
         const reason = reasonMap[e.reason] || e.reason || '';
@@ -36,7 +60,11 @@ export default function FSMViewer() {
         };
       })
     : (data.glue_events?.[position] || []);
-  const selectedData = !isMat && selectedEvent?.set_values ? selectedEvent : null;
+
+  const selectedData = selectedEvent?.set_values ? selectedEvent : null;
+
+  const glueTotal = Object.values(data.glue_events || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
+  const matTotal = data.material_events?.length || 0;
 
   return (
     <div style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
@@ -47,14 +75,16 @@ export default function FSMViewer() {
       }}>
         <span style={{ fontWeight: 600, fontSize: 14 }}>事件诊断</span>
         <span style={{ fontSize: 12, color: '#6b7280' }}>
-          {Object.values(data.glue_events || {}).reduce((s, arr) => s + (arr?.length || 0), 0)} 个事件
+          {glueTotal} 个事件
         </span>
       </div>
 
       {/* position tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
         {POSITIONS.map(pos => {
-          const cnt = data.glue_events?.[pos]?.length || 0;
+          const cnt = pos === 'ALL'
+            ? glueTotal + matTotal
+            : data.glue_events?.[pos]?.length || 0;
           return (
             <button
               key={pos}
