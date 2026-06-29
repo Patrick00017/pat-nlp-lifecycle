@@ -16,7 +16,7 @@ opencode:
   host: "127.0.0.1"
   port: 4097
   password: "my-opencode-password"
-  project_directory: "D:/code/pat-nlp-lifecycle"
+  project_directory: "D:/code/pat-nlp-lifecycle/app/agent_web_app/bts_analysis_sandbox"
   mcp_servers:
     sqlserver:
       type: local

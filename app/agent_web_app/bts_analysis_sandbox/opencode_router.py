@@ -37,11 +37,11 @@ router = APIRouter(prefix="/opencode")
 class OpenCodeChatRequest(BaseModel):
     thread_id: Optional[str] = None
     message: str
-    agent: Optional[str] = "general"
+    agent: Optional[str] = "timeline-analyst"
 
 
 class CreateSessionRequest(BaseModel):
-    agent: Optional[str] = "general"
+    agent: Optional[str] = "timeline-analyst"
 
 
 class CreateSessionResponse(BaseModel):
@@ -173,7 +173,7 @@ async def opencode_diagnose():
     if result["health_check"].get("ok"):
         try:
             t0 = time.time()
-            sid = await orch.create_session(agent="general")
+            sid = await orch.create_session(agent="timeline-analyst")
             result["create_session"] = {
                 "ok": True,
                 "session_id": sid,

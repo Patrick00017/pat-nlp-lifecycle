@@ -3,7 +3,7 @@ import Tabs from './components/Tabs'
 import ChatPanel from './components/ChatPanel'
 import DataAnalysis from './components/DataAnalysis'
 import OpenCodePanel from './components/OpenCodePanel'
-import FSMTab from './components/FSMTab'
+import DiagnosisChat from './components/DiagnosisChat'
 
 const tabs = [
   { key: 'chat', label: '智能助手' },
@@ -18,7 +18,7 @@ export default function App() {
     <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
       {activeTab === 'chat' && <ChatPanel />}
       {activeTab === 'analysis' && <DataAnalysis />}
-      {activeTab === 'fsm' && <FSMTab />}
+      {activeTab === 'fsm' && <DiagnosisChat />}
       {activeTab === 'opencode' && <OpenCodePanel />}
     </Tabs>
   )
