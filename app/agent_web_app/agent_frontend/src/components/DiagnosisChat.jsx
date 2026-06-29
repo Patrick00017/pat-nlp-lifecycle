@@ -10,7 +10,7 @@ export default function DiagnosisChat() {
       <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
         <FSMViewer />
       </div>
-      <div style={{ width: 420, flexShrink: 0 }}>
+      <div style={{ width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
         <OpenCodeChat />
       </div>
     </div>

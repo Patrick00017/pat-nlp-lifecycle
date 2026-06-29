@@ -72,7 +72,7 @@ export default function FSMViewer() {
   const isEmpty = glueTotal + matTotal === 0;
 
   return (
-    <div style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
       {/* header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
