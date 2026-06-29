@@ -7,9 +7,10 @@ const ISSUE_STYLES = {
   weight_not_exist:    { color: '#f97316', bg: '#fff7ed', icon: '⚠', label: '克重' },
   basedoc_dismatch:    { color: '#eab308', bg: '#fefce8', icon: '⚠', label: '基础设置' },
   basedoc_not_exist:   { color: '#eab308', bg: '#fefce8', icon: '⚠', label: '基础资料' },
-  speed_coef_dismatch: { color: '#3b82f6', bg: '#eff6ff', icon: 'ℹ', label: '车速系数' },
-  speed_coef_not_exist:{ color: '#3b82f6', bg: '#eff6ff', icon: 'ℹ', label: '车速系数' },
+  speed_coef_dismatch: { color: '#8b5cf6', bg: '#f5f3ff', icon: 'ℹ', label: '车速系数' },
+  speed_coef_not_exist:{ color: '#8b5cf6', bg: '#f5f3ff', icon: 'ℹ', label: '车速系数' },
   no_set_values:       { color: '#9ca3af', bg: '#f9fafb', icon: '💤', label: '无数据' },
+  cancel:              { color: '#eab308', bg: '#fefce8', icon: '⚠️', label: '取消' },
 };
 
 export default function IssueBadge({ type, detail, args }) {

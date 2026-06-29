@@ -52,6 +52,9 @@ export default function TimelineView({ events = [], onSelectEvent }) {
               {(evt.errors || []).map((err, j) => (
                 <IssueBadge key={j} type={err.type} detail={err.detail} args={err.args} />
               ))}
+              {(evt.warnings || []).map((w, j) => (
+                <IssueBadge key={`w${j}`} type={w.type} detail={w.detail} args={w.args} />
+              ))}
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
               {evt.material && <span style={{ marginRight: 12 }}>材质: {evt.material}</span>}

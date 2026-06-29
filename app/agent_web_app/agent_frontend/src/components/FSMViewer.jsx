@@ -45,7 +45,7 @@ export default function FSMViewer() {
         display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
         background: '#f9fafb', borderBottom: '1px solid #e5e7eb',
       }}>
-        <span style={{ fontWeight: 600, fontSize: 14 }}>FSM 诊断结果</span>
+        <span style={{ fontWeight: 600, fontSize: 14 }}>事件诊断</span>
         <span style={{ fontSize: 12, color: '#6b7280' }}>
           {Object.values(data.glue_events || {}).reduce((s, arr) => s + (arr?.length || 0), 0)} 个事件
         </span>

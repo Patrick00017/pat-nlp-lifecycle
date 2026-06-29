@@ -1,5 +1,19 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import IssuePanel from './IssuePanel';
+
+const COL_NAMES = {
+  speed: '车速',
+  min_glue: '最小糊间隙',
+  max_glue: '最大糊间隙',
+  min_weight: '最小克重',
+  max_weight: '最大克重',
+  current_glue_weight: '当前克重',
+  speed_factor: '车速系数',
+  min_speed: '最低车速',
+  qdm_factor: 'QDM 系数',
+  ui_factor: '界面系数',
+  offset: '偏移量',
+  value: '结果值',
+};
 
 export default function ChartView({ event, onBack, materialEvents }) {
   if (!event) return null;
@@ -9,19 +23,7 @@ export default function ChartView({ event, onBack, materialEvents }) {
   }
 
   const cols = sv.columns;
-  const speedIdx = cols.indexOf('speed');
-  const valIdx = cols.indexOf('value');
-  const minIdx = cols.indexOf('min_glue');
-  const maxIdx = cols.indexOf('max_glue');
 
-  const chartData = sv.data.map(row => ({
-    speed: row[speedIdx],
-    value: parseFloat(row[valIdx]) || 0,
-    min: row[minIdx] ? parseFloat(row[minIdx]) : undefined,
-    max: row[maxIdx] ? parseFloat(row[maxIdx]) : undefined,
-  }));
-
-  // 用 material_dismatch 的 args.id 精确匹配换材事件
   const matErrorIds = (event.errors || [])
     .filter(e => e.type === 'material_dismatch')
     .map(e => e.args?.id)
@@ -70,30 +72,38 @@ export default function ChartView({ event, onBack, materialEvents }) {
         )}
       </div>
 
-      {/* chart */}
-      <div style={{ padding: '16px 16px 0' }}>
-        <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis
-              dataKey="speed"
-              label={{ value: '车速', position: 'insideBottomRight', offset: -5, style: { fontSize: 12, fill: '#6b7280' } }}
-              tick={{ fontSize: 11 }}
-            />
-            <YAxis
-              label={{ value: '糊间隙值', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
-              tick={{ fontSize: 11 }}
-            />
-            <Tooltip />
-            {chartData[0]?.min !== undefined && (
-              <Line type="monotone" dataKey="min" stroke="#fbbf24" strokeWidth={1} strokeDasharray="4 4" dot={false} name="下限" />
-            )}
-            {chartData[0]?.max !== undefined && (
-              <Line type="monotone" dataKey="max" stroke="#f87171" strokeWidth={1} strokeDasharray="4 4" dot={false} name="上限" />
-            )}
-            <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6' }} name="实际值" />
-          </LineChart>
-        </ResponsiveContainer>
+      {/* data table */}
+      <div style={{ padding: '16px', overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, fontFamily: 'monospace' }}>
+          <thead>
+            <tr style={{ background: '#f9fafb' }}>
+              {cols.map((col, i) => (
+                <th key={i} style={{
+                  padding: '6px 10px', textAlign: 'right', borderBottom: '2px solid #e5e7eb',
+                  whiteSpace: 'nowrap', color: '#374151', fontWeight: 600,
+                }}>
+                  {COL_NAMES[col] || col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sv.data.map((row, ri) => (
+              <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{
+                    padding: '4px 10px', textAlign: 'right', borderBottom: '1px solid #f3f4f6',
+                    whiteSpace: 'nowrap',
+                    fontWeight: cols[ci] === 'value' ? 600 : 400,
+                    color: cols[ci] === 'value' ? '#1e40af' : '#374151',
+                  }}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* issues */}
@@ -108,7 +118,6 @@ export default function ChartView({ event, onBack, materialEvents }) {
             📋 附近换材记录 ({relatedMaterials.length})
           </div>
           {(() => {
-            const reasonMap = { normal: '正常换材', reset: '复位' };
             const matchedItems = relatedMaterials.filter(m => m._isMatch);
             if (matchedItems.length === 0) return null;
             const matchIndices = relatedMaterials

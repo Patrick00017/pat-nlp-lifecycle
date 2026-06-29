@@ -8,7 +8,7 @@ import FSMTab from './components/FSMTab'
 const tabs = [
   { key: 'chat', label: '智能助手' },
   { key: 'analysis', label: '数据分析' },
-  { key: 'fsm', label: 'FSM 诊断' },
+  { key: 'fsm', label: '事件诊断' },
   { key: 'opencode', label: 'Opencode 助手' },
 ]
 
