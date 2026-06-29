@@ -51,7 +51,7 @@ export default function TimelineView({ events = [], onSelectEvent }) {
             }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>
-                {evt.time ? evt.time.slice(11, 19) : ''}
+                {evt.time ? evt.time.slice(11) : ''}
               </span>
               <span style={{ fontWeight: 600, fontSize: 13 }}>{[evt.event_id, evt.part].filter(Boolean).join(' · ')}</span>
               {label !== evt.event_id && <span style={{ fontSize: 12, color: '#374151' }}>{label}</span>}

@@ -116,27 +116,36 @@ class KeyEventExtractor:
             ls0_template2 = "LS0横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ms1_template1 = "{idk0}MS1材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ms1_template2 = "{idk0}MS1横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ms1_template3 = "MS1横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ls1_template1 = "{idk0}LS1材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ls1_template2 = "{idk0}LS1横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls1_template3 = "LS1横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ms2_template1 = "{idk0}MS2材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ms2_template2 = "{idk0}MS2横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ms2_template3 = "MS2横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ls2_template1 = "{idk0}LS2材质校准：当前正在用的材质={material}，门幅={width}，校准后的材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             ls2_template2 = "{idk0}LS2横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
+            ls2_template3 = "LS2横切换材了。上笔材质={material}，门幅={width}；本批材质={next_material}，门幅={next_width}\\r\\n{idk1}"
             
             part2templates = {
                 "ls0": [ls0_template1, ls0_template2],
-                "ms1": [ms1_template1, ms1_template2],
-                "ls1": [ls1_template1, ls1_template2],
-                "ms2": [ms2_template1, ms2_template2],
-                "ls2": [ls2_template1, ls2_template2]
+                "ms1": [ms1_template1, ms1_template2, ms1_template3],
+                "ls1": [ls1_template1, ls1_template2, ls1_template3],
+                "ms2": [ms2_template1, ms2_template2, ms2_template3],
+                "ls2": [ls2_template1, ls2_template2, ls2_template3]
             }
             
             for k, v in part2templates.items():
-                results = parse(v[0], content)
-                print(f"{k} -> 0 -> {results}")
-                if results == None:
-                    results = parse(v[1], content)
-                    print(f"{k} -> 1 -> {results}")
+                # results = parse(v[0], content)
+                # print(f"{k} -> 0 -> {results}")
+                # if results == None:
+                #     results = parse(v[1], content)
+                #     print(f"{k} -> 1 -> {results}")
+                results = None
+                for template in v:
+                    results = parse(template, content)
+                    if results != None:
+                        break
                 if results:
                     # update the state
                     prev_info = {

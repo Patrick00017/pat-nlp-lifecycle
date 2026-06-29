@@ -11,12 +11,16 @@ export default function FSMViewer() {
   const [position, setPosition] = useState('ALL');
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  useEffect(() => {
+  function loadData() {
+    setLoading(true);
+    setSelectedEvent(null);
     fetchFSMResults()
       .then(setData)
       .catch(e => console.error('FSM data load failed:', e))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(loadData, []);
 
   if (loading) return <div style={{ padding: 20, color: '#6b7280' }}>加载 FSM 结果...</div>;
   if (!data) return <div style={{ padding: 20, color: '#dc2626' }}>无法加载 FSM 结果文件</div>;
@@ -74,9 +78,20 @@ export default function FSMViewer() {
         background: '#f9fafb', borderBottom: '1px solid #e5e7eb',
       }}>
         <span style={{ fontWeight: 600, fontSize: 14 }}>事件诊断</span>
-        <span style={{ fontSize: 12, color: '#6b7280' }}>
-          {glueTotal} 个事件
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+          <span style={{ fontSize: 12, color: '#6b7280' }}>{glueTotal} 个事件</span>
+          <button
+            onClick={loadData}
+            disabled={loading}
+            style={{
+              background: 'none', border: '1px solid #d1d5db', borderRadius: 4,
+              padding: '3px 10px', cursor: loading ? 'default' : 'pointer',
+              fontSize: 12, color: '#6b7280', opacity: loading ? 0.5 : 1,
+            }}
+          >
+            {loading ? '刷新中...' : '🔄 刷新'}
+          </button>
+        </div>
       </div>
 
       {/* position tabs */}

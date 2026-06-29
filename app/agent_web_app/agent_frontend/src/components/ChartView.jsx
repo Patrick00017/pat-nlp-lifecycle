@@ -136,7 +136,7 @@ export default function ChartView({ event, onBack, materialEvents }) {
                 background: isMatch ? '#fef3c7' : (idx % 2 === 0 ? '#f9fafb' : 'transparent'),
                 borderRadius: 4, fontWeight: isMatch ? 600 : 400,
               }}>
-                <span>{me.time ? me.time.slice(11, 19) : ''}</span>
+                <span>{me.time ? me.time.slice(11) : ''}</span>
                 <span style={{ fontWeight: 600, minWidth: 32 }}>{(me.part || '').toUpperCase()}</span>
                 <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me.msg}</span>
                 <span style={{ color: '#9ca3af' }}>{reasonMap[me.reason] || me.reason || ''}</span>

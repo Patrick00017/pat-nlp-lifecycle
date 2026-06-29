@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { connectSSE, BASE, listOpenCodeProviders } from '../api'
+import { connectSSE, BASE } from '../api'
 
 const STREAM_URL = `${BASE}/opencode/chat/stream`
 
@@ -10,7 +10,6 @@ export default function OpenCodeChat() {
   const [threadId, setThreadId] = useState(null)
   const [chatLog, setChatLog] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-  const [providers, setProviders] = useState([])
   const chatRef = useRef(null)
   const messageTokensRef = useRef('')
   const reasonTokensRef = useRef('')
@@ -23,12 +22,6 @@ export default function OpenCodeChat() {
       chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' })
     }
   }, [chatLog, messageTokens, reasonTokens, isAutoScroll])
-
-  useEffect(() => {
-    listOpenCodeProviders()
-      .then(d => setProviders(d.providers || []))
-      .catch(() => {})
-  }, [])
 
   const handleScroll = () => {
     if (chatRef.current) {
@@ -84,20 +77,27 @@ export default function OpenCodeChat() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
       <div style={{ padding: '8px 12px', fontSize: 12, color: '#94a3b8', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Opencode 助手</span>
-        {providers.length > 0 && (() => {
-          const go = providers.find(p => p.name === 'opencode-go' || p.id === 'opencode-go');
-          if (!go?.models) return null;
-          const names = Object.values(go.models).map(m => m.name || m.id);
-          return <span style={{ fontSize: 11, color: '#94a3b8' }}>{names.join(', ')}</span>;
-        })()}
+        <span>产线助手</span>
         {threadId && <span style={{ fontFamily: 'monospace' }}>{threadId.slice(0, 8)}...</span>}
       </div>
 
       <div ref={chatRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column' }}>
         {chatLog.length === 0 && !isLoading && (
-          <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, marginTop: 40 }}>
-            在右侧询问关于诊断数据的问题
+          <div className="welcome-guide">
+            <div className="welcome-header">
+              <span className="welcome-icon">🤖</span>
+              <span>欢迎使用产线助手</span>
+            </div>
+            <div className="welcome-questions">
+              <h3>你可以这样问我:</h3>
+              <div className="question-chips">
+                {['看一下6月1日下午2点到4点的胶水事件'].map((q, i) => (
+                  <button key={i} className="question-chip" onClick={() => setMessage(q)}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
         {chatLog.map((m, i) => (
