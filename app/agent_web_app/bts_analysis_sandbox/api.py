@@ -29,3 +29,6 @@ def get_results():
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+from opencode_router import router as opencode_router
+app.include_router(opencode_router)
