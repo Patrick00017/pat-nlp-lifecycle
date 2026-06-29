@@ -53,8 +53,8 @@ export default function TimelineView({ events = [], onSelectEvent }) {
               <span style={{ fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>
                 {evt.time ? evt.time.slice(11, 19) : ''}
               </span>
-              <span style={{ fontWeight: 600, fontSize: 13 }}>{evt.event_id}</span>
-              <span style={{ fontSize: 12, color: '#374151' }}>{label}</span>
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{[evt.event_id, evt.part].filter(Boolean).join(' · ')}</span>
+              {label !== evt.event_id && <span style={{ fontSize: 12, color: '#374151' }}>{label}</span>}
               {(evt.errors || []).map((err, j) => (
                 <IssueBadge key={j} type={err.type} detail={err.detail} args={err.args} />
               ))}

@@ -8,7 +8,7 @@ const POSITIONS = ['ALL', 'GU1', 'GU2', 'GU3', 'SF1', 'SF2', 'SF3', 'MAT'];
 export default function FSMViewer() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [position, setPosition] = useState('GU2');
+  const [position, setPosition] = useState('ALL');
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
