@@ -123,6 +123,15 @@ export async function listOpenCodeAgents() {
   return res.json()
 }
 
+export async function listOpenCodeProviders() {
+  const res = await fetch(`${BASE}/opencode/providers`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  if (!res.ok) throw new Error(`List providers failed: ${res.status}`)
+  return res.json()
+}
+
 export async function createOpenCodeSession(agent = 'general') {
   const res = await fetch(`${BASE}/opencode/session`, {
     method: 'POST',

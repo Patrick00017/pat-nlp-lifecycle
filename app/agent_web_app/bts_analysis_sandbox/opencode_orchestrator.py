@@ -166,7 +166,70 @@ class OpencodeOrchestrator:
 
         async def _send_message():
             try:
-                payload = {"parts": [{"type": "text", "text": text}]}
+                payload = {"model": {
+                    "modelID": "deepseek-v4-flash",
+                    "providerID": "opencode-go",
+                    "api": {
+                        "id": "deepseek-v4-flash",
+                        "url": "https://opencode.ai/zen/go/v1",
+                        "npm": "@ai-sdk/openai-compatible"
+                    },
+                    "name": "DeepSeek V4 Flash",
+                    "family": "deepseek-flash",
+                    "capabilities": {
+                        "temperature": True,
+                        "reasoning": True,
+                        "attachment": False,
+                        "toolcall": True,
+                        "input": {
+                            "text": True,
+                            "audio": False,
+                            "image": False,
+                            "video": False,
+                            "pdf": False
+                        },
+                        "output": {
+                            "text": True,
+                            "audio": False,
+                            "image": False,
+                            "video": False,
+                            "pdf": False
+                        },
+                        "interleaved": {
+                            "field": "reasoning_content"
+                        }
+                    },
+                    "cost": {
+                        "input": 0.14,
+                        "output": 0.28,
+                        "cache": {
+                            "read": 0.0028,
+                            "write": 0
+                        }
+                    },
+                    "limit": {
+                        "context": 1000000,
+                        "output": 384000
+                    },
+                    "status": "active",
+                    "options": {},
+                    "headers": {},
+                    "release_date": "2026-04-24",
+                    "variants": {
+                        "low": {
+                            "reasoningEffort": "low"
+                        },
+                        "medium": {
+                            "reasoningEffort": "medium"
+                        },
+                        "high": {
+                            "reasoningEffort": "high"
+                        },
+                        "max": {
+                            "reasoningEffort": "max"
+                        }
+                    }
+                }, "parts": [{"type": "text", "text": text}]}
                 await self.client.post(
                     f"/session/{session_id}/message", json=payload
                 )
@@ -264,7 +327,7 @@ class OpencodeOrchestrator:
         body = resp.json()
         if isinstance(body, list):
             return body
-        return body.get("data", [])
+        return body.get("all", [])
 
     async def read_file(self, path: str, directory: str | None = None) -> bytes:
         params: dict[str, str] = {}

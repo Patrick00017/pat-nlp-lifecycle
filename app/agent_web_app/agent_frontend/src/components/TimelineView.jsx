@@ -64,7 +64,7 @@ export default function TimelineView({ events = [], onSelectEvent }) {
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
               {evt.material && evt.material.includes('->')
-                ? <span>{fmtMaterial(evt.material)}</span>
+                ? <span>{fmtMaterial(evt.material)}{evt.flute_type ? `  原因：${evt.flute_type}` : ''}</span>
                 : evt.material && <span>材质：{evt.material}  楞型：{evt.flute_type || ''}</span>
               }
             </div>

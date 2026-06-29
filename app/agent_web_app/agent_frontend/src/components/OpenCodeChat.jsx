@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { connectSSE, BASE } from '../api'
+import { connectSSE, BASE, listOpenCodeProviders } from '../api'
 
 const STREAM_URL = `${BASE}/opencode/chat/stream`
 
@@ -10,6 +10,7 @@ export default function OpenCodeChat() {
   const [threadId, setThreadId] = useState(null)
   const [chatLog, setChatLog] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [providers, setProviders] = useState([])
   const chatRef = useRef(null)
   const messageTokensRef = useRef('')
   const reasonTokensRef = useRef('')
@@ -22,6 +23,12 @@ export default function OpenCodeChat() {
       chatRef.current.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' })
     }
   }, [chatLog, messageTokens, reasonTokens, isAutoScroll])
+
+  useEffect(() => {
+    listOpenCodeProviders()
+      .then(d => setProviders(d.providers || []))
+      .catch(() => {})
+  }, [])
 
   const handleScroll = () => {
     if (chatRef.current) {
@@ -78,6 +85,12 @@ export default function OpenCodeChat() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
       <div style={{ padding: '8px 12px', fontSize: 12, color: '#94a3b8', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
         <span>Opencode 助手</span>
+        {providers.length > 0 && (() => {
+          const go = providers.find(p => p.name === 'opencode-go' || p.id === 'opencode-go');
+          if (!go?.models) return null;
+          const names = Object.values(go.models).map(m => m.name || m.id);
+          return <span style={{ fontSize: 11, color: '#94a3b8' }}>{names.join(', ')}</span>;
+        })()}
         {threadId && <span style={{ fontFamily: 'monospace' }}>{threadId.slice(0, 8)}...</span>}
       </div>
 

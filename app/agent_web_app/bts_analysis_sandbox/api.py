@@ -14,17 +14,10 @@ app.add_middleware(
 )
 
 DATA_PATH = Path(__file__).parent / "environments" / "fsm_results.json"
-_cache = None
-
-def _load():
-    global _cache
-    if _cache is None:
-        _cache = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-    return _cache
 
 @app.get("/api/fsm-results")
 def get_results():
-    return _load()
+    return json.loads(DATA_PATH.read_text(encoding="utf-8"))
 
 @app.get("/api/health")
 def health():
