@@ -54,6 +54,6 @@ class RAGService:
             f"\n\n文档内容：\n{context}\n\n用户问题：{query}"
         )
         if session_id is None:
-            session_id = await self.orchestrator.create_session(agent="general")
+            session_id = await self.orchestrator.create_session(agent="doc-query-responder")
         async for event in self.orchestrator.stream_chat(session_id, prompt):
             yield event
