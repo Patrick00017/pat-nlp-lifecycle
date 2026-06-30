@@ -29,3 +29,6 @@ def health():
 
 from opencode_router import router as opencode_router
 app.include_router(opencode_router)
+
+from rag_router import router as rag_router
+app.include_router(rag_router)
