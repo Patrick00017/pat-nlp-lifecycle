@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { connectSSE, BASE } from '../api'
 
-const STREAM_URL = `${BASE}/rag/stream`
+const STREAM_URL = `${BASE}/opencode/chat/stream`
 
 export default function RagChatPanel() {
   const [message, setMessage] = useState('')
@@ -42,7 +42,7 @@ export default function RagChatPanel() {
 
     setChatLog(c => [...c, { from: 'user', text: userMsg }])
 
-    const payload = { message: userMsg }
+    const payload = { message: userMsg, agent: 'rag' }
     if (threadId) payload.thread_id = threadId
 
     connectSSE(STREAM_URL, payload,
