@@ -519,15 +519,19 @@ class PositionFSM:
                 codes = self.material.split('/')          # "8/J" → ["8","J"]
             elif '.' in self.material:
                 parts = self.material.split('.')
-                if self.position == 'GU1':
-                    relevant = [parts[0], parts[1]]
-                elif self.position == 'GU2':
-                    relevant = [parts[2], parts[3]]
-                elif self.position == 'GU3':
-                    relevant = [parts[4]] if len(parts) > 4 else []
+                pos_targets = {'GU1': (0, 1), 'GU2': (2, 3), 'GU3': (4, 5)}
+                start, end = pos_targets.get(self.position, (-1, -1))
+                if start < 0 or start >= len(parts) or parts[start] == '-':
+                    codes = []
+                elif end < len(parts) and parts[end] != '-':
+                    codes = [parts[start], parts[end]]
+                elif end >= len(parts):
+                    codes = []
                 else:
-                    relevant = [p for p in parts if p != '-']
-                codes = [c for c in relevant if c != '-']
+                    next_i = end + 1
+                    while next_i < len(parts) and parts[next_i] == '-':
+                        next_i += 1
+                    codes = [parts[start], parts[next_i]] if next_i < len(parts) else []
             else:
                 return None
             if not codes:
