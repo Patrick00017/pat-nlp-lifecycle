@@ -44,7 +44,7 @@ export default function ChartView({ event, onBack, materialEvents }) {
     }
   }
 
-  const reasonMap = { normal: '正常换材', reset: '复位' };
+  const reasonMap = { normal: '正常换材', reset: '复位', hq: '横切校验' };
 
   return (
     <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb' }}>

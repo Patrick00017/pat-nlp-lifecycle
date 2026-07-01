@@ -381,7 +381,7 @@ class PositionFSM:
         # 1. is disable
         if event['event_issue'] == 'disable':
             # this event is been canceled
-            warnings.append(Warning("取消", WarningType.CANCEL, {}))
+            warnings.append(Warning("部位未启用", WarningType.CANCEL, {}))
         full_event = event
         full_event['errors'] = errors
         full_event['warnings'] = warnings
@@ -571,6 +571,18 @@ class PositionFSM:
                 'FROM "TB_IPS_GlueGu" WHERE "F_Flute" = %s AND "F_Position" = %s',
                 (self.flute, pos)
             )
+            if not rows and pos != '1':
+                rows = self._query_ips(
+                    'SELECT "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" '
+                    'FROM "TB_IPS_GlueGu" WHERE "F_Flute" = %s AND "F_Position" = %s',
+                    (self.flute, '1')
+                )
+            if not rows:
+                rows = self._query_ips(
+                    'SELECT "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" '
+                    'FROM "TB_IPS_GlueGu" WHERE "F_Flute" = %s LIMIT 1',
+                    (self.flute,)
+                )
         elif self.position.startswith('SF'):
             rows = self._query_ips(
                 'SELECT "F_MinGlue", "F_MaxGlue", "F_MinWeight", "F_MaxWeight" '

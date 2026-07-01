@@ -17,7 +17,7 @@ const ISSUE_META = {
   weight_pass:         { title: '克重匹配', emoji: '✅' },
   basedoc_pass:        { title: '基础设置匹配', emoji: '✅' },
   speed_pass:          { title: '车速系数匹配', emoji: '✅' },
-  cancel:              { title: '取消', emoji: '↩️' },
+  cancel:              { title: '部位未启用', emoji: '⚠️' },
 };
 
 const SECTION_META = {

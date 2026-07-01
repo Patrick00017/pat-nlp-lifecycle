@@ -10,7 +10,7 @@ const ISSUE_STYLES = {
   speed_coef_dismatch: { color: '#8b5cf6', bg: '#f5f3ff', icon: 'ℹ', label: '车速系数' },
   speed_coef_not_exist:{ color: '#8b5cf6', bg: '#f5f3ff', icon: 'ℹ', label: '车速系数' },
   no_set_values:       { color: '#9ca3af', bg: '#f9fafb', icon: '💤', label: '无数据' },
-  cancel:              { color: '#eab308', bg: '#fefce8', icon: '⚠️', label: '取消' },
+  cancel:              { color: '#eab308', bg: '#fefce8', icon: '⚠️', label: '部位未启用' },
 };
 
 export default function IssueBadge({ type, detail, args }) {
