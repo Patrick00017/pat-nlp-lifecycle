@@ -686,7 +686,7 @@ class GlueGapDiagnosticFSM:
             from database_utils import PostgreSQLHelper
             try:
                 self.dev_ips = PostgreSQLHelper.from_connection_string(
-                    "PORT=5433;DATABASE=IPS;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
+                    "PORT=5433;DATABASE=HNHY_IPS;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
                 )
                 self.dev_ips.connect()
             except Exception:

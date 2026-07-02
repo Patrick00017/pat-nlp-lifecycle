@@ -228,7 +228,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
     extractor = GlueEventExtractor()
 
     pg = PostgreSQLHelper.from_connection_string(
-        "PORT=5433;DATABASE=BaseDB;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
+        "PORT=5433;DATABASE=HNHY_BaseDB;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
     )
     pg.connect()
 
@@ -255,9 +255,9 @@ def test_ips_and_glue_template_pg(start_time, end_time):
         # )
 
         df = pd.concat([df_ips, df_glue], ignore_index=True)
-        df.to_csv("./pg_raw_messages.csv", index=False)
         if "Date" in df.columns:
             df = df.sort_values("Date").reset_index(drop=True)
+        df.to_csv("./pg_raw_messages.csv", index=False)
 
         # 预处理：将空字符串替换为空格，避免 parse 库空捕获 bug
         df["Message"] = df["Message"].str.replace(
