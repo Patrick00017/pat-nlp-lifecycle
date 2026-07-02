@@ -310,44 +310,51 @@ class KeyEventExtractor:
                 'time': str(row['Date']),
                 'reason': '实际材质'
             }
-            self.material_events.append(event)    
-
-            # handle every part
-            slot_map = {0: 'ls0', 1: 'ms1', 2: 'ls1', 3: 'ms2', 4: 'ls2', 5: 'ms3', 6: 'ls3'}
-            cur_parts = current_material_batch['material'].split('.')
-            prev_parts = prev_material_batch['material'].split('.')
-            width = int(current_material_batch['width'])
-            flute_type = current_material_batch['flute_type']
-
-            for idx in range(min(len(cur_parts), len(prev_parts))):
-                part_name = slot_map.get(idx)
-                if part_name is None:
-                    continue
-                cur_code = cur_parts[idx]
-                prev_code = prev_parts[idx]
-                if cur_code == prev_code or cur_code == '-':
-                    continue
-                # 管理一下现在的状态
-                self.splicer_state[part_name] = {
-                    'material': cur_code,
-                    'width': width,
-                    'flute_type': flute_type,
-                    'next_batch': {
-                        'material': '-',
-                        'width': 0,
-                        'flute_type': '-',
-                    },
-                    'change_time': str(row['Date'])
-                }
-                # 生成该机台的换材 event
-                self.material_events.append({
-                    'id': uuid.uuid1(),
-                    'part': part_name,
-                    'type': 'material',
-                    'msg': f"({prev_code},{width},{flute_type}) -> ({cur_code},{width},{flute_type})",
-                    'time': str(row['Date']),
-                    'reason': '实际材质'
-                })
+            self.material_events.append(event)
+        
+        elif row['EventId'] == 'I4':
+            # 实际材质，等于直接换
+            parsed_values = row["ParsedValues"]
+            print(f"I4 -> {parsed_values}")
+            part2part = {
+                'LS0': 'ls0',
+                'MS1': 'ms1',
+                'LS1': 'ls1',
+                'MS2': 'ms2',
+                'LS2': 'ls2',
+                'MS3': 'ms3',
+                'LS3': 'ls3'
+            }
+            part = part2part[parsed_values['splicer_part']]
+            real_material = parsed_values['real_material']
+            real_width = int(parsed_values['real_width'])
+            prev_material_batch = {
+                'material': self.splicer_state[part]["material"],
+                'width': self.splicer_state[part]["width"],
+                'flute_type': self.splicer_state[part]["flute_type"]
+            }
+            # update the state
+            self.splicer_state[part] = {
+                'material': real_material,
+                'width': real_width,
+                'flute_type': prev_material_batch['flute_type'],
+                'next_batch': {
+                    'material': '-',
+                    'width': 0,
+                    'flute_type': '-',
+                },
+                'change_time': str(row['Date'])
+            }
+            # generate the event
+            event = {
+                'id': uuid.uuid1(),
+                'part': part,
+                'type': 'material',
+                'msg': f"({prev_material_batch['material']},{prev_material_batch['width']},{prev_material_batch['flute_type']}) -> ({real_material},{real_width},{prev_material_batch['flute_type']})",
+                'time': str(row['Date']),
+                'reason': '实际材质'
+            }
+            self.material_events.append(event)
         
         # I16: InitInfos 包含所有部位当前材质（PG 特有），初始化或者重置时触发
         elif row['EventId'] == 'I16':
