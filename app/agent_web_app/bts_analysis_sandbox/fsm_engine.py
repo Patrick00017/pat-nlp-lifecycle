@@ -183,19 +183,28 @@ _POSITION_GU = ('GU1', 'GU2', 'GU3')
 _POSITION_SF = ('SF1', 'SF2', 'SF3')
 _ALL_POSITIONS = _POSITION_GU + _POSITION_SF
 
+class OrderAndMaterialFSM:
+    def __init__(self):
+        self.timeline = []
+        
+    def process_event(self, event: dict) -> bool:
+        type = event.get('type')
+        handler = getattr(self, f'_on_{type}', None)
+        if handler:
+            handler(event)
+            return True
+        return False
+
+    def _on_material(self, event):
+        pass
+
+    def _on_order(self, event):
+        pass
 
 class PositionFSM:
     """
-    单个糊间隙位置（GU1/GU2/...）的状态机。
-    
-    也可以不算一个状态机，只不过是一直读取环境变换信息，在成功赋值时检验一下
-    状态机有如下状态：
-    1. IDLE: 初始状态
-    2. MATERIAL_CHANGE: 材质发生变化
-    3. SET_OK: 赋值完成，处理后回归IDLE
-    
+    单个糊间隙位置（GU1/GU2/GU3/SF1/SF2/SF3）的状态机。
     """
-
     def __init__(self, position: str, dev_ips=None):
         self.position = position
         self.state = GlueState.IDLE
@@ -672,7 +681,8 @@ class GlueGapDiagnosticFSM:
         self.raw_events.sort(key=lambda x: str(x.get('Date', '')))
         self.set_func_events = extractor.get_glue_set_function_full_event()
         self.all_events = extractor.get_all_events()
-        self.all_material_events = []
+        self.all_material_events = [] # 仅仅用于最终输出
+        self.all_order_events = [] # 仅仅用于最终输出
         
         # 加入一些可选的组件，比如用于qdm和克重数据拿取的数据库    
         self.build_components()
@@ -680,6 +690,8 @@ class GlueGapDiagnosticFSM:
         self.fsms: Dict[str, PositionFSM] = {}
         for pos in _ALL_POSITIONS:
             self.fsms[pos] = PositionFSM(pos, self.dev_ips)
+        
+        self.order_and_material_fsm = OrderAndMaterialFSM()
         
     def build_components(self):
         if self.dev_ips is None:
@@ -716,8 +728,11 @@ class GlueGapDiagnosticFSM:
                 self.all_material_events.append(evt) # 只用于后续输出
                 for fsm in self.fsms.values():
                     fsm.process_event(evt)
+                self.order_and_material_fsm.process_event(evt)
             elif type == 'glue':
                 self.fsms[part].process_event(evt)
+            elif type == 'order':
+                self.order_and_material_fsm.process_event(evt)
                 
     def get_results(self):
         results = {}

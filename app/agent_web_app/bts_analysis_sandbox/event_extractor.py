@@ -96,7 +96,21 @@ class KeyEventExtractor:
         self.order_events = []
         
     def process_orders(self):
-        pass
+        for row in self.order_init_data:
+            event = {
+                'id': uuid.uuid1(),
+                'type': 'order',
+                'order_id': str(row['F_OrderID']),
+                'time': str(row['F_CreateTime']),
+                'machine': row['F_MachineID'],
+                'paper_code': row['F_PaperCode'],
+                'flute': row['F_Flute'],
+                'width': int(row['F_Width']) if row.get('F_Width') else 0,
+                'erp_paper_code': str(row.get('F_ErpPaperCode') or ''),
+                'erp_weight': float(row['F_ErpWeight'] or 0),
+                'erp_width': float(row['F_ErpWidth'] or 0),
+            }
+            self.order_events.append(event)
     
     def process_log_row(self, row):
         """
@@ -745,8 +759,8 @@ class GlueEventExtractor(KeyEventExtractor):
 
     def get_all_events(self):
         # return all set funcs, and with lifecycle based on the machine material change event
-        print(f"material len: {len(self.material_events)}, setfunc len: {len(self.set_func_call_events)}")
-        all_events = self.material_events + self.set_func_call_events
+        print(f"material len: {len(self.material_events)}, setfunc len: {len(self.set_func_call_events)}, order len: {len(self.order_events)}")
+        all_events = self.material_events + self.set_func_call_events + self.order_events
         all_events.sort(key=lambda x: x['time'])
         return all_events
     
