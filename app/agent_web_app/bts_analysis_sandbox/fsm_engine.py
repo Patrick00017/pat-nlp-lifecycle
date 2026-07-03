@@ -789,7 +789,7 @@ class GlueGapDiagnosticFSM:
     def save_results(self, filepath=None):
         import json, os, uuid
         results = self.get_results()
-        print(results['glue_events'])
+        # print(results['glue_events'])
         if filepath is None:
             filepath = os.path.join(os.path.dirname(__file__), "environments", "fsm_results.json")
         os.makedirs(os.path.dirname(filepath), exist_ok=True)

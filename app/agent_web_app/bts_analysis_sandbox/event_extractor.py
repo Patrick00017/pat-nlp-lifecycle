@@ -90,8 +90,14 @@ class KeyEventExtractor:
                 'change_time': '2026-03-02 15:39:32.530'
             }
         }
+        # raw order list
+        # {'F_CreateTime': Timestamp('2026-06-22 00:00:00'), 'F_OrderID': '9102', 'F_MachineID': 'MS1', 'F_PaperCode': 'HD.07.07.07.B9', 'F_Flute': '5BA', 'F_Width': 2150, 'F_ErpPaperCode': '07', 'F_ErpWeight': Decimal('170.00'), 'F_ErpWidth': Decimal('2150.00')}
+        self.order_init_data = []
+        self.order_events = []
         
-
+    def process_orders(self):
+        pass
+    
     def process_log_row(self, row):
         """
         row: {
@@ -315,7 +321,7 @@ class KeyEventExtractor:
         elif row['EventId'] == 'I4':
             # 实际材质，等于直接换
             parsed_values = row["ParsedValues"]
-            print(f"I4 -> {parsed_values}")
+            # print(f"I4 -> {parsed_values}")
             part2part = {
                 'LS0': 'ls0',
                 'MS1': 'ms1',
@@ -327,7 +333,7 @@ class KeyEventExtractor:
             }
             part = part2part[parsed_values['splicer_part']]
             real_material = parsed_values['real_material']
-            real_width = int(parsed_values['real_width'])
+            real_width = int(float(parsed_values['real_width']))
             prev_material_batch = {
                 'material': self.splicer_state[part]["material"],
                 'width': self.splicer_state[part]["width"],

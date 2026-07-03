@@ -259,6 +259,29 @@ def test_ips_and_glue_template_pg(start_time, end_time):
             df = df.sort_values("Date").reset_index(drop=True)
         df.to_csv("./pg_raw_messages.csv", index=False)
 
+        # 查询每个订单首次出现的行（初始化数据）
+        try:
+            pg_ips = PostgreSQLHelper.from_connection_string(
+                "PORT=5433;DATABASE=HNHY_IPS;HOST=127.0.0.1;PASSWORD=123456;USER ID=postgres"
+            )
+            pg_ips.connect()
+            df_orders = pg_ips.get_dataframe_from_query(
+                'SELECT DISTINCT ON ("F_OrderID") '
+                '"F_CreateTime", "F_OrderID", "F_MachineID", '
+                '"F_PaperCode", "F_Flute", "F_Width", '
+                '"F_ErpPaperCode", "F_ErpWeight", "F_ErpWidth" '
+                'FROM "T_IPS_HisRunningData_20260622" '
+                'WHERE "F_CreateTime" >= %s AND "F_CreateTime" < %s '
+                'ORDER BY "F_OrderID", "F_CreateTime"',
+                (start_time, end_time),
+            )
+            extractor.order_init_data = df_orders.to_dict('records')
+            print(extractor.order_init_data)
+            pg_ips.close_connection()
+        except Exception as e:
+            print(f"Failed to query order init data: {e}")
+            extractor.order_init_data = []
+
         # 预处理：将空字符串替换为空格，避免 parse 库空捕获 bug
         df["Message"] = df["Message"].str.replace(
             '"Ip":"","Host":"","UserName":""',
@@ -277,7 +300,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
         )
 
         parsed_message_df = log_parser.match_messages(df)
-        print(parsed_message_df.head())
+        # print(parsed_message_df.head())
         none_rows = parsed_message_df[parsed_message_df["EventId"].isna()]
         if len(none_rows) > 0:
             none_rows.to_csv("./none.csv")
