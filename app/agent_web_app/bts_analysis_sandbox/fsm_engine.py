@@ -185,8 +185,18 @@ _ALL_POSITIONS = _POSITION_GU + _POSITION_SF
 
 class OrderAndMaterialFSM:
     def __init__(self):
-        self.timeline = []
-        
+        self.current_order_id = None
+        self.current_paper_code = None
+        self.current_flute = None
+        self.order_list = []
+        self.material_list = []
+        self.match_list = []
+        self._has_material_in_current_order = False
+        self.current_parts = self._default_parts()
+
+    def _default_parts(self):
+        return {k: {'material': '-', 'event_id': None} for k in ['ls0','ms1','ls1','ms2','ls2']}
+
     def process_event(self, event: dict) -> bool:
         type = event.get('type')
         handler = getattr(self, f'_on_{type}', None)
@@ -195,11 +205,86 @@ class OrderAndMaterialFSM:
             return True
         return False
 
-    def _on_material(self, event):
-        pass
-
     def _on_order(self, event):
-        pass
+        if self.current_order_id is not None and not self._has_material_in_current_order:
+            self.order_list.append(self.current_order_id)
+            self.material_list.append({'time': '', 'part': '', 'msg': '(该订单无换材记录)'})
+            self.match_list.append(None)
+        self.current_order_id = event['order_id']
+        self.current_paper_code = event['paper_code']
+        self.current_flute = event['flute']
+        self._has_material_in_current_order = False
+        self.current_parts = self._default_parts()
+
+    def _on_material(self, event):
+        if not self.current_paper_code:
+            return
+        slot_map = {'ls0': 0, 'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}
+        idx = slot_map.get(event['part'], -1)
+        if idx < 0:
+            return
+        curr_mat = event['msg'].split('-> ')[-1].strip('()').split(',')[0] if '->' in event['msg'] else ''
+        if not curr_mat:
+            return
+
+        self.current_parts[event['part']] = {'material': curr_mat, 'event_id': str(event['id'])}
+        self._has_material_in_current_order = True
+
+        parts = self.current_paper_code.split('.')
+        slots = {}
+        all_match = True
+        for slot_name, si in slot_map.items():
+            expected = parts[si] if si < len(parts) else '-'
+            info = self.current_parts.get(slot_name, {'material': '-', 'event_id': None})
+            actual = info['material']
+            evt_id = info['event_id']
+            slot_match = (actual == expected or actual == '-' or expected == '00')
+            slots[slot_name] = {'actual': actual, 'expected': expected, 'match': slot_match, 'id': evt_id}
+            if not slot_match:
+                all_match = False
+
+        self.order_list.append(self.current_order_id)
+        self.material_list.append({
+            'time': event['time'],
+            'part': event['part'],
+            'msg': event['msg'],
+        })
+        self.match_list.append({
+            'material_event_id': str(event['id']),
+            'order_id': self.current_order_id,
+            'part': event['part'],
+            'slots': slots,
+            'all_match': all_match,
+        })
+
+    def get_results(self):
+        if self.current_order_id is not None and not self._has_material_in_current_order:
+            self.order_list.append(self.current_order_id)
+            self.material_list.append({'time': '', 'part': '', 'msg': '(该订单无换材记录)'})
+            self.match_list.append(None)
+        return {
+            'order_list': self.order_list,
+            'material_list': self.material_list,
+            'match_list': self.match_list,
+            'summary': self._build_summary(),
+        }
+
+    def _build_summary(self):
+        orders = {}
+        for oid, info, match in zip(self.order_list, self.material_list, self.match_list):
+            if oid not in orders:
+                orders[oid] = {
+                    'total': 0, 'matched': 0, 'mismatched': 0,
+                    'paper_code': self.current_paper_code,
+                }
+            orders[oid]['total'] += 1
+            if match is None:
+                continue
+            if match['all_match']:
+                orders[oid]['matched'] += 1
+            else:
+                orders[oid]['mismatched'] += 1
+        return orders
 
 class PositionFSM:
     """
@@ -798,13 +883,14 @@ class GlueGapDiagnosticFSM:
             except Exception:
                 pass
         
-        results['description'] = "glue_events中保存的是已经成功的胶水赋值事件，其中errors中是已经确认的错误，是最需要注意的部分。material_events是这个时间段内的所有换材事件，如果出现材质不匹配的错误，可以使用id在这里匹配对应的换材事件。qdm_df中保存的是GU1，GU2，GU3使用的用于取qdm_factor的数据表。qdm_sf中保存的是SF1，SF2，SF3在胶水赋值时取qdm_factor的数据表。basedoc_gu保存的是GU1，GU2，GU3在胶水赋值时取基础楞型的数据表。basedoc_sf保存的是SF1，SF2，SF3在胶水赋值时取基础楞型的数据表。speed_coef中保存的是取车速系数的数据表。paper_codes中保存的是取克重的数据表。"
+        results['description'] = "glue_events中保存的是已经成功的胶水赋值事件，其中errors中是已经确认的错误，是最需要注意的部分。material_events是这个时间段内的所有换材事件，如果出现材质不匹配的错误，可以使用id在这里匹配对应的换材事件。qdm_df中保存的是GU1，GU2，GU3使用的用于取qdm_factor的数据表。qdm_sf中保存的是SF1，SF2，SF3在胶水赋值时取qdm_factor的数据表。basedoc_gu保存的是GU1，GU2，GU3在胶水赋值时取基础楞型的数据表。basedoc_sf保存的是SF1，SF2，SF3在胶水赋值时取基础楞型的数据表。speed_coef中保存的是取车速系数的数据表。paper_codes中保存的是取克重的数据表。order_check中保存的是换材与订单材质的匹配检查结果。"
+        results['order_check'] = self.order_and_material_fsm.get_results()
         return results
 
     def save_results(self, filepath=None):
         import json, os, uuid
         results = self.get_results()
-        # print(results['glue_events'])
+        print(results['order_check'])
         if filepath is None:
             filepath = os.path.join(os.path.dirname(__file__), "environments", "fsm_results.json")
         os.makedirs(os.path.dirname(filepath), exist_ok=True)

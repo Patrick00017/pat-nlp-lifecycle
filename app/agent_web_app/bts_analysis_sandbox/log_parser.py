@@ -276,7 +276,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
                 (start_time, end_time),
             )
             extractor.order_init_data = df_orders.to_dict('records')
-            print(extractor.order_init_data)
+            # print(extractor.order_init_data)
             pg_ips.close_connection()
         except Exception as e:
             print(f"Failed to query order init data: {e}")
@@ -306,6 +306,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
             none_rows.to_csv("./none.csv")
         for index, row in parsed_message_df.iterrows():
             extractor.process(row)
+        extractor.process_orders()
         return extractor
     finally:
         pg.close_connection()
