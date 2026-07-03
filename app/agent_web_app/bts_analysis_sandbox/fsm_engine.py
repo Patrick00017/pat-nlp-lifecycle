@@ -195,7 +195,7 @@ class OrderAndMaterialFSM:
         self.current_parts = self._default_parts()
 
     def _default_parts(self):
-        return {k: {'material': '-', 'event_id': None} for k in ['ls0','ms1','ls1','ms2','ls2']}
+        return {k: {'material': '-', 'event_id': None} for k in ['ls0','ms1','ls1','ms2','ls2','df']}
 
     def process_event(self, event: dict) -> bool:
         type = event.get('type')
@@ -220,14 +220,18 @@ class OrderAndMaterialFSM:
         if not self.current_paper_code:
             return
         slot_map = {'ls0': 0, 'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}
-        idx = slot_map.get(event['part'], -1)
-        if idx < 0:
-            return
         curr_mat = event['msg'].split('-> ')[-1].strip('()').split(',')[0] if '->' in event['msg'] else ''
         if not curr_mat:
             return
 
-        self.current_parts[event['part']] = {'material': curr_mat, 'event_id': str(event['id'])}
+        if event['part'] == 'df':
+            self.current_parts['df'] = {'material': curr_mat, 'event_id': str(event['id'])}
+        else:
+            idx = slot_map.get(event['part'], -1)
+            if idx < 0:
+                return
+            self.current_parts[event['part']] = {'material': curr_mat, 'event_id': str(event['id'])}
+
         self._has_material_in_current_order = True
 
         parts = self.current_paper_code.split('.')
@@ -238,10 +242,23 @@ class OrderAndMaterialFSM:
             info = self.current_parts.get(slot_name, {'material': '-', 'event_id': None})
             actual = info['material']
             evt_id = info['event_id']
-            slot_match = (actual == expected or actual == '-' or expected == '00')
+            slot_match = (actual == expected or expected == '00')
             slots[slot_name] = {'actual': actual, 'expected': expected, 'match': slot_match, 'id': evt_id}
             if not slot_match:
                 all_match = False
+        # df 对比
+        df_info = self.current_parts.get('df', {'material': '-.-.-.-.-', 'event_id': None})
+        df_parts = df_info['material'].split('.')
+        df_match = True
+        for si, slot_name in enumerate(['ls0','ms1','ls1','ms2','ls2']):
+            expected = parts[si] if si < len(parts) else '-'
+            actual = df_parts[si] if si < len(df_parts) else '-'
+            m = (actual == expected or expected == '00' or actual == '00')
+            if not m:
+                df_match = False
+        slots['df'] = {'actual': df_info['material'], 'expected': self.current_paper_code, 'match': df_match, 'id': df_info['event_id']}
+        if not df_match:
+            all_match = False
 
         self.order_list.append(self.current_order_id)
         self.material_list.append({
