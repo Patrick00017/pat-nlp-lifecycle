@@ -1,8 +1,22 @@
 import { useState, useEffect } from 'react';
 import { fetchFSMResults } from '../api';
 
-const SLOTS = ['时间', '订单', 'ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df', 'GU1', 'GU2', 'GU3', 'SF1', 'SF2'];
-const SLOT_LABELS = { 时间: '时间', 订单: '订单', ls0: 'LS0', ms1: 'MS1', ls1: 'LS1', ms2: 'MS2', ls2: 'LS2', df: 'DF', GU1: 'GU1', GU2: 'GU2', GU3: 'GU3', SF1: 'SF1', SF2: 'SF2' };
+const SLOTS = ['时间', '订单', 'ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df', 'GU1', 'GU2', 'GU3', 'SF1.ms1', 'SF1.ls1', 'SF2.ms2', 'SF2.ls2'];
+const SLOT_LABELS = { 时间: '时间', 订单: '订单', ls0: 'LS0', ms1: 'MS1', ls1: 'LS1', ms2: 'MS2', ls2: 'LS2', df: 'DF', GU1: 'GU1', GU2: 'GU2', GU3: 'GU3', 'SF1.ms1': 'SF1 ms1', 'SF1.ls1': 'SF1 ls1', 'SF2.ms2': 'SF2 ms2', 'SF2.ls2': 'SF2 ls2' };
+
+const GLUE_SUB_PARENT = { 'SF1.ms1': 'SF1', 'SF1.ls1': 'SF1', 'SF2.ms2': 'SF2', 'SF2.ls2': 'SF2' };
+
+function getGlueSubSlot(slot, seg) {
+  const parent = GLUE_SUB_PARENT[slot];
+  if (!parent) return seg.glue?.[slot] || null;
+  const g = seg.glue?.[parent];
+  if (!g) return null;
+  const parts = (g.material || '').split('/');
+  const subSlot = slot.split('.')[1]; // 'ms1', 'ls1', 'ms2', 'ls2'
+  const mat = slot === parent + '.ms1' || slot === parent + '.ms2' ? (parts[0] || '') : (parts[1] || '');
+  const subAnalysis = (g.analysis || []).filter(a => a.slot === subSlot);
+  return { material: mat, analysis: subAnalysis, time: g.time };
+}
 
 function glueVerdictColor(analysis) {
   if (!analysis || analysis.length === 0) return '#10b981';
@@ -143,9 +157,9 @@ export default function OrderMatchTimeline() {
           {SLOTS.map((slot, si) => {
             const isTime = slot === '时间';
             const isOrder = slot === '订单';
-            const isGlue = slot === 'GU1' || slot === 'GU2' || slot === 'GU3' || slot === 'SF1' || slot === 'SF2';
+            const isGlue = slot.startsWith('GU') || slot.startsWith('SF1') || slot.startsWith('SF2');
             const prevSlot = si > 0 ? SLOTS[si - 1] : '';
-            const needSep = isGlue && (prevSlot === '' || !['GU1','GU2','GU3','SF1','SF2'].includes(prevSlot));
+            const needSep = isGlue && !(prevSlot.startsWith('GU') || prevSlot.startsWith('SF1') || prevSlot.startsWith('SF2'));
             return (
             <>
               {needSep && (
@@ -174,7 +188,7 @@ export default function OrderMatchTimeline() {
                     const o = seg.order || {};
                     title = `${o.order_id} | ${o.paper_code} | ${o.width} | ${o.time?.slice(11, 26) || ''}`;
                   } else if (isGlue) {
-                    const g = seg.glue?.[slot];
+                    const g = getGlueSubSlot(slot, seg);
                     if (!g) {
                       color = '#e5e7eb'; textColor = '#9ca3af';
                     } else {
@@ -213,8 +227,8 @@ export default function OrderMatchTimeline() {
                           {seg.order?.width > 0 && (<span style={{ fontSize: 7, opacity: 0.4 }}>{seg.order.width}</span>)}
                         </>
                       ) : isGlue ? (
-                        seg.glue?.[slot] ? (
-                          <span style={{ fontSize: 10 }}>{slot} {seg.glue[slot].material}</span>
+                        getGlueSubSlot(slot, seg) ? (
+                          <span style={{ fontSize: 10 }}>{SLOT_LABELS[slot]} {getGlueSubSlot(slot, seg).material}</span>
                         ) : null
                       ) : (
                         <>

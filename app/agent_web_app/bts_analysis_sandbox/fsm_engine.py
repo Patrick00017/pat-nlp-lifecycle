@@ -961,7 +961,6 @@ class GlueGapDiagnosticFSM:
                     if info is None or info.get('match', True):
                         continue
                     actual = info.get('actual_material', '-')
-                    actual_w = info.get('actual_width', 0)
                     mid = info.get('id')
                     reason = mat_by_id.get(mid, {}).get('reason', 'unknown') if mid else 'unknown'
 
@@ -971,24 +970,24 @@ class GlueGapDiagnosticFSM:
                     if reason == 'real':
                         verdict = '实际材质触发（实材直送）'
                     elif slot_name == 'df':
-                        if prev_order and actual == prev_order['paper_code'] and actual_w == prev_order.get('width', 0):
+                        if prev_order and actual == prev_order['paper_code']:
                             verdict = '换材滞后（仍在用上一订单材质）'
                             related_order = prev_order['order_id']
-                        elif next_order and actual == next_order['paper_code'] and actual_w == next_order.get('width', 0):
+                        elif next_order and actual == next_order['paper_code']:
                             verdict = '换材提前（已为下一订单备料）'
                             related_order = next_order['order_id']
                     else:
                         if prev_order:
                             parts = prev_order['paper_code'].split('.')
                             si = {'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}.get(slot_name, -1)
-                            if si >= 0 and si < len(parts) and actual == parts[si] and actual_w == prev_order.get('width', 0):
+                            if si >= 0 and si < len(parts) and actual == parts[si]:
                                 verdict = '换材滞后（仍在用上一订单材质）'
                                 related_order = prev_order['order_id']
 
                         if verdict == '未知材质错误' and next_order:
                             parts = next_order['paper_code'].split('.')
                             si = {'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}.get(slot_name, -1)
-                            if si >= 0 and si < len(parts) and actual == parts[si] and actual_w == next_order.get('width', 0):
+                            if si >= 0 and si < len(parts) and actual == parts[si]:
                                 verdict = '换材提前（已为下一订单备料）'
                                 related_order = next_order['order_id']
 

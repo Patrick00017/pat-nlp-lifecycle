@@ -36,7 +36,7 @@ export default function FSMViewer() {
             all.push(evt);
           }
         }
-        const reasonMap = { normal: '正常换材', reset: '复位', hq: '横切校验' };
+        const reasonMap = { normal: '正常换材', reset: '复位', hq: '横切校验', real: '实际材质' };
         for (const e of (data.material_events || [])) {
           all.push({
             event_id: (e.part || '').toUpperCase(),
@@ -52,7 +52,7 @@ export default function FSMViewer() {
       })()
     : isMat
     ? (data.material_events || []).map(e => {
-        const reasonMap = { normal: '正常换材', reset: '复位', hq: '横切校验' };
+        const reasonMap = { normal: '正常换材', reset: '复位', hq: '横切校验', real: '实际材质' };
         const reason = reasonMap[e.reason] || e.reason || '';
         return {
           event_id: (e.part || '').toUpperCase(),
