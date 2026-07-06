@@ -962,11 +962,14 @@ class GlueGapDiagnosticFSM:
                         continue
                     actual = info.get('actual_material', '-')
                     mid = info.get('id')
+                    reason = mat_by_id.get(mid, {}).get('reason', 'unknown') if mid else 'unknown'
 
                     verdict = '未知材质错误'
                     related_order = None
 
-                    if slot_name == 'df':
+                    if reason == 'real':
+                        verdict = '实际材质触发（实材直送）'
+                    elif slot_name == 'df':
                         if prev_order and actual == prev_order['paper_code']:
                             verdict = '换材滞后（仍在用上一订单材质）'
                             related_order = prev_order['order_id']
@@ -987,8 +990,6 @@ class GlueGapDiagnosticFSM:
                             if si >= 0 and si < len(parts) and actual == parts[si]:
                                 verdict = '换材提前（已为下一订单备料）'
                                 related_order = next_order['order_id']
-
-                    reason = mat_by_id.get(mid, {}).get('reason', 'unknown') if mid else 'unknown'
 
                     detail.append({
                         'slot': slot_name,

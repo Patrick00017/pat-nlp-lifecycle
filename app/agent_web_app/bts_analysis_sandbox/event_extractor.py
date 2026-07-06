@@ -328,7 +328,7 @@ class KeyEventExtractor:
                 'type': 'material',
                 'msg': f"({prev_material_batch['material']},{prev_material_batch['width']},{prev_material_batch['flute_type']}) -> ({current_material_batch['material']},{current_material_batch['width']},{current_material_batch['flute_type']})",
                 'time': str(row['Date']),
-                'reason': '实际材质'
+                'reason': 'real'
             }
             self.material_events.append(event)
         
@@ -372,7 +372,7 @@ class KeyEventExtractor:
                 'type': 'material',
                 'msg': f"({prev_material_batch['material']},{prev_material_batch['width']},{prev_material_batch['flute_type']}) -> ({real_material},{real_width},{prev_material_batch['flute_type']})",
                 'time': str(row['Date']),
-                'reason': '实际材质'
+                'reason': 'real'
             }
             self.material_events.append(event)
         

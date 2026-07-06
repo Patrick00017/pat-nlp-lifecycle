@@ -7,6 +7,7 @@ const SLOT_LABELS = { 时间: '时间', 订单: '订单', ls0: 'LS0', ms1: 'MS1'
 function glueVerdictColor(analysis) {
   if (!analysis || analysis.length === 0) return '#10b981';
   const v = analysis[0]?.verdict || '';
+  if (v.startsWith('实际材质')) return '#8b5cf6';
   if (v.startsWith('未知')) return '#ef4444';
   if (v.startsWith('换材提前')) return '#f59e0b';
   if (v.startsWith('换材滞后')) return '#f97316';
@@ -16,6 +17,7 @@ function glueVerdictColor(analysis) {
 function glueVerdictTextColor(analysis) {
   if (!analysis || analysis.length === 0) return '#065f46';
   const v = analysis[0]?.verdict || '';
+  if (v.startsWith('实际材质')) return '#fff';
   if (v.startsWith('未知')) return '#fff';
   return '#fff';
 }
