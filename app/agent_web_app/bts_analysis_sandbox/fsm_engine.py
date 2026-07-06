@@ -908,9 +908,9 @@ class GlueGapDiagnosticFSM:
             except Exception:
                 pass
         
-        results['description'] = "glue_events...order_check...analysis..."
+        results['description'] = "glue_events...order_check..."
         results['order_check'] = self.order_and_material_fsm.get_results()
-        results['analysis'] = self.analyze()
+        self.analyze(fsm_events)
         return results
 
     # ── 根因分析 ──
@@ -920,11 +920,21 @@ class GlueGapDiagnosticFSM:
         'SF1': ['ms1', 'ls1'], 'SF2': ['ms2', 'ls2'],
     }
 
-    def analyze(self):
+    def analyze(self, fsm_events):
         oc = self.order_and_material_fsm
         mat_by_id = {str(e['id']): e for e in self.all_material_events}
         order_events = sorted(self.extractor.order_events, key=lambda x: x['time'])
-        results = []
+
+        # (pos, event_id) → event 映射 + 初始化 analysis
+        event_map = {}
+        for pos, events in fsm_events.items():
+            for evt in events:
+                if isinstance(evt.get('id'), uuid.UUID):
+                    key = (pos, str(evt['id']))
+                else:
+                    key = (pos, str(evt.get('id', '')))
+                event_map[key] = evt
+                evt['analysis'] = []
 
         for pos, fsm in self.fsms.items():
             slots_of_interest = self.GLUE_TO_SLOTS.get(pos, [])
@@ -932,7 +942,6 @@ class GlueGapDiagnosticFSM:
                 continue
             for evt in fsm.full_events:
                 glue_time = evt['time']
-                # 找胶水事件前后的订单
                 prev_order = None
                 current_order = None
                 next_order = None
@@ -954,7 +963,6 @@ class GlueGapDiagnosticFSM:
                     actual = info.get('actual_material', '-')
                     mid = info.get('id')
 
-                    # 查前后订单
                     verdict = '未知材质错误'
                     related_order = None
 
@@ -992,13 +1000,13 @@ class GlueGapDiagnosticFSM:
                     })
 
                 if detail:
-                    results.append({
-                        'glue_position': pos,
-                        'glue_time': glue_time,
-                        'glue_material': evt.get('material', ''),
-                        'detail': detail,
-                    })
-        return results
+                    if isinstance(evt.get('id'), uuid.UUID):
+                        key = (pos, str(evt['id']))
+                    else:
+                        key = (pos, str(evt.get('id', '')))
+                    target = event_map.get(key)
+                    if target is not None:
+                        target['analysis'].extend(detail)
 
     def _find_slot_match_at_time(self, oc, glue_time, slot_name):
         latest = None
