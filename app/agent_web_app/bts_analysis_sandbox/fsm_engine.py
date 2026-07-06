@@ -979,14 +979,14 @@ class GlueGapDiagnosticFSM:
                     else:
                         if prev_order:
                             parts = prev_order['paper_code'].split('.')
-                            si = {'ms1': 0, 'ls1': 1, 'ms2': 2, 'ls2': 3}.get(slot_name, -1)
+                            si = {'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}.get(slot_name, -1)
                             if si >= 0 and si < len(parts) and actual == parts[si]:
                                 verdict = '换材滞后（仍在用上一订单材质）'
                                 related_order = prev_order['order_id']
 
                         if verdict == '未知材质错误' and next_order:
                             parts = next_order['paper_code'].split('.')
-                            si = {'ms1': 0, 'ls1': 1, 'ms2': 2, 'ls2': 3}.get(slot_name, -1)
+                            si = {'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}.get(slot_name, -1)
                             if si >= 0 and si < len(parts) and actual == parts[si]:
                                 verdict = '换材提前（已为下一订单备料）'
                                 related_order = next_order['order_id']

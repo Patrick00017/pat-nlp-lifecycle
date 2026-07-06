@@ -201,7 +201,9 @@ export default function OrderMatchTimeline() {
                       overflow: 'hidden', textOverflow: 'ellipsis',
                       padding: '1px 3px', lineHeight: 1.2,
                       wordBreak: (slot === 'df' || isOrder || isGlue) ? 'break-all' : undefined,
-                      borderRight: j % 5 === 0 && !isTime ? '2px solid #fff' : '1px solid rgba(255,255,255,0.4)',
+                      borderLeft: j > 0 && seg.order?.order_id !== segments[j - 1]?.order?.order_id
+                        ? '2px solid #fff'
+                        : '1px solid rgba(255,255,255,0.4)',
                       cursor: 'default',
                     }}>
                       {isTime ? (<span>{seg.timeLabel}</span>) : isOrder ? (
