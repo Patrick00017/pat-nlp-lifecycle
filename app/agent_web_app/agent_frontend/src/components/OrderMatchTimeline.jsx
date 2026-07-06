@@ -172,11 +172,15 @@ export default function OrderMatchTimeline() {
                     const o = seg.order || {};
                     title = `${o.order_id} | ${o.paper_code} | ${o.width} | ${o.time?.slice(11, 26) || ''}`;
                   } else if (isGlue) {
-                    const g = seg.glue?.[slot] || {};
-                    color = glueVerdictColor(g.analysis);
-                    textColor = glueVerdictTextColor(g.analysis);
-                    const v = g.analysis?.[0]?.verdict || '正常';
-                    title = `${slot} | ${g.material || ''} | ${v} | ${(g.time || '').slice(11, 26)}`;
+                    const g = seg.glue?.[slot];
+                    if (!g) {
+                      color = '#e5e7eb'; textColor = '#9ca3af';
+                    } else {
+                      color = glueVerdictColor(g.analysis);
+                      textColor = glueVerdictTextColor(g.analysis);
+                    }
+                    const v = g?.analysis?.[0]?.verdict || '正常';
+                    title = `${slot} | ${g?.material || ''} | ${v} | ${(g?.time || '').slice(11, 26)}`;
                   } else {
                     const s = seg.slots?.[slot] || { actual: '-', expected: '-', match: false };
                     color = segmentColor(s.match, s.actual);
@@ -205,12 +209,9 @@ export default function OrderMatchTimeline() {
                           {seg.order?.width > 0 && (<span style={{ fontSize: 7, opacity: 0.4 }}>{seg.order.width}</span>)}
                         </>
                       ) : isGlue ? (
-                        <>
-                          <span style={{ fontSize: 10 }}>{slot}</span>
-                          {seg.glue?.[slot]?.material && (
-                            <span style={{ fontSize: 9, opacity: 0.8, marginLeft: 3 }}>{seg.glue[slot].material}</span>
-                          )}
-                        </>
+                        seg.glue?.[slot] ? (
+                          <span style={{ fontSize: 10 }}>{slot} {seg.glue[slot].material}</span>
+                        ) : null
                       ) : (
                         <>
                           <span>{seg.slots?.[slot]?.actual || '-'}</span>
