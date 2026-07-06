@@ -187,6 +187,7 @@ class OrderAndMaterialFSM:
     def __init__(self):
         self.current_order_id = None
         self.current_paper_code = None
+        self.current_order_width = 0
         self.current_flute = None
         self.order_list = []
         self.material_list = []
@@ -195,7 +196,7 @@ class OrderAndMaterialFSM:
         self.current_parts = self._default_parts()
 
     def _default_parts(self):
-        return {k: {'material': '-', 'event_id': None} for k in ['ls0','ms1','ls1','ms2','ls2','df']}
+        return {k: {'material': '-', 'width': 0, 'event_id': None} for k in ['ls0','ms1','ls1','ms2','ls2','df']}
 
     def process_event(self, event: dict) -> bool:
         type = event.get('type')
@@ -212,51 +213,53 @@ class OrderAndMaterialFSM:
             self.match_list.append(None)
         self.current_order_id = event['order_id']
         self.current_paper_code = event['paper_code']
+        self.current_order_width = event['width']
         self.current_flute = event['flute']
         self._has_material_in_current_order = False
-        self.current_parts = self._default_parts()
+        # 修改：在换单时不重置各个机台的材质
+        # self.current_parts = self._default_parts()
 
     def _on_material(self, event):
         if not self.current_paper_code:
             return
         slot_map = {'ls0': 0, 'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}
         curr_mat = event['msg'].split('-> ')[-1].strip('()').split(',')[0] if '->' in event['msg'] else ''
+        curr_width = int(event['msg'].split('-> ')[-1].strip('()').split(',')[1]) if '->' in event['msg'] else ''
         if not curr_mat:
             return
 
         if event['part'] == 'df':
-            self.current_parts['df'] = {'material': curr_mat, 'event_id': str(event['id'])}
+            self.current_parts['df'] = {'material': curr_mat, 'width': curr_width, 'event_id': str(event['id'])}
         else:
             idx = slot_map.get(event['part'], -1)
             if idx < 0:
                 return
-            self.current_parts[event['part']] = {'material': curr_mat, 'event_id': str(event['id'])}
+            self.current_parts[event['part']] = {'material': curr_mat, 'width': curr_width, 'event_id': str(event['id'])}
 
         self._has_material_in_current_order = True
 
         parts = self.current_paper_code.split('.')
+        expected_width = self.current_order_width
         slots = {}
         all_match = True
         for slot_name, si in slot_map.items():
-            expected = parts[si] if si < len(parts) else '-'
-            info = self.current_parts.get(slot_name, {'material': '-', 'event_id': None})
-            actual = info['material']
-            evt_id = info['event_id']
-            slot_match = (actual == expected or expected == '00')
-            slots[slot_name] = {'actual': actual, 'expected': expected, 'match': slot_match, 'id': evt_id}
+            expected_material = parts[si] if si < len(parts) else '-'
+            info = self.current_parts.get(slot_name, {'material': '-', 'width': 0, 'event_id': None})
+            actual_material = info['material']
+            actual_width = info['width']
+            evt_id = info['event_id'] # 换材id
+            slot_match = (actual_material == expected_material or expected_material == '-') and (actual_width == expected_width or expected_material == '-')
+            slots[slot_name] = {'actual_material': actual_material, 'expected_material': expected_material, 'actual_width': actual_width, 'expected_width': expected_width, 'match': slot_match, 'id': evt_id}
             if not slot_match:
                 all_match = False
         # df 对比
-        df_info = self.current_parts.get('df', {'material': '-.-.-.-.-', 'event_id': None})
-        df_parts = df_info['material'].split('.')
-        df_match = True
-        for si, slot_name in enumerate(['ls0','ms1','ls1','ms2','ls2']):
-            expected = parts[si] if si < len(parts) else '-'
-            actual = df_parts[si] if si < len(df_parts) else '-'
-            m = (actual == expected or expected == '00' or actual == '00')
-            if not m:
-                df_match = False
-        slots['df'] = {'actual': df_info['material'], 'expected': self.current_paper_code, 'match': df_match, 'id': df_info['event_id']}
+        df_info = self.current_parts.get('df', {'material': '-.-.-.-.-', 'width': 0, 'event_id': None})
+        df_expected_material = self.current_paper_code
+        df_expected_width = self.current_order_width
+        df_actual_material = df_info['material']
+        df_actual_width = df_info['width']
+        df_match = (df_expected_material == df_actual_material or df_expected_material == '-') and (df_expected_width == df_actual_width or df_expected_material == '-')
+        slots['df'] = {'actual_material': df_actual_material, 'expected_material': df_expected_material, 'actual_width': df_actual_width, 'expected_width': df_expected_width, 'match': df_match, 'id': df_info['event_id']}
         if not df_match:
             all_match = False
 
@@ -302,6 +305,66 @@ class OrderAndMaterialFSM:
             else:
                 orders[oid]['mismatched'] += 1
         return orders
+
+    def analyze(self, glue_events, material_events):
+        GLUE_TO_SLOTS = {
+            'GU1': ['ls0', 'ms1'], 'GU2': ['ls1', 'ms2'], 'GU3': ['ls2', 'ms3'],
+            'SF1': ['ms1', 'ls1'], 'SF2': ['ms2', 'ls2'], 'SF3': ['ms3', 'ls3']
+        }
+        mat_by_id = {str(e['id']): e for e in material_events}
+        results = []
+        for pos, events in glue_events.items():
+            slots_of_interest = GLUE_TO_SLOTS.get(pos, [])
+            if not slots_of_interest:
+                continue
+            for evt in events:
+                # 找的当前订单或者上一笔订单
+                order_id = self._find_order_at_time(evt['time'])
+                if not order_id:
+                    continue
+                mismatched = self._find_mismatch_at_time(evt['time'], slots_of_interest)
+                if not mismatched:
+                    continue
+                detail = []
+                for slot_name, entry in mismatched.items():
+                    mid = entry.get('id')
+                    reason = mat_by_id.get(mid, {}).get('reason', 'unknown') if mid else 'unknown'
+                    detail.append({
+                        'slot': slot_name,
+                        'actual': entry['actual'],
+                        'expected': entry['expected'],
+                        'material_event_id': mid,
+                        'reason': reason,
+                        'confirmed': reason != 'real',
+                    })
+                results.append({
+                    'glue_event_id': str(evt['id']),
+                    'order_id': order_id,
+                    'detail': detail,
+                })
+        return results
+
+    def _find_order_at_time(self, time_str):
+        current = None
+        for i, oid in enumerate(self.order_list):
+            mat_time = self.material_list[i].get('time', '')
+            if mat_time and mat_time <= time_str:
+                current = oid
+        return current
+
+    def _find_mismatch_at_time(self, time_str, slots_of_interest):
+        latest = {}
+        for i, oid in enumerate(self.order_list):
+            mat_time = self.material_list[i].get('time', '')
+            m = self.match_list[i]
+            if mat_time and mat_time > time_str: # 如果时间超出，停止
+                break
+            if m is None: # 订单期间没有换材
+                continue
+            for slot_name, info in m['slots'].items():
+                latest[slot_name] = info
+        return {s: latest[s] for s in slots_of_interest
+                if s in latest and not latest[s]['match']}
 
 class PositionFSM:
     """
@@ -902,6 +965,9 @@ class GlueGapDiagnosticFSM:
         
         results['description'] = "glue_events中保存的是已经成功的胶水赋值事件，其中errors中是已经确认的错误，是最需要注意的部分。material_events是这个时间段内的所有换材事件，如果出现材质不匹配的错误，可以使用id在这里匹配对应的换材事件。qdm_df中保存的是GU1，GU2，GU3使用的用于取qdm_factor的数据表。qdm_sf中保存的是SF1，SF2，SF3在胶水赋值时取qdm_factor的数据表。basedoc_gu保存的是GU1，GU2，GU3在胶水赋值时取基础楞型的数据表。basedoc_sf保存的是SF1，SF2，SF3在胶水赋值时取基础楞型的数据表。speed_coef中保存的是取车速系数的数据表。paper_codes中保存的是取克重的数据表。order_check中保存的是换材与订单材质的匹配检查结果。"
         results['order_check'] = self.order_and_material_fsm.get_results()
+        # results['root_cause'] = self.order_and_material_fsm.analyze(
+        #     fsm_events, self.all_material_events
+        # )
         return results
 
     def save_results(self, filepath=None):
