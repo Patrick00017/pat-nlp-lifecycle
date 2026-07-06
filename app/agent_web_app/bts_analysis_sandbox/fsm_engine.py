@@ -908,10 +908,111 @@ class GlueGapDiagnosticFSM:
             except Exception:
                 pass
         
-        results['description'] = "glue_events中保存的是已经成功的胶水赋值事件，其中errors中是已经确认的错误，是最需要注意的部分。material_events是这个时间段内的所有换材事件，如果出现材质不匹配的错误，可以使用id在这里匹配对应的换材事件。qdm_df中保存的是GU1，GU2，GU3使用的用于取qdm_factor的数据表。qdm_sf中保存的是SF1，SF2，SF3在胶水赋值时取qdm_factor的数据表。basedoc_gu保存的是GU1，GU2，GU3在胶水赋值时取基础楞型的数据表。basedoc_sf保存的是SF1，SF2，SF3在胶水赋值时取基础楞型的数据表。speed_coef中保存的是取车速系数的数据表。paper_codes中保存的是取克重的数据表。order_check中保存的是换材与订单材质的匹配检查结果。"
+        results['description'] = "glue_events...order_check...analysis..."
         results['order_check'] = self.order_and_material_fsm.get_results()
-
+        results['analysis'] = self.analyze()
         return results
+
+    # ── 根因分析 ──
+
+    GLUE_TO_SLOTS = {
+        'GU1': ['df'], 'GU2': ['df'], 'GU3': ['df'],
+        'SF1': ['ms1', 'ls1'], 'SF2': ['ms2', 'ls2'],
+    }
+
+    def analyze(self):
+        oc = self.order_and_material_fsm
+        mat_by_id = {str(e['id']): e for e in self.all_material_events}
+        order_events = sorted(self.extractor.order_events, key=lambda x: x['time'])
+        results = []
+
+        for pos, fsm in self.fsms.items():
+            slots_of_interest = self.GLUE_TO_SLOTS.get(pos, [])
+            if not slots_of_interest:
+                continue
+            for evt in fsm.full_events:
+                glue_time = evt['time']
+                # 找胶水事件前后的订单
+                prev_order = None
+                current_order = None
+                next_order = None
+                for o in order_events:
+                    if o['time'] <= glue_time:
+                        prev_order = o
+                    elif next_order is None:
+                        next_order = o
+                current_order = prev_order
+
+                if not current_order:
+                    continue
+
+                detail = []
+                for slot_name in slots_of_interest:
+                    info = self._find_slot_match_at_time(oc, glue_time, slot_name)
+                    if info is None or info.get('match', True):
+                        continue
+                    actual = info.get('actual_material', '-')
+                    mid = info.get('id')
+
+                    # 查前后订单
+                    verdict = '未知材质错误'
+                    related_order = None
+
+                    if slot_name == 'df':
+                        if prev_order and actual == prev_order['paper_code']:
+                            verdict = '换材滞后（仍在用上一订单材质）'
+                            related_order = prev_order['order_id']
+                        elif next_order and actual == next_order['paper_code']:
+                            verdict = '换材提前（已为下一订单备料）'
+                            related_order = next_order['order_id']
+                    else:
+                        if prev_order:
+                            parts = prev_order['paper_code'].split('.')
+                            si = {'ms1': 0, 'ls1': 1, 'ms2': 2, 'ls2': 3}.get(slot_name, -1)
+                            if si >= 0 and si < len(parts) and actual == parts[si]:
+                                verdict = '换材滞后（仍在用上一订单材质）'
+                                related_order = prev_order['order_id']
+
+                        if verdict == '未知材质错误' and next_order:
+                            parts = next_order['paper_code'].split('.')
+                            si = {'ms1': 0, 'ls1': 1, 'ms2': 2, 'ls2': 3}.get(slot_name, -1)
+                            if si >= 0 and si < len(parts) and actual == parts[si]:
+                                verdict = '换材提前（已为下一订单备料）'
+                                related_order = next_order['order_id']
+
+                    reason = mat_by_id.get(mid, {}).get('reason', 'unknown') if mid else 'unknown'
+
+                    detail.append({
+                        'slot': slot_name,
+                        'actual': actual,
+                        'current_order': current_order['order_id'],
+                        'verdict': verdict,
+                        'related_order': related_order,
+                        'reason': reason,
+                    })
+
+                if detail:
+                    results.append({
+                        'glue_position': pos,
+                        'glue_time': glue_time,
+                        'glue_material': evt.get('material', ''),
+                        'detail': detail,
+                    })
+        return results
+
+    def _find_slot_match_at_time(self, oc, glue_time, slot_name):
+        latest = None
+        for i in range(len(oc.order_list)):
+            mat_time = oc.material_list[i].get('time', '')
+            m = oc.match_list[i]
+            if mat_time and mat_time > glue_time:
+                break
+            if m is None:
+                continue
+            slots = m.get('slots', {})
+            if slot_name in slots:
+                latest = slots[slot_name]
+        return latest
 
     def save_results(self, filepath=None):
         import json, os, uuid
