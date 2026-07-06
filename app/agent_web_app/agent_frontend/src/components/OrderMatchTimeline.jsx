@@ -45,72 +45,90 @@ export default function OrderMatchTimeline() {
   if (!data?.order_check) return <div style={{ padding: 20, color: '#6b7280' }}>无订单匹配数据</div>;
 
   const oc = data.order_check;
-  const times = oc.material_list.map(m => new Date(m.time || 0).getTime());
-  // 扩展到胶水事件时间范围
-  for (const pos of ['GU1','GU2','GU3','SF1','SF2']) {
-    for (const e of (data.glue_events?.[pos] || [])) {
-      times.push(new Date(e.time || 0).getTime());
-    }
-  }
-  const minT = times.length > 0 ? Math.min(...times) : 0;
-  const maxT = times.length > 0 ? Math.max(...times) : 1;
-  const totalDuration = maxT - minT || 1;
-
   const matReasonMap = {};
   for (const e of (data.material_events || [])) {
     matReasonMap[e.id] = e.reason || '';
   }
 
-  // Build segments: for each slot, a list of {wd%, color, label, tooltip, textColor}
-  const slotSegments = {};
-  for (const s of SLOTS) slotSegments[s] = [];
+  // ── 收集所有唯一时间点 ──
+  const timeSet = new Set();
+  for (const m of oc.material_list) if (m.time) timeSet.add(m.time);
+  for (const pos of ['GU1','GU2','GU3','SF1','SF2']) {
+    for (const e of (data.glue_events?.[pos] || [])) if (e.time) timeSet.add(e.time);
+  }
+  const sortedTimes = [...timeSet].map(t => new Date(t).getTime()).sort((a, b) => a - b);
+  const minT = sortedTimes.length > 0 ? sortedTimes[0] : 0;
+  const maxT = sortedTimes.length > 0 ? sortedTimes[sortedTimes.length - 1] : 1;
+  const totalDuration = maxT - minT || 1;
 
-  for (let i = 0; i < oc.material_list.length; i++) {
-    const t = times[i] || 0;
-    const nextT = (i + 1 < times.length) ? times[i + 1] : maxT + 1;
-    const wd = Math.max(((nextT - t) / totalDuration) * 100, 0.3);
-    const timeFull = oc.material_list[i].time || '';
-    const timeHHMM = timeFull.slice(11, 16);
-    const prevHHMM = i > 0 ? (oc.material_list[i - 1]?.time || '').slice(11, 16) : '';
-    const showTime = i === 0 || timeHHMM !== prevHHMM;
+  // ── 构建统一段数组：每个时间点一个段 ──
+  const segments = sortedTimes.map((t, i) => {
+    const nextT = (i + 1 < sortedTimes.length) ? sortedTimes[i + 1] : maxT + 1;
+    return {
+      startMs: t,
+      wd: Math.max(((nextT - t) / totalDuration) * 100, 0.3),
+    };
+  });
 
-    // 时间轴段：仅每分钟变显
-    slotSegments['时间'].push({ wd, label: showTime ? timeFull.slice(11, 19) : '', time: oc.material_list[i].time });
+  // ── 为每个段填充快照数据 ──
+  let mi = 0; // material_list cursor
+  let lastOrderData = null;
+  let lastSlotData = {};
+  const glueCursors = {};
+  for (const pos of ['GU1','GU2','GU3','SF1','SF2']) glueCursors[pos] = 0;
 
-    for (const slot of ['ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df']) {
-      const info = oc.match_list[i]?.slots?.[slot] || {};
-      const actual = info.actual_material || info.actual || '-';
-      const expected = info.expected_material || info.expected || '-';
-      const actualW = info.actual_width ?? '';
-      const expectedW = info.expected_width ?? '';
-      const match = info.match ?? false;
-      const reason = matReasonMap[info.id] || '';
-      slotSegments[slot].push({ wd, actual, expected, actualW, expectedW, match, reason, time: oc.material_list[i].time });
+  for (const seg of segments) {
+    // 物料快照：推进 cursor
+    while (mi < oc.material_list.length) {
+      const mt = new Date(oc.material_list[mi].time || 0).getTime();
+      if (mt > seg.startMs) break;
+      lastOrderData = {
+        order_id: oc.order_list[mi] || '?',
+        paper_code: oc.summary?.[oc.order_list[mi]]?.paper_code || '',
+        width: oc.summary?.[oc.order_list[mi]]?.width || '',
+        time: oc.material_list[mi].time,
+      };
+      for (const slot of ['ls0','ms1','ls1','ms2','ls2','df']) {
+        const info = oc.match_list[mi]?.slots?.[slot] || {};
+        lastSlotData[slot] = {
+          actual: info.actual_material || info.actual || '-',
+          expected: info.expected_material || info.expected || '-',
+          actualW: info.actual_width ?? '',
+          expectedW: info.expected_width ?? '',
+          match: info.match ?? false,
+          reason: matReasonMap[info.id] || '',
+        };
+      }
+      mi++;
     }
-    // 订单段
-    slotSegments['订单'].push({
-      wd, label: oc.order_list[i] || '?',
-      paper_code: oc.summary?.[oc.order_list[i]]?.paper_code || '',
-      width: oc.summary?.[oc.order_list[i]]?.width || '',
-      time: oc.material_list[i].time,
-    });
+    seg.order = lastOrderData ? { ...lastOrderData } : null;
+    seg.slots = JSON.parse(JSON.stringify(lastSlotData));
+
+    // 胶水快照
+    seg.glue = {};
+    for (const pos of ['GU1','GU2','GU3','SF1','SF2']) {
+      const events = (data.glue_events?.[pos] || []);
+      while (glueCursors[pos] < events.length) {
+        const et = new Date(events[glueCursors[pos]].time || 0).getTime();
+        if (et > seg.startMs) break;
+        seg.glue[pos] = {
+          material: events[glueCursors[pos]].material || '',
+          analysis: events[glueCursors[pos]].analysis || [],
+          time: events[glueCursors[pos]].time,
+        };
+        glueCursors[pos]++;
+      }
+    }
   }
 
-  // ── 胶水事件段 ──
-  for (const pos of ['GU1','GU2','GU3','SF1','SF2']) {
-    const events = (data.glue_events?.[pos] || []);
-    for (let i = 0; i < events.length; i++) {
-      const t = new Date(events[i].time || 0).getTime();
-      const nextT = (i + 1 < events.length) ? new Date(events[i + 1].time || 0).getTime() : maxT + 1;
-      const wd = Math.max(((nextT - t) / totalDuration) * 100, 0.3);
-      const analysis = events[i].analysis || [];
-      const verdict = analysis[0]?.verdict || '';
-      const material = events[i].material || '';
-      slotSegments[pos].push({
-        wd, material, verdict, analysis,
-        time: events[i].time,
-      });
-    }
+  // ── 时间标签（每分行变） ──
+  let lastHHMM = '';
+  for (const seg of segments) {
+    const d = new Date(seg.startMs);
+    const iso = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    const hhmm = iso.slice(0, 5);
+    seg.timeLabel = hhmm !== lastHHMM ? iso : '';
+    lastHHMM = hhmm;
   }
 
   return (
@@ -119,7 +137,7 @@ export default function OrderMatchTimeline() {
         订单材质匹配
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <div style={{ minWidth: Math.max(slotSegments['订单'].length * 120, 800) }}>
+        <div style={{ minWidth: Math.max(segments.length * 120, 800) }}>
           {SLOTS.map((slot, si) => {
             const isTime = slot === '时间';
             const isOrder = slot === '订单';
@@ -128,15 +146,12 @@ export default function OrderMatchTimeline() {
             const needSep = isGlue && (prevSlot === '' || !['GU1','GU2','GU3','SF1','SF2'].includes(prevSlot));
             return (
             <>
-              {/* Glue section separator */}
-              {needSep && slot === 'GU1' && (
+              {needSep && (
                 <div key="glue-sep" style={{
                   height: 24, display: 'flex', alignItems: 'center',
                   background: '#f0f9ff', borderBottom: '2px solid #bae6fd',
                   paddingLeft: 12, fontSize: 11, fontWeight: 600, color: '#0369a1',
-                }}>
-                  胶水赋值
-                </div>
+                }}>胶水赋值</div>
               )}
             <div key={slot} style={{
               display: 'flex', height: isTime ? 28 : 44,
@@ -146,39 +161,35 @@ export default function OrderMatchTimeline() {
                 width: 48, minWidth: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 600, color: '#6b7280', background: '#f9fafb',
                 borderRight: '1px solid #e5e7eb', flexShrink: 0,
-              }}>
-                {isTime ? '' : SLOT_LABELS[slot]}
-              </div>
+              }}>{isTime ? '' : SLOT_LABELS[slot]}</div>
               <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                {slotSegments[slot].map((seg, j) => {
-                  let color, textColor;
+                {segments.map((seg, j) => {
+                  let color, textColor, title = seg.timeLabel || '';
                   if (isTime) {
                     color = 'transparent'; textColor = '#9ca3af';
                   } else if (isOrder) {
                     color = '#e5e7eb'; textColor = '#374151';
+                    const o = seg.order || {};
+                    title = `${o.order_id} | ${o.paper_code} | ${o.width} | ${o.time?.slice(11, 26) || ''}`;
                   } else if (isGlue) {
-                    color = glueVerdictColor(seg.analysis);
-                    textColor = glueVerdictTextColor(seg.analysis);
+                    const g = seg.glue?.[slot] || {};
+                    color = glueVerdictColor(g.analysis);
+                    textColor = glueVerdictTextColor(g.analysis);
+                    const v = g.analysis?.[0]?.verdict || '正常';
+                    title = `${slot} | ${g.material || ''} | ${v} | ${(g.time || '').slice(11, 26)}`;
                   } else {
-                    color = segmentColor(seg.match, seg.actual);
-                    textColor = segmentTextColor(seg.match, seg.actual);
-                  }
-                  // title
-                  let title = seg.time || '';
-                  if (isOrder) title = `${seg.label} | ${seg.paper_code || ''} | ${seg.width || ''} | ${seg.time?.slice(11, 26) || ''}`;
-                  else if (isGlue) {
-                    const v = seg.analysis?.[0]?.verdict || '正常';
-                    title = `${slot} | ${seg.material || ''} | ${v} | ${seg.time?.slice(11, 26) || ''}`;
-                  } else {
-                    title = `${seg.actual} vs ${seg.expected} | ${seg.actualW || 0} vs ${seg.expectedW || 0} | ${seg.match ? '✅ 匹配' : '❌ 不匹配'} | ${seg.time?.slice(11, 26) || ''}`;
+                    const s = seg.slots?.[slot] || { actual: '-', expected: '-', match: false };
+                    color = segmentColor(s.match, s.actual);
+                    textColor = segmentTextColor(s.match, s.actual);
+                    title = `${s.actual} vs ${s.expected} | ${s.actualW || 0} vs ${s.expectedW || 0} | ${s.match ? 'OK' : 'X'} | ${seg.timeLabel}`;
                   }
                   return (
                     <div key={j} title={title} style={{
                       width: `${seg.wd}%`, minWidth: 120,
                       background: color, color: textColor,
-                      display: 'flex', flexDirection: isGlue ? 'row' : 'column',
+                      display: 'flex', flexDirection: isTime ? 'row' : isGlue ? 'row' : 'column',
                       alignItems: 'center', justifyContent: 'center',
-                      fontSize: isTime ? 9 : 11, fontWeight: isTime ? 400 : isOrder ? 600 : 500,
+                      fontSize: isTime ? 9 : 11, fontWeight: isOrder ? 600 : 500,
                       fontFamily: 'monospace',
                       whiteSpace: (slot === 'df' || isOrder || isGlue) ? 'normal' : 'nowrap',
                       overflow: 'hidden', textOverflow: 'ellipsis',
@@ -187,24 +198,28 @@ export default function OrderMatchTimeline() {
                       borderRight: j % 5 === 0 && !isTime ? '2px solid #fff' : '1px solid rgba(255,255,255,0.4)',
                       cursor: 'default',
                     }}>
-                      {isTime ? (<span>{seg.label}</span>) : isOrder ? (
+                      {isTime ? (<span>{seg.timeLabel}</span>) : isOrder ? (
                         <>
-                          <span>{seg.label}</span>
-                          {seg.paper_code && (<span style={{ fontSize: 7, opacity: 0.5 }}>{seg.paper_code}</span>)}
-                          {seg.width > 0 && (<span style={{ fontSize: 7, opacity: 0.4 }}>{seg.width}</span>)}
+                          <span>{seg.order?.order_id || '?'}</span>
+                          {seg.order?.paper_code && (<span style={{ fontSize: 7, opacity: 0.5 }}>{seg.order.paper_code}</span>)}
+                          {seg.order?.width > 0 && (<span style={{ fontSize: 7, opacity: 0.4 }}>{seg.order.width}</span>)}
                         </>
                       ) : isGlue ? (
                         <>
                           <span style={{ fontSize: 10 }}>{slot}</span>
-                          {seg.material && (<span style={{ fontSize: 9, opacity: 0.8, marginLeft: 3 }}>{seg.material}</span>)}
+                          {seg.glue?.[slot]?.material && (
+                            <span style={{ fontSize: 9, opacity: 0.8, marginLeft: 3 }}>{seg.glue[slot].material}</span>
+                          )}
                         </>
                       ) : (
                         <>
-                          <span>{seg.actual}</span>
-                          {seg.actualW > 0 && (<span style={{ fontSize: 8, opacity: 0.6 }}>{seg.actualW}</span>)}
-                          {seg.reason && (
+                          <span>{seg.slots?.[slot]?.actual || '-'}</span>
+                          {(seg.slots?.[slot]?.actualW || 0) > 0 && (
+                            <span style={{ fontSize: 8, opacity: 0.6 }}>{seg.slots[slot].actualW}</span>
+                          )}
+                          {seg.slots?.[slot]?.reason && (
                             <span style={{ fontSize: 7, opacity: 0.5 }}>
-                              {{normal:'正常换材',hq:'横切校验',real:'实际材质',reset:'初始化'}[seg.reason] || seg.reason}
+                              {{normal:'正常换材',hq:'横切校验',real:'实际材质',reset:'初始化'}[seg.slots[slot].reason] || seg.slots[slot].reason}
                             </span>
                           )}
                         </>
