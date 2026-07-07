@@ -59,17 +59,21 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
   const [botLoading, setBotLoading] = useState(false);
   const botContentRef = useRef('');
 
-  useEffect(() => {
+  function loadData() {
+    setLoading(true);
     fetchFSMResults()
       .then(setData)
       .catch(e => console.error('Order data load failed:', e))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(loadData, []);
 
   if (loading) return <div style={{ padding: 20, color: '#6b7280' }}>加载中...</div>;
   if (!data?.order_check) return <div style={{ padding: 20, color: '#6b7280' }}>无订单匹配数据</div>;
 
   const oc = data.order_check;
+  const isEmpty = !oc.order_list?.length;
   // 胶水事件查找表: (pos|time) → event
   const glueEventMap = {};
   for (const pos of ['GU1','GU2','GU3','SF1','SF2']) {
@@ -208,22 +212,36 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
     }
   }
 
-  // Time labels
-  let lastHHMM = '';
   for (const seg of segments) {
     const d = new Date(seg.startMs);
-    const iso = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
-    seg.timeLabel = iso.slice(0, 5) !== lastHHMM ? iso : '';
-    lastHHMM = iso.slice(0, 5);
+    seg.timeLabel = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
   }
 
   return (
     <>
       <style>{'.glue-clickable:hover{filter:brightness(1.15);}'}</style>
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-      <div style={{ padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontWeight: 600, fontSize: 14 }}>
-        订单材质匹配
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
+                    background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+        <span style={{ fontWeight: 600, fontSize: 14 }}>订单材质匹配</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+          {!isEmpty && <span style={{ fontSize: 12, color: '#6b7280' }}>{oc.order_list?.length || 0} 条记录</span>}
+          <button onClick={loadData} disabled={loading} style={{
+            background: 'none', border: '1px solid #d1d5db', borderRadius: 4,
+            padding: '3px 10px', cursor: loading ? 'default' : 'pointer',
+            fontSize: 12, color: '#6b7280', opacity: loading ? 0.5 : 1,
+          }}>{loading ? '刷新中...' : '🔄 加载数据'}</button>
+        </div>
       </div>
+      {isEmpty ? (
+        <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>📋</div>
+          <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>暂无订单匹配数据</div>
+          <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+            请先通过工具或服务端生成诊断结果，<br />然后点击刷新按钮加载
+          </div>
+        </div>
+      ) : (
       <div style={{ flex: 1, overflow: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 12, width: '100%' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
@@ -308,6 +326,7 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
           </tbody>
         </table>
       </div>
+      )}
       {/* Modal for glue event detail */}
       {selectedEvent && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100,
