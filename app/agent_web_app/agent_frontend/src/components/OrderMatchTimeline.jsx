@@ -52,6 +52,7 @@ export default function OrderMatchTimeline() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showBot, setShowBot] = useState(false);
 
   useEffect(() => {
     fetchFSMResults()
@@ -243,12 +244,32 @@ export default function OrderMatchTimeline() {
       {selectedEvent && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100,
                       display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-             onClick={() => setSelectedEvent(null)}>
-          <div style={{ width: '85%', maxWidth: 960, maxHeight: '90vh', overflow: 'auto',
-                        background: '#fff', borderRadius: 8 }}
+             onClick={() => { setSelectedEvent(null); setShowBot(false); }}>
+          <div style={{ width: '90%', maxWidth: showBot ? 1200 : 960, maxHeight: '90vh',
+                        background: '#fff', borderRadius: 8, display: 'flex', overflow: 'hidden' }}
                onClick={e => e.stopPropagation()}>
-            <ChartView event={selectedEvent} onBack={() => setSelectedEvent(null)}
-                      materialEvents={data.material_events} />
+            {/* 左: ChartView */}
+            <div style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+              <ChartView event={selectedEvent} onBack={() => { setSelectedEvent(null); setShowBot(false); }}
+                        materialEvents={data.material_events}
+                        onToggleBot={() => setShowBot(v => !v)} />
+            </div>
+            {/* 右: Bot 摘要 */}
+            {showBot && (
+              <div style={{ width: 340, borderLeft: '1px solid #e5e7eb', background: '#f8fafc',
+                            display: 'flex', flexDirection: 'column', overflow: 'auto', fontSize: 12 }}>
+                <div style={{ padding: '8px 12px', fontWeight: 600, color: '#374151',
+                              borderBottom: '1px solid #e5e7eb' }}>🤖 分析摘要</div>
+                <div style={{ padding: 10, lineHeight: 1.6, color: '#6b7280' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>参数校验</div>
+                  <div style={{ marginBottom: 12 }}>—</div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>根因分析</div>
+                  <div style={{ marginBottom: 12 }}>—</div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>赋值参数</div>
+                  <div style={{ marginBottom: 12 }}>—</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

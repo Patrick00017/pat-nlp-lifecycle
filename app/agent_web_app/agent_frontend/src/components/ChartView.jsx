@@ -15,7 +15,7 @@ const COL_NAMES = {
   value: '结果值',
 };
 
-export default function ChartView({ event, onBack, materialEvents }) {
+export default function ChartView({ event, onBack, materialEvents, onToggleBot }) {
   if (!event) return null;
   const sv = event.set_values;
   if (!sv || !sv.data) {
@@ -69,6 +69,20 @@ export default function ChartView({ event, onBack, materialEvents }) {
           <span style={{ fontSize: 12, color: '#6b7280' }}>
             材质：{event.material} 楞型：{event.flute_type}
           </span>
+        )}
+        {onToggleBot && (
+          <button
+            onClick={onToggleBot}
+            title="分析摘要"
+            style={{
+              marginLeft: 'auto', background: 'none', border: 'none',
+              cursor: 'pointer', fontSize: 18, lineHeight: 1,
+              padding: '2px 4px',
+              backgroundImage: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >✨</button>
         )}
       </div>
 
