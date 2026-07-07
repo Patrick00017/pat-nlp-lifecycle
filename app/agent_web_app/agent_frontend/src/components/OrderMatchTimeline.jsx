@@ -183,6 +183,14 @@ export default function OrderMatchTimeline() {
                       color = g ? glueVerdictColor(g.analysis) : '#e5e7eb';
                       textColor = g ? glueVerdictTextColor(g.analysis) : '#9ca3af';
                       content = g ? <span style={{ fontSize: 10 }}>{SLOT_LABELS[slot]} {g.material}</span> : null;
+                      if (g) {
+                        const v = g.analysis?.[0]?.verdict || '正常';
+                        const orig = g.analysis?.[0]?.origin;
+                        title = `${slot} ${g.material} | ${v}`;
+                        if (orig) {
+                          title += ` | 溯源: 订单${orig.order_id}(${orig.direction}${Math.round(orig.distance_seconds / 60)}分钟)`;
+                        }
+                      }
                     } else {
                       const s = seg.slots?.[slot] || { actual: '-', expected: '-', match: false };
                       color = segmentColor(s.match, s.actual);
@@ -198,7 +206,7 @@ export default function OrderMatchTimeline() {
                       );
                     }
                     return (
-                      <td key={slot} style={{
+                      <td key={slot} title={title} style={{
                         padding: '2px 4px', background: color, color: textColor,
                         textAlign: 'center', verticalAlign: 'middle', fontSize: 10,
                         lineHeight: 1.2, borderRight: '1px solid rgba(255,255,255,0.4)',

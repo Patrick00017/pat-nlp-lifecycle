@@ -991,6 +991,45 @@ class GlueGapDiagnosticFSM:
                                 verdict = '换材提前（已为下一订单备料）'
                                 related_order = next_order['order_id']
 
+                    # 材质溯源：未知材质错时，查找所有历史订单中最接近的期望了该材质的订单
+                    origin = None
+                    if verdict == '未知材质错误':
+                        best_order = None
+                        best_dist = float('inf')
+                        glue_dt = glue_time
+                        try:
+                            from datetime import datetime
+                            glue_dt = datetime.strptime(glue_time[:19], '%Y-%m-%d %H:%M:%S')
+                        except Exception:
+                            pass
+                        for o in order_events:
+                            o_dt = None
+                            try:
+                                o_dt = datetime.strptime(o['time'][:19], '%Y-%m-%d %H:%M:%S')
+                            except Exception:
+                                continue
+                            matched = False
+                            if slot_name == 'df':
+                                if actual == o['paper_code']:
+                                    matched = True
+                            else:
+                                parts = o['paper_code'].split('.')
+                                si = {'ms1': 1, 'ls1': 2, 'ms2': 3, 'ls2': 4}.get(slot_name, -1)
+                                if si >= 0 and si < len(parts) and actual == parts[si]:
+                                    matched = True
+                            if matched:
+                                dist = abs((o_dt - glue_dt).total_seconds())
+                                if dist < best_dist:
+                                    best_dist = dist
+                                    best_order = o
+                        if best_order:
+                            direction = '之前' if best_order['time'] <= glue_time else '之后'
+                            origin = {
+                                'order_id': best_order['order_id'],
+                                'direction': direction,
+                                'distance_seconds': int(best_dist),
+                            }
+
                     detail.append({
                         'slot': slot_name,
                         'actual': actual,
@@ -998,6 +1037,7 @@ class GlueGapDiagnosticFSM:
                         'verdict': verdict,
                         'related_order': related_order,
                         'reason': reason,
+                        'origin': origin,
                     })
 
                 if detail:
