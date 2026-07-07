@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { fetchFSMResults } from '../api';
+import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { fetchFSMResults, connectSSE, BASE } from '../api';
 import ChartView from './ChartView';
 
 const SLOTS = ['时间', '订单', 'ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df', 'GU1', 'GU2', 'GU3', 'SF1.ms1', 'SF1.ls1', 'SF2.ms2', 'SF2.ls2'];
@@ -48,11 +50,14 @@ function segmentTextColor(match, actual) {
   return match ? '#065f46' : '#fff';
 }
 
-export default function OrderMatchTimeline() {
+export default function OrderMatchTimeline({ sharedThreadId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showBot, setShowBot] = useState(false);
+  const [botContent, setBotContent] = useState('');
+  const [botLoading, setBotLoading] = useState(false);
+  const botContentRef = useRef('');
 
   useEffect(() => {
     fetchFSMResults()
@@ -71,6 +76,69 @@ export default function OrderMatchTimeline() {
     for (const e of (data.glue_events?.[pos] || [])) {
       if (e.set_values?.data) glueEventMap[pos + '|' + e.time] = e;
     }
+  }
+
+  function buildPrompt(evt) {
+    const lines = [];
+    lines.push(`分析胶水赋值事件:`);
+    lines.push(`部位: ${evt.part || evt.func}`);
+    lines.push(`材质: ${evt.material} / 楞型: ${evt.flute_type}`);
+    lines.push(`时间: ${evt.time}`);
+    lines.push('');
+    if (evt.errors?.length) {
+      lines.push('错误:');
+      evt.errors.forEach(e => lines.push(`  ❌ ${e.detail}`));
+      lines.push('');
+    }
+    if (evt.warnings?.length) {
+      lines.push('警告:');
+      evt.warnings.forEach(w => lines.push(`  ⚠️ ${w.detail}`));
+      lines.push('');
+    }
+    if (evt.analysis?.length) {
+      lines.push('根因分析:');
+      evt.analysis.forEach(a => {
+        lines.push(`  ${a.slot}: actual=${a.actual}, verdict=${a.verdict}`);
+        if (a.origin) lines.push(`    ↳ 材质来自订单${a.origin.order_id}(${a.origin.direction}, ${Math.round(a.origin.distance_seconds / 60)}分钟)`);
+      });
+      lines.push('');
+    }
+    lines.push('请以专业运维的角度分析可能的原因，给出建议。');
+    return lines.join('\n');
+  }
+
+  function handleStarClick(evt) {
+    setShowBot(true);
+    setBotLoading(true);
+    setBotContent('');
+    botContentRef.current = '';
+    const prompt = buildPrompt(evt);
+    const payload = { message: prompt, agent: 'timeline-analyst' };
+    if (sharedThreadId) payload.thread_id = sharedThreadId;
+    connectSSE(`${BASE}/opencode/chat/stream`, payload,
+      (rawData) => {
+        let data;
+        try { data = JSON.parse(rawData); } catch { return; }
+        if (data.type === 'reason') {
+          botContentRef.current += data.content;
+          setBotContent(botContentRef.current);
+        } else if (data.type === 'message') {
+          botContentRef.current += data.content;
+          setBotContent(botContentRef.current);
+        } else if (data.type === 'done') {
+          setBotLoading(false);
+        } else if (data.type === 'error') {
+          botContentRef.current = `请求失败: ${data.error}`;
+          setBotContent(botContentRef.current);
+          setBotLoading(false);
+        }
+      },
+      (err) => {
+        botContentRef.current = `请求失败: ${String(err)}`;
+        setBotContent(botContentRef.current);
+        setBotLoading(false);
+      }
+    );
   }
   const matReasonMap = {};
   for (const e of (data.material_events || [])) {
@@ -252,7 +320,7 @@ export default function OrderMatchTimeline() {
             <div style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
               <ChartView event={selectedEvent} onBack={() => { setSelectedEvent(null); setShowBot(false); }}
                         materialEvents={data.material_events}
-                        onToggleBot={() => setShowBot(v => !v)} />
+                        onClickStar={() => handleStarClick(selectedEvent)} />
             </div>
             {/* 右: Bot 摘要 */}
             {showBot && (
@@ -260,13 +328,19 @@ export default function OrderMatchTimeline() {
                             display: 'flex', flexDirection: 'column', overflow: 'auto', fontSize: 12 }}>
                 <div style={{ padding: '8px 12px', fontWeight: 600, color: '#374151',
                               borderBottom: '1px solid #e5e7eb' }}>🤖 分析摘要</div>
-                <div style={{ padding: 10, lineHeight: 1.6, color: '#6b7280' }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>参数校验</div>
-                  <div style={{ marginBottom: 12 }}>—</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>根因分析</div>
-                  <div style={{ marginBottom: 12 }}>—</div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>赋值参数</div>
-                  <div style={{ marginBottom: 12 }}>—</div>
+                <div style={{ padding: 10, lineHeight: 1.6, color: '#374151', flex: 1, overflow: 'auto' }}>
+                  {botLoading && !botContent && <div style={{ color: '#9ca3af' }}>加载中...</div>}
+                  {botContent && <ReactMarkdown remarkPlugins={[remarkGfm]}>{botContent}</ReactMarkdown>}
+                  {!botLoading && !botContent && (
+                    <>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>参数校验</div>
+                      <div style={{ marginBottom: 12, color: '#9ca3af' }}>—</div>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>根因分析</div>
+                      <div style={{ marginBottom: 12, color: '#9ca3af' }}>—</div>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>赋值参数</div>
+                      <div style={{ marginBottom: 12, color: '#9ca3af' }}>—</div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

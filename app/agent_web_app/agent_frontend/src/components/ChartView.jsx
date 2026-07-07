@@ -15,7 +15,7 @@ const COL_NAMES = {
   value: '结果值',
 };
 
-export default function ChartView({ event, onBack, materialEvents, onToggleBot }) {
+export default function ChartView({ event, onBack, materialEvents, onClickStar }) {
   if (!event) return null;
   const sv = event.set_values;
   if (!sv || !sv.data) {
@@ -70,9 +70,9 @@ export default function ChartView({ event, onBack, materialEvents, onToggleBot }
             材质：{event.material} 楞型：{event.flute_type}
           </span>
         )}
-        {onToggleBot && (
+        {onClickStar && (
           <button
-            onClick={onToggleBot}
+            onClick={onClickStar}
             title="分析摘要"
             style={{
               marginLeft: 'auto', background: 'none', border: 'none',

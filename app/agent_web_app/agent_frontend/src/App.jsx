@@ -16,13 +16,14 @@ const tabs = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('chat')
+  const [sharedThreadId, setSharedThreadId] = useState(null)
   return (
     <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
       <div style={{ height: '100%', display: activeTab === 'chat' ? '' : 'none' }}><ChatPanel /></div>
       <div style={{ height: '100%', display: activeTab === 'analysis' ? '' : 'none' }}><DataAnalysis /></div>
-      <div style={{ height: '100%', display: activeTab === 'fsm' ? '' : 'none' }}><DiagnosisChat /></div>
+      <div style={{ height: '100%', display: activeTab === 'fsm' ? '' : 'none' }}><DiagnosisChat sharedThreadId={sharedThreadId} setSharedThreadId={setSharedThreadId} /></div>
       <div style={{ height: '100%', display: activeTab === 'rag' ? '' : 'none' }}><RagChatPanel /></div>
-      <div style={{ height: '100%', display: activeTab === 'order' ? '' : 'none' }}><OrderMatchTimeline /></div>
+      <div style={{ height: '100%', display: activeTab === 'order' ? '' : 'none' }}><OrderMatchTimeline sharedThreadId={sharedThreadId} /></div>
     </Tabs>
   )
 }

@@ -5,9 +5,8 @@ import { connectSSE, BASE } from '../api'
 
 const STREAM_URL = `${BASE}/opencode/chat/stream`
 
-export default function OpenCodeChat() {
+export default function OpenCodeChat({ sharedThreadId, setSharedThreadId }) {
   const [message, setMessage] = useState('')
-  const [threadId, setThreadId] = useState(null)
   const [chatLog, setChatLog] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const chatRef = useRef(null)
@@ -42,15 +41,15 @@ export default function OpenCodeChat() {
 
     setChatLog(c => [...c, { from: 'user', text: userMsg }])
 
-    const payload = { message: userMsg, agent: 'general' }
-    if (threadId) payload.thread_id = threadId
+    const payload = { message: userMsg, agent: 'timeline-analyst' }
+    if (sharedThreadId) payload.thread_id = sharedThreadId
 
     connectSSE(STREAM_URL, payload,
       (rawData) => {
         let data
         try { data = JSON.parse(rawData) } catch { return }
         if (data.type === 'thread_id') {
-          setThreadId(data.value)
+          setSharedThreadId(data.value)
         } else if (data.type === 'reason') {
           reasonTokensRef.current += data.content
           setReasonTokens(reasonTokensRef.current)
@@ -78,7 +77,7 @@ export default function OpenCodeChat() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
       <div style={{ padding: '8px 12px', fontSize: 12, color: '#94a3b8', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
         <span>产线助手</span>
-        {threadId && <span style={{ fontFamily: 'monospace' }}>{threadId.slice(0, 8)}...</span>}
+        {sharedThreadId && <span style={{ fontFamily: 'monospace' }}>{sharedThreadId.slice(0, 8)}...</span>}
       </div>
 
       <div ref={chatRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column' }}>
