@@ -252,7 +252,7 @@ class OrderAndMaterialFSM:
             actual_material = info['material']
             actual_width = info['width']
             evt_id = info['event_id'] # 换材id
-            slot_match = (actual_material == expected_material or expected_material == '-') and (actual_width == expected_width or expected_material == '-')
+            slot_match = (actual_material == expected_material or expected_material == '-')
             slots[slot_name] = {'actual_material': actual_material, 'expected_material': expected_material, 'actual_width': actual_width, 'expected_width': expected_width, 'match': slot_match, 'id': evt_id}
             if not slot_match:
                 all_match = False
@@ -262,7 +262,7 @@ class OrderAndMaterialFSM:
         df_expected_width = self.current_order_width
         df_actual_material = df_info['material']
         df_actual_width = df_info['width']
-        df_match = (df_expected_material == df_actual_material or df_expected_material == '-') and (df_expected_width == df_actual_width or df_expected_material == '-')
+        df_match = (df_expected_material == df_actual_material or df_expected_material == '-')
         slots['df'] = {'actual_material': df_actual_material, 'expected_material': df_expected_material, 'actual_width': df_actual_width, 'expected_width': df_expected_width, 'match': df_match, 'id': df_info['event_id']}
         if not df_match:
             all_match = False

@@ -145,7 +145,7 @@ export default function OrderMatchTimeline() {
         订单材质匹配
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 11, width: '100%' }}>
+        <table style={{ borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 12, width: '100%' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             <tr style={{ background: '#f9fafb' }}>
               {SLOTS.map(s => (
@@ -175,7 +175,8 @@ export default function OrderMatchTimeline() {
                       content = (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <span style={{ fontWeight: 600 }}>{o.order_id}</span>
-                          {o.paper_code && <span style={{ fontSize: 7, opacity: 0.5 }}>{o.paper_code}</span>}
+                          {o.paper_code && <span style={{ fontSize: 9, opacity: 0.5 }}>{o.paper_code}</span>}
+                          {o.width > 0 && <span style={{ fontSize: 9, opacity: 0.4 }}>{o.width}</span>}
                         </div>
                       );
                     } else if (slot.startsWith('GU') || slot.startsWith('SF')) {
@@ -198,8 +199,8 @@ export default function OrderMatchTimeline() {
                       content = (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <span>{s.actual}</span>
-                          {(s.actualW || 0) > 0 && <span style={{ fontSize: 8, opacity: 0.6 }}>{s.actualW}</span>}
-                          {s.reason && <span style={{ fontSize: 7, opacity: 0.5 }}>
+                          {(s.actualW || 0) > 0 && <span style={{ fontSize: 9, opacity: 0.6 }}>{s.actualW}</span>}
+                          {s.reason && <span style={{ fontSize: 9, opacity: 0.5 }}>
                             {{normal:'正常换材',hq:'横切校验',real:'实际材质',reset:'初始化'}[s.reason] || s.reason}
                           </span>}
                         </div>
@@ -208,7 +209,7 @@ export default function OrderMatchTimeline() {
                     return (
                       <td key={slot} title={title} style={{
                         padding: '2px 4px', background: color, color: textColor,
-                        textAlign: 'center', verticalAlign: 'middle', fontSize: 10,
+                        textAlign: 'center', verticalAlign: 'middle', fontSize: 11,
                         lineHeight: 1.2, borderRight: '1px solid rgba(255,255,255,0.4)',
                       }}>{content}</td>
                     );
