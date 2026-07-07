@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchFSMResults } from '../api';
+import ChartView from './ChartView';
 
 const SLOTS = ['时间', '订单', 'ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df', 'GU1', 'GU2', 'GU3', 'SF1.ms1', 'SF1.ls1', 'SF2.ms2', 'SF2.ls2'];
 const SLOT_LABELS = { 时间: '时间', 订单: '订单', ls0: 'LS0', ms1: 'MS1', ls1: 'LS1', ms2: 'MS2', ls2: 'LS2', df: 'DF', GU1: 'GU1', GU2: 'GU2', GU3: 'GU3',
@@ -50,6 +51,7 @@ function segmentTextColor(match, actual) {
 export default function OrderMatchTimeline() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     fetchFSMResults()
@@ -62,6 +64,13 @@ export default function OrderMatchTimeline() {
   if (!data?.order_check) return <div style={{ padding: 20, color: '#6b7280' }}>无订单匹配数据</div>;
 
   const oc = data.order_check;
+  // 胶水事件查找表: (pos|time) → event
+  const glueEventMap = {};
+  for (const pos of ['GU1','GU2','GU3','SF1','SF2']) {
+    for (const e of (data.glue_events?.[pos] || [])) {
+      if (e.set_values?.data) glueEventMap[pos + '|' + e.time] = e;
+    }
+  }
   const matReasonMap = {};
   for (const e of (data.material_events || [])) {
     matReasonMap[e.id] = e.reason || '';
@@ -140,7 +149,9 @@ export default function OrderMatchTimeline() {
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+    <>
+      <style>{'.glue-clickable:hover{filter:brightness(1.15);}'}</style>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
       <div style={{ padding: '10px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontWeight: 600, fontSize: 14 }}>
         订单材质匹配
       </div>
@@ -166,7 +177,7 @@ export default function OrderMatchTimeline() {
                   borderTop: isOrderNew ? '2px solid #fff' : '1px solid #f3f4f6',
                 }}>
                   {SLOTS.map(slot => {
-                    let content, color = 'transparent', textColor, title = '';
+                    let content, color = 'transparent', textColor, title = '', glueEvt = null;
                     if (slot === '时间') {
                       color = 'transparent'; textColor = '#9ca3af';
                       content = <span style={{ fontSize: 10 }}>{seg.timeLabel}</span>;
@@ -181,6 +192,8 @@ export default function OrderMatchTimeline() {
                       );
                     } else if (slot.startsWith('GU') || slot.startsWith('SF')) {
                       const g = getGlueSubSlot(slot, seg);
+                      const parentPos = GLUE_SUB_PARENT[slot] || slot;
+                      glueEvt = g ? glueEventMap[parentPos + '|' + g.time] : null;
                       color = g ? glueVerdictColor(g.analysis) : '#e5e7eb';
                       textColor = g ? glueVerdictTextColor(g.analysis) : '#9ca3af';
                       content = g ? <span style={{ fontSize: 10 }}>{SLOT_LABELS[slot]} {g.material}</span> : null;
@@ -207,10 +220,16 @@ export default function OrderMatchTimeline() {
                       );
                     }
                     return (
-                      <td key={slot} title={title} style={{
+                      <td key={slot} title={title}
+                        className={glueEvt && glueEvt.set_values?.data ? 'glue-clickable' : ''}
+                        onClick={() => {
+                        if (glueEvt && glueEvt.set_values?.data) setSelectedEvent(glueEvt);
+                      }} style={{
                         padding: '2px 4px', background: color, color: textColor,
                         textAlign: 'center', verticalAlign: 'middle', fontSize: 11,
                         lineHeight: 1.2, borderRight: '1px solid rgba(255,255,255,0.4)',
+                        cursor: glueEvt && glueEvt.set_values?.data ? 'pointer' : 'default',
+                        transition: 'filter 0.15s',
                       }}>{content}</td>
                     );
                   })}
@@ -220,6 +239,20 @@ export default function OrderMatchTimeline() {
           </tbody>
         </table>
       </div>
+      {/* Modal for glue event detail */}
+      {selectedEvent && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+             onClick={() => setSelectedEvent(null)}>
+          <div style={{ width: '85%', maxWidth: 960, maxHeight: '90vh', overflow: 'auto',
+                        background: '#fff', borderRadius: 8 }}
+               onClick={e => e.stopPropagation()}>
+            <ChartView event={selectedEvent} onBack={() => setSelectedEvent(null)}
+                      materialEvents={data.material_events} />
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }
