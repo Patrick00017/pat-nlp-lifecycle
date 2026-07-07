@@ -111,6 +111,49 @@ export default function ChartView({ event, onBack, materialEvents }) {
         <IssuePanel errors={event.errors} warnings={event.warnings} passes={event.passes} />
       </div>
 
+      {/* 根因分析 */}
+      {(event.analysis || []).length > 0 && (
+        <div style={{ padding: '0 16px 12px', borderTop: '1px solid #e5e7eb' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6, paddingTop: 8 }}>
+            根因分析
+          </div>
+          {event.analysis.map((a, i) => {
+            const verdictColors = {
+              '实际材质触发': '#8b5cf6',
+              '未知材质错误': '#ef4444',
+              '换材提前': '#f59e0b',
+              '换材滞后': '#f97316',
+            };
+            const vkey = (a.verdict || '').split('（')[0];
+            const vcolor = verdictColors[vkey] || '#6b7280';
+            const reasonLabel = {normal:'正常换材',hq:'横切校验',real:'实际材质'}[a.reason] || a.reason || '';
+            return (
+              <div key={i} style={{
+                display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline',
+                fontSize: 12, padding: '5px 8px', borderLeft: `3px solid ${vcolor}`,
+                background: '#f9fafb', borderRadius: 4, marginBottom: 4, lineHeight: 1.6,
+              }}>
+                <span style={{ fontWeight: 600, minWidth: 36 }}>{(a.slot || '').toUpperCase()}</span>
+                <span>
+                  <strong>{a.actual}</strong> ≠ 订单{a.current_order}期望
+                  {a.Expected ? `(${a.Expected})` : ''}
+                </span>
+                <span style={{ color: vcolor, fontWeight: 500 }}>{a.verdict}</span>
+                {reasonLabel && <span style={{ color: '#9ca3af', fontSize: 11 }}>({reasonLabel})</span>}
+                {a.related_order && a.verdict !== '未知材质错误' && (
+                  <span style={{ color: '#6b7280', fontSize: 11 }}>关联: {a.related_order}</span>
+                )}
+                {a.origin && (
+                  <span style={{ color: '#6b7280', fontSize: 11, display: 'block', width: '100%', paddingLeft: 42 }}>
+                    ↳ 材质来自订单{a.origin.order_id}({a.origin.direction}{Math.round(a.origin.distance_seconds / 60)}分钟)
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 附近换材记录 */}
       {relatedMaterials.length > 0 && (
         <div style={{ padding: '0 16px 12px', borderTop: '1px solid #e5e7eb' }}>
