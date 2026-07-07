@@ -276,7 +276,16 @@ def test_ips_and_glue_template_pg(start_time, end_time):
                 (start_time, end_time),
             )
             extractor.order_init_data = df_orders.to_dict('records')
-            # print(extractor.order_init_data)
+            # 查询各机台纸卷剩余量数据
+            df_machine_run = pg_ips.get_dataframe_from_query(
+                'SELECT "F_CreateTime", "F_OrderID", "F_MachineID", "F_Remainning_mm" '
+                'FROM "T_IPS_HisRunningData_20260622" '
+                'WHERE "F_MachineID" IN (%s, %s, %s, %s, %s, %s, %s) '
+                'AND "F_CreateTime" >= %s AND "F_CreateTime" < %s '
+                'ORDER BY "F_CreateTime"',
+                ("LS0", "MS1", "LS1", "MS2", "LS2", "MS3", "LS3", start_time, end_time),
+            )
+            extractor.machine_run_data = df_machine_run.to_dict('records')
             pg_ips.close_connection()
         except Exception as e:
             print(f"Failed to query order init data: {e}")

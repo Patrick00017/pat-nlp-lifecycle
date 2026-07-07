@@ -93,6 +93,7 @@ class KeyEventExtractor:
         # raw order list
         # {'F_CreateTime': Timestamp('2026-06-22 00:00:00'), 'F_OrderID': '9102', 'F_MachineID': 'MS1', 'F_PaperCode': 'HD.07.07.07.B9', 'F_Flute': '5BA', 'F_Width': 2150, 'F_ErpPaperCode': '07', 'F_ErpWeight': Decimal('170.00'), 'F_ErpWidth': Decimal('2150.00')}
         self.order_init_data = []
+        self.machine_run_data = []
         self.order_events = []
         
     def process_orders(self):
