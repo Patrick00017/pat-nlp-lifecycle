@@ -95,6 +95,7 @@ class KeyEventExtractor:
         self.order_init_data = []
         self.machine_run_data = []
         self.order_events = []
+        self.machine_anomaly_events = []
         
     def process_orders(self):
         for row in self.order_init_data:
@@ -110,9 +111,113 @@ class KeyEventExtractor:
                 'erp_paper_code': str(row.get('F_ErpPaperCode') or ''),
                 'erp_weight': float(row['F_ErpWeight'] or 0),
                 'erp_width': float(row['F_ErpWidth'] or 0),
+                'anomalies': [],
             }
             self.order_events.append(event)
     
+    def process_machine_run_data(self):
+        CYCLE_JUMP = 500
+        MAX_POSITIVE_RATIO = 0.15
+        MAX_ZERO_RATIO = 0.5
+        MAX_FLAT_SEG = 300
+
+        grouped = {}
+        for row in self.machine_run_data:
+            mid = row['F_MachineID']
+            if mid not in grouped:
+                grouped[mid] = []
+            grouped[mid].append({
+                'time': str(row['F_CreateTime']),
+                'order_id': str(row['F_OrderID']),
+                'remaining_mm': float(row['F_Remainning_mm'] or 0),
+            })
+
+        for mid, entries in grouped.items():
+            if len(entries) < 30:
+                continue
+
+            # 切分周期: delta >= CYCLE_JUMP 为分界线
+            cycle = [entries[0]]
+            cycles = [cycle]
+
+            for i in range(1, len(entries)):
+                delta = entries[i]['remaining_mm'] - entries[i-1]['remaining_mm']
+                if delta >= CYCLE_JUMP and entries[i-1]['remaining_mm'] <= 100:
+                    cycle = [entries[i]]
+                    cycles.append(cycle)
+                else:
+                    cycle.append(entries[i])
+
+            for cyc in cycles:
+                if len(cyc) < 30:
+                    continue
+                order_ids = list(dict.fromkeys(e['order_id'] for e in cyc if e.get('order_id')))
+                deltas = []
+                for i in range(1, len(cyc)):
+                    deltas.append(cyc[i]['remaining_mm'] - cyc[i-1]['remaining_mm'])
+                total = len(deltas)
+
+                # ① 乱跳: 回升比例过高
+                pos_count = sum(1 for d in deltas if d > 0)
+                if pos_count / total > MAX_POSITIVE_RATIO:
+                    self.machine_anomaly_events.append({
+                        'id': uuid.uuid1(),
+                        'type': 'machine_anomaly',
+                        'machine': mid,
+                        'time': cyc[0]['time'],
+                        'reason': '剩余量频繁波动',
+                        'detail': f'回升率 {pos_count/total:.0%}，周期 {total}s',
+                        'start_remaining_mm': cyc[0]['remaining_mm'],
+                        'end_remaining_mm': cyc[-1]['remaining_mm'],
+                        'order_ids': order_ids,
+                    })
+                    continue
+
+                # ② 停滞: 零值占比过高
+                zero_count = sum(1 for d in deltas if d == 0)
+                if zero_count / total > MAX_ZERO_RATIO:
+                    self.machine_anomaly_events.append({
+                        'id': uuid.uuid1(),
+                        'type': 'machine_anomaly',
+                        'machine': mid,
+                        'time': cyc[0]['time'],
+                        'reason': '剩余量长时间停滞',
+                        'detail': f'零值率 {zero_count/total:.0%}，周期 {total}s',
+                        'start_remaining_mm': cyc[0]['remaining_mm'],
+                        'end_remaining_mm': cyc[-1]['remaining_mm'],
+                        'order_ids': order_ids,
+                    })
+                    continue
+
+                # ③ 趋势异常: 长时间不递减
+                flat = 0
+                for d in deltas:
+                    if d >= 0:
+                        flat += 1
+                    else:
+                        flat = 0
+                    if flat > MAX_FLAT_SEG:
+                        self.machine_anomaly_events.append({
+                            'id': uuid.uuid1(),
+                            'type': 'machine_anomaly',
+                            'machine': mid,
+                            'time': cyc[0]['time'],
+                            'reason': '剩余量长期未递减',
+                            'detail': f'连续 {flat}s 未减少, 周期 {total}s',
+                            'start_remaining_mm': cyc[0]['remaining_mm'],
+                            'end_remaining_mm': cyc[-1]['remaining_mm'],
+                        })
+                        break
+
+        # 匹配异常到对应的订单
+        for anomaly in self.machine_anomaly_events:
+            best = None
+            for o in self.order_events:
+                if o['time'] <= anomaly['time']:
+                    best = o
+            if best is not None:
+                best['anomalies'].append(anomaly)
+
     def process_log_row(self, row):
         """
         row: {

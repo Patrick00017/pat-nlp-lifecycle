@@ -316,6 +316,7 @@ def test_ips_and_glue_template_pg(start_time, end_time):
         for index, row in parsed_message_df.iterrows():
             extractor.process(row)
         extractor.process_orders()
+        extractor.process_machine_run_data()
         return extractor
     finally:
         pg.close_connection()
