@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { fetchFSMResults, connectSSE, BASE } from '../api';
 import ChartView from './ChartView';
+import MaterialDetailPanel from './MaterialDetailPanel';
 
 const SLOTS = ['时间', '订单', 'ls0', 'ms1', 'ls1', 'ms2', 'ls2', 'df', 'GU1', 'GU2', 'GU3', 'SF1.ms1', 'SF1.ls1', 'SF2.ms2', 'SF2.ls2'];
 const SLOT_LABELS = { 时间: '时间', 订单: '订单', ls0: 'LS0', ms1: 'MS1', ls1: 'LS1', ms2: 'MS2', ls2: 'LS2', df: 'DF', GU1: 'GU1', GU2: 'GU2', GU3: 'GU3',
@@ -54,6 +55,7 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [showBot, setShowBot] = useState(false);
   const [botContent, setBotContent] = useState('');
   const [botLoading, setBotLoading] = useState(false);
@@ -90,6 +92,11 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
     for (const e of (data.glue_events?.[pos] || [])) {
       if (e.set_values?.data) glueEventMap[pos + '|' + e.time] = e;
     }
+  }
+
+  const materialEventMap = {};
+  for (const e of (data.material_events || [])) {
+    materialEventMap[e.id] = e;
   }
 
   function buildPrompt(evt) {
@@ -206,6 +213,7 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
           expectedW: info.expected_width ?? '',
           match: info.match ?? false,
           reason: matReasonMap[info.id] || '',
+          id: info.id || '',
         };
       }
       mi++;
@@ -280,7 +288,7 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
                   borderTop: isOrderNew ? '2px solid #fff' : '1px solid #f3f4f6',
                 }}>
                   {SLOTS.map(slot => {
-                    let content, color = 'transparent', textColor, title = '', glueEvt = null;
+                    let content, color = 'transparent', textColor, title = '', glueEvt = null, matEvt = null;
                     if (slot === '时间') {
                       color = 'transparent'; textColor = '#9ca3af';
                       content = <span style={{ fontSize: 10 }}>{seg.timeLabel}</span>;
@@ -312,6 +320,7 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
                       const s = seg.slots?.[slot] || { actual: '-', expected: '-', match: false };
                       color = segmentColor(s.match, s.actual);
                       textColor = segmentTextColor(s.match, s.actual);
+                      matEvt = s.id ? materialEventMap[s.id] : null;
                       content = (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <span>{s.actual}</span>
@@ -327,11 +336,12 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
                         className={glueEvt && glueEvt.set_values?.data ? 'glue-clickable' : ''}
                         onClick={() => {
                         if (glueEvt && glueEvt.set_values?.data) setSelectedEvent(glueEvt);
+                        else if (matEvt) setSelectedMaterial(matEvt);
                       }} style={{
                         padding: '2px 4px', background: color, color: textColor,
                         textAlign: 'center', verticalAlign: 'middle', fontSize: 11,
                         lineHeight: 1.2, borderRight: '1px solid rgba(255,255,255,0.4)',
-                        cursor: glueEvt && glueEvt.set_values?.data ? 'pointer' : 'default',
+                        cursor: (glueEvt && glueEvt.set_values?.data) || matEvt ? 'pointer' : 'default',
                         transition: 'filter 0.15s',
                       }}>{content}</td>
                     );
@@ -387,6 +397,16 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Modal for material event detail */}
+      {selectedMaterial && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 100,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+             onClick={() => setSelectedMaterial(null)}>
+          <div onClick={e => e.stopPropagation()}>
+            <MaterialDetailPanel event={selectedMaterial} onBack={() => setSelectedMaterial(null)} />
           </div>
         </div>
       )}
