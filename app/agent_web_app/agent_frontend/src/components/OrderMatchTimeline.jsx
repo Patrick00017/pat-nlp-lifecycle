@@ -58,6 +58,7 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
   const [botContent, setBotContent] = useState('');
   const [botLoading, setBotLoading] = useState(false);
   const botContentRef = useRef('');
+  const botPanelRef = useRef(null);
 
   function loadData() {
     setLoading(true);
@@ -69,10 +70,19 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
 
   useEffect(loadData, []);
 
-  if (loading) return <div style={{ padding: 20, color: '#6b7280' }}>加载中...</div>;
-  if (!data?.order_check) return <div style={{ padding: 20, color: '#6b7280' }}>无订单匹配数据</div>;
+  useEffect(() => {
+    if (botPanelRef.current) {
+      botPanelRef.current.scrollTop = botPanelRef.current.scrollHeight;
+    }
+  }, [botContent]);
 
-  const oc = data.order_check;
+  if (loading) return <div style={{ padding: 20, color: '#6b7280' }}>加载中...</div>;
+  if (!data) return <div style={{ padding: 20, color: '#6b7280' }}>无法加载数据</div>;
+
+  const oc = data.order_check || {};
+  oc.material_list = oc.material_list || [];
+  oc.match_list = oc.match_list || [];
+  oc.order_list = oc.order_list || [];
   const isEmpty = !oc.order_list?.length;
   // 胶水事件查找表: (pos|time) → event
   const glueEventMap = {};
@@ -107,7 +117,13 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
       });
       lines.push('');
     }
-    lines.push('请以专业运维的角度分析可能的原因，给出建议。');
+    lines.push('只需要使用如下规则进行总结说明，必须要给出一个根本原因，可查看fsm_results.json。不允许使用胶水查询工具。最终的回答直接说明根本原因以及为什么即可，要求语句通顺，易读。');
+    lines.push('1. 如果事件时处于开始阶段，材质等信息还没有拿齐，可以初步判定为这次赋值的根本原因超出了当前的日志范围，无法查看原因；');
+    lines.push('2. 如果事件中的初步校验存在问题，那个不是根本的问题，但是需要简单阐述一下，因为用户可能会在后续更改QDM等基础参数，提示用户自查；');
+    lines.push('3. 实际材质是外部直接传入的，因为实际材质造成的与订单材质不符合的赋值事件被认为是正常的，但是由于用户特意要求分析该事件，所以需要提醒用户自己验证实际材质是否正确，该系统无法校验实际材质；')
+    lines.push('4. 注意查看是否有正常换材，如果没有正常换材的话系统一定是处于不正常状态，在推理时需要指出。')
+    lines.push('5. 稍微提前更换和延迟更换材质是正常的，可能会造成的只是某一段时间内的参数出现问题，需要向用户说明。')
+    lines.push('6. 做出决策时，最主要的分析方法就是把订单、换材以及赋值事件放在一个时间线上对比，从而找出其中的关联，得到结果。')
     return lines.join('\n');
   }
 
@@ -347,9 +363,17 @@ export default function OrderMatchTimeline({ sharedThreadId }) {
                             display: 'flex', flexDirection: 'column', overflow: 'auto', fontSize: 12 }}>
                 <div style={{ padding: '8px 12px', fontWeight: 600, color: '#374151',
                               borderBottom: '1px solid #e5e7eb' }}>🤖 分析摘要</div>
-                <div style={{ padding: 10, lineHeight: 1.6, color: '#374151', flex: 1, overflow: 'auto' }}>
-                  {botLoading && !botContent && <div style={{ color: '#9ca3af' }}>加载中...</div>}
+                <div ref={botPanelRef} style={{ padding: 10, lineHeight: 1.6, color: '#374151', flex: 1, overflow: 'auto' }}>
+                  {botLoading && !botContent && (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <span>🤖</span>
+                      <span style={{ animation: 'blink 1s step-end infinite', fontSize: 16 }}>▋</span>
+                    </div>
+                  )}
                   {botContent && <ReactMarkdown remarkPlugins={[remarkGfm]}>{botContent}</ReactMarkdown>}
+                  {botLoading && botContent && (
+                    <span style={{ animation: 'blink 1s step-end infinite', fontSize: 16 }}>▋</span>
+                  )}
                   {!botLoading && !botContent && (
                     <>
                       <div style={{ fontWeight: 600, marginBottom: 4 }}>参数校验</div>
