@@ -4,3 +4,5 @@
 *.sqlite3
 *.bin
 node_modules
+uploads
+chroma_db

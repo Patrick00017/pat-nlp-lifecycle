@@ -202,3 +202,37 @@ export async function fetchFSMResults() {
   if (!res.ok) throw new Error('Fetch FSM results failed: ' + res.status);
   return res.json();
 }
+
+export async function getKBFiles() {
+  const res = await fetch(`${BASE}/api/kb/files`);
+  if (!res.ok) throw new Error('Get KB files failed: ' + res.status);
+  return res.json();
+}
+
+export async function uploadKBFiles(files) {
+  const formData = new FormData();
+  files.forEach(f => formData.append('files', f));
+  const res = await fetch(`${BASE}/api/kb/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Upload KB files failed: ' + res.status);
+  return res.json();
+}
+
+export async function buildKB() {
+  const res = await fetch(`${BASE}/api/kb/build`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error('Build KB failed: ' + res.status);
+  return res.json();
+}
+
+export async function deleteKBFile(name) {
+  const res = await fetch(`${BASE}/api/kb/file/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Delete KB file failed: ' + res.status);
+  return res.json();
+}
