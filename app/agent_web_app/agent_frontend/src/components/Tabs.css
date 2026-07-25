@@ -2,15 +2,27 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: var(--bg-body);
 }
 
 .tabs-header {
   display: flex;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  justify-content: space-between;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-color);
   padding: 0 16px;
   flex-shrink: 0;
+}
+
+.tabs-header-left {
+  display: flex;
+}
+
+.tabs-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 4px;
 }
 
 .tab-btn {
@@ -19,14 +31,14 @@
   background: none;
   font-size: 14px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   position: relative;
   transition: color 0.2s;
 }
 
 .tab-btn:hover {
-  color: #1a1a2e;
+  color: var(--text-primary);
 }
 
 .tab-btn.active {

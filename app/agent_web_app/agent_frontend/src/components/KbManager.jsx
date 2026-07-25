@@ -6,10 +6,10 @@ const COLORS = {
   success: '#10b981',
   danger: '#ef4444',
   warn: '#f59e0b',
-  border: '#e5e7eb',
-  bg: '#f9fafb',
-  text: '#374151',
-  muted: '#6b7280',
+  border: 'var(--border-color)',
+  bg: 'var(--bg-body)',
+  text: 'var(--text-primary)',
+  muted: 'var(--text-muted)',
 }
 
 function fmtSize(bytes) {
@@ -235,7 +235,7 @@ export default function KbManager() {
             padding: '7px 0',
             border: `1px solid ${COLORS.border}`,
             borderRadius: 6,
-            background: '#fff',
+            background: 'var(--bg-card)',
             color: COLORS.text,
             cursor: uploading || building ? 'not-allowed' : 'pointer',
             fontSize: 12,
